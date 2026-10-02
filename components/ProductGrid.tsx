@@ -23,6 +23,48 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   onSelectCategory,
   onSelectProduct,
 }) => {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    let animationFrameId: number;
+    let scrollPos = el.scrollLeft;
+    let isPaused = false;
+
+    const scroll = () => {
+      if (!isPaused) {
+        scrollPos += 0.5; // adjust speed here
+        if (scrollPos >= el.scrollWidth - el.clientWidth) {
+          scrollPos = 0; // restart
+        }
+        el.scrollLeft = scrollPos;
+      } else {
+        scrollPos = el.scrollLeft; // Sync pos if user scrolls manually
+      }
+      animationFrameId = requestAnimationFrame(scroll);
+    };
+
+    animationFrameId = requestAnimationFrame(scroll);
+
+    const pause = () => { isPaused = true; };
+    const resume = () => { isPaused = false; };
+
+    el.addEventListener('mouseenter', pause);
+    el.addEventListener('mouseleave', resume);
+    el.addEventListener('touchstart', pause);
+    el.addEventListener('touchend', resume);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      el.removeEventListener('mouseenter', pause);
+      el.removeEventListener('mouseleave', resume);
+      el.removeEventListener('touchstart', pause);
+      el.removeEventListener('touchend', resume);
+    };
+  }, [products]);
+
   return (
     <>
       <nav id="catalogo" className="w-full bg-surface-pure border-b border-border-hairline sticky top-16 z-40">
@@ -67,17 +109,21 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
         </div>
       )}
 
-      <section className="w-full bg-surface-pure">
-        <div className="grid grid-cols-2 lg:grid-cols-3 border-l border-t border-border-hairline" id="product-grid">
+      <section className="w-full bg-surface-pure overflow-hidden">
+        <div 
+          ref={scrollRef}
+          className="flex overflow-x-auto no-scrollbar border-t border-b border-border-hairline" 
+          id="product-grid"
+        >
           {products.length === 0 ? (
-            <div className="col-span-full py-16 text-center text-text-secondary text-sm bg-surface-pure">
+            <div className="w-full py-16 text-center text-text-secondary text-sm bg-surface-pure">
               Nenhum produto encontrado.
             </div>
           ) : (
-            products.map((product) => (
+            [...products, ...products, ...products].map((product, index) => (
               <article
-                key={product.id}
-                className="group relative flex flex-col border-r border-b border-border-hairline bg-surface-pure hover:bg-surface-off transition-colors duration-200"
+                key={`${product.id}-${index}`}
+                className="group relative flex flex-col border-r border-border-hairline bg-surface-pure hover:bg-surface-off transition-colors duration-200 flex-none w-[80vw] sm:w-[50vw] md:w-[33.333vw] lg:w-[25vw]"
                 onClick={() => onSelectProduct(product)}
               >
                 <div className="block w-full overflow-hidden p-2.5 sm:p-6 lg:p-8">

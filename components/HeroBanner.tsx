@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import Image from 'next/image';
 
 export const HeroMain: React.FC = () => {
@@ -25,25 +25,25 @@ export const HeroCollection: React.FC<HeroCollectionProps> = ({ onCollectionClic
       <div className="relative w-full aspect-[3/4] sm:aspect-[16/9] lg:aspect-[21/9]">
         <Image
           src="/images/hero-sanctum.webp"
-          alt="Coleção Sanctum"
+          alt="ColeÃ§Ã£o Sanctum"
           fill
           className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30"></div>
         <div className="relative z-10 h-full w-full flex flex-col items-center justify-center text-center px-6 gap-4">
-          <span className="font-display text-white/60 text-[11px] uppercase tracking-[0.3em]">Coleção</span>
+          <span className="font-display text-white/60 text-[11px] uppercase tracking-[0.3em]">ColeÃ§Ã£o</span>
           <h2 className="font-display text-white text-4xl sm:text-5xl lg:text-6xl tracking-[0.15em] font-bold">SANCTUM</h2>
           <div className="max-w-md space-y-3 text-white/80 text-sm sm:text-base leading-relaxed">
             <p>Alguns seguem tendências.<br/>Outros se escondem delas para criar as suas.</p>
-            <p>SANCTUM é o ponto onde o mundo lá fora para de fazer barulho.</p>
-            <p className="text-white uppercase tracking-widest text-xs sm:text-sm">Exclusivo. Intocável. Só para quem entende.</p>
-            <p className="italic text-white/60">Não é para todos. Nunca foi.</p>
+            <p>SANCTUM Ã© o ponto onde o mundo lÃ¡ fora para de fazer barulho.</p>
+            <p className="text-white uppercase tracking-widest text-xs sm:text-sm">Exclusivo. Intocável. SÃ³ para quem entende.</p>
+            <p className="italic text-white/60">NÃ£o Ã© para todos. Nunca foi.</p>
           </div>
           <button 
             onClick={() => onCollectionClick('Sanctum')} 
             className="mt-4 border border-white/50 text-white text-xs uppercase tracking-widest px-6 py-3 hover:bg-white hover:text-primary transition-colors"
           >
-            Ver coleção
+            Ver coleÃ§Ã£o
           </button>
         </div>
       </div>
