@@ -23,83 +23,22 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   onSelectCategory,
   onSelectProduct,
 }) => {
-  const scrollRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    let animationFrameId: number;
-    let scrollPos = el.scrollLeft;
-    let isPaused = false;
-
-    const scroll = () => {
-      if (!isPaused) {
-        scrollPos += 0.5; // adjust speed here
-        if (scrollPos >= el.scrollWidth - el.clientWidth) {
-          scrollPos = 0; // restart
-        }
-        el.scrollLeft = scrollPos;
-      } else {
-        scrollPos = el.scrollLeft; // Sync pos if user scrolls manually
-      }
-      animationFrameId = requestAnimationFrame(scroll);
-    };
-
-    animationFrameId = requestAnimationFrame(scroll);
-
-    const pause = () => { isPaused = true; };
-    const resume = () => { isPaused = false; };
-
-    el.addEventListener('mouseenter', pause);
-    el.addEventListener('mouseleave', resume);
-    el.addEventListener('touchstart', pause);
-    el.addEventListener('touchend', resume);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      el.removeEventListener('mouseenter', pause);
-      el.removeEventListener('mouseleave', resume);
-      el.removeEventListener('touchstart', pause);
-      el.removeEventListener('touchend', resume);
-    };
-  }, [products]);
-
   return (
     <>
-      <nav id="catalogo" className="w-full bg-surface-pure border-b border-border-hairline sticky top-16 z-40">
-        <div className="w-full px-4 md:px-12 py-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-4 overflow-x-auto no-scrollbar" id="category-filters">
-            <button
-              onClick={() => onSelectCategory(null)}
-              className={`text-[11px] uppercase tracking-wide whitespace-nowrap transition-colors ${
-                activeCategory === null
-                  ? 'text-primary'
-                  : 'text-text-secondary hover:text-primary'
-              }`}
-            >
-              TODOS OS ARTIGOS
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => onSelectCategory(cat.slug)}
-                className={`text-[11px] uppercase tracking-wide whitespace-nowrap transition-colors ${
-                  activeCategory === cat.slug
-                    ? 'text-primary'
-                    : 'text-text-secondary hover:text-primary'
-                }`}
-              >
-                {cat.name.toUpperCase()}
-              </button>
-            ))}
-          </div>
-          <div className="hidden lg:flex items-center gap-2 text-[11px] text-text-secondary uppercase">
-            <span className="inline-block w-2 h-2 rounded-full bg-status-active"></span>
-            <span>Estoque atualizado em tempo real</span>
-          </div>
-        </div>
-      </nav>
+      <style>{`
+        @keyframes auto-scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-33.3333%); }
+        }
+        .animate-auto-scroll {
+          animation: auto-scroll 30s linear infinite;
+        }
+        .animate-auto-scroll:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+      
+      {/* Categories nav removed to see how it looks without it */}
 
       {searchQuery && (
         <div className="w-full px-4 md:px-12 py-4 bg-surface-off border-b border-border-hairline">
@@ -111,8 +50,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
 
       <section className="w-full bg-surface-pure overflow-hidden">
         <div 
-          ref={scrollRef}
-          className="flex overflow-x-auto no-scrollbar border-t border-b border-border-hairline" 
+          className="flex overflow-visible border-t border-b border-border-hairline animate-auto-scroll w-max" 
           id="product-grid"
         >
           {products.length === 0 ? (
