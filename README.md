@@ -248,3 +248,5 @@ A **Hostinger** oferece suporte a aplicações Node.js / Next.js tanto em planos
 
 Este projeto foi desenvolvido como aplicação de referência profissional de e-commerce.
 Sinta-se à vontade para utilizar e estender o código!
+T e s t e   d e   s i n c r o n i z a c a o   c o m   o   G i t H u b  
+ 
