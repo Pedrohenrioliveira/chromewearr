@@ -64,11 +64,19 @@ export default function HomePage() {
     }
   }, []);
 
-  // Save Cart to localStorage on changes
+  // Save Cart to localStorage and DB on changes
   useEffect(() => {
     try {
       const cartKey = `chromewear_cart_${user ? user.email : 'guest'}`;
       localStorage.setItem(cartKey, JSON.stringify(cartItems));
+
+      if (user) {
+        fetch('/api/cart', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: user.email, cartData: cartItems })
+        }).catch(err => console.error('Erro ao salvar no banco:', err));
+      }
     } catch (e) {
       console.error('Erro ao salvar sacola:', e);
     }
@@ -76,17 +84,51 @@ export default function HomePage() {
 
   // Load specific cart when user changes (login/logout)
   useEffect(() => {
-    try {
-      const cartKey = `chromewear_cart_${user ? user.email : 'guest'}`;
-      const savedCart = localStorage.getItem(cartKey);
-      if (savedCart) {
-        setCartItems(JSON.parse(savedCart));
-      } else {
-        setCartItems([]);
+    const fetchCart = async () => {
+      try {
+        if (user) {
+          const res = await fetch(`/api/cart?email=${user.email}`);
+          let dbCart: CartItem[] = [];
+          if (res.ok) {
+            const data = await res.json();
+            dbCart = data.cart || [];
+          }
+          
+          const guestCartStr = localStorage.getItem('chromewear_cart_guest');
+          let guestCart: CartItem[] = [];
+          if (guestCartStr) {
+            guestCart = JSON.parse(guestCartStr);
+            localStorage.removeItem('chromewear_cart_guest'); 
+          }
+          
+          if (guestCart.length > 0) {
+            const merged = [...dbCart];
+            guestCart.forEach(gItem => {
+              const existingIndex = merged.findIndex(i => i.id === gItem.id);
+              if (existingIndex > -1) {
+                merged[existingIndex].quantity += gItem.quantity;
+              } else {
+                merged.push(gItem);
+              }
+            });
+            setCartItems(merged);
+          } else {
+            setCartItems(dbCart);
+          }
+        } else {
+          const guestCartStr = localStorage.getItem('chromewear_cart_guest');
+          if (guestCartStr) {
+            setCartItems(JSON.parse(guestCartStr));
+          } else {
+            setCartItems([]);
+          }
+        }
+      } catch (e) {
+        console.error('Erro ao carregar sacola:', e);
       }
-    } catch (e) {
-      console.error('Erro ao carregar sacola do usuario:', e);
-    }
+    };
+    
+    fetchCart();
   }, [user]);
 
 
