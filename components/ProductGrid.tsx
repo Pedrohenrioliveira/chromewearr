@@ -75,7 +75,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                     />
                   </div>
                 </div>
-                <div className="w-full px-3 py-3 sm:px-4 sm:py-4 mt-auto flex flex-row items-start justify-between gap-3 border-t border-border-hairline bg-transparent cursor-pointer">
+                <div className="w-full px-3 py-3 sm:px-4 sm:py-4 flex-1 flex flex-row items-start justify-between gap-3 border-t border-border-hairline bg-transparent cursor-pointer">
                   <h2 className="text-[10px] sm:text-[12px] uppercase text-text-primary tracking-widest leading-snug font-medium text-left line-clamp-2">
                     {product.name}
                   </h2>

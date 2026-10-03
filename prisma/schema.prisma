@@ -16,6 +16,18 @@ model User {
   updatedAt DateTime @updatedAt
 
   orders    Order[]
+  verificationTokens VerificationToken[]
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  code      String
+  expiresAt DateTime
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
 }
 
 model Category {

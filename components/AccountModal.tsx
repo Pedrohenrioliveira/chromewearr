@@ -178,6 +178,15 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                 >
                   Entrar
                 </button>
+                <div className="text-center mt-3">
+                  <a 
+                    href="/forgot-password" 
+                    onClick={onClose}
+                    className="text-xs text-text-secondary hover:text-primary transition-colors underline"
+                  >
+                    Esqueci minha senha
+                  </a>
+                </div>
               </div>
             )}
 
