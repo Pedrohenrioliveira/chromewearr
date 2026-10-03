@@ -3,14 +3,14 @@ import { Hanken_Grotesk, Cinzel } from 'next/font/google';
 import './globals.css';
 
 const hanken = Hanken_Grotesk({
-  subsets: ['latin'],
+  subsets: ['latin', 'latin-ext'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-hanken',
   display: 'swap',
 });
 
 const cinzel = Cinzel({
-  subsets: ['latin'],
+  subsets: ['latin', 'latin-ext'],
   weight: ['400', '500', '600', '700', '800', '900'],
   variable: '--font-cinzel',
   display: 'swap',

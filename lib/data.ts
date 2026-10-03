@@ -1,13 +1,13 @@
-﻿import { Product, Category } from '@/types';
+import { Product, Category } from '@/types';
 
 export const WHATSAPP_NUMBER = '5527998535551';
 
 export const STORE_CATEGORIES = [
   'Camisetas CW',
   'Camisas CW',
-  'CalÃ§a CW',
+  'Calça CW',
   'Chaveiros CW',
-  'AcessÃ³rios CW',
+  'Acessórios CW',
 ];
 
 export const INITIAL_CATEGORIES: Category[] = STORE_CATEGORIES.map((cat, idx) => ({

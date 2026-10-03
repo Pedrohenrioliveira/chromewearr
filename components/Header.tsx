@@ -137,6 +137,8 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={() => {
             onSelectCategory(null);
+            setMobileNavOpen(false);
+            setShopMenuOpen(false);
           }}
           className="absolute left-1/2 -translate-x-1/2 flex items-center h-14"
         >

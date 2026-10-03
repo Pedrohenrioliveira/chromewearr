@@ -61,25 +61,25 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             [...products, ...products, ...products].map((product, index) => (
               <article
                 key={`${product.id}-${index}`}
-                className="group relative flex flex-col border-r border-border-hairline bg-surface-pure hover:bg-surface-off transition-colors duration-200 flex-none w-[80vw] sm:w-[50vw] md:w-[33.333vw] lg:w-[25vw]"
+                className="group relative flex flex-col border-r border-border-hairline bg-surface-pure hover:bg-surface-off transition-colors duration-200 flex-none w-[50vw] sm:w-[40vw] md:w-[33.333vw] lg:w-[25vw]"
                 onClick={() => onSelectProduct(product)}
               >
-                <div className="block w-full overflow-hidden p-2.5 sm:p-6 lg:p-8">
+                <div className="block w-full overflow-hidden p-2.5 sm:p-6 lg:p-8 cursor-pointer">
                   <div className="relative aspect-[4/5] w-full flex items-center justify-center">
                     <Image
                       src={product.imageUrl}
                       alt={product.name}
                       fill
-                      sizes="(max-width: 768px) 50vw, 33vw"
+                      sizes="(max-width: 768px) 50vw, 25vw"
                       className="object-contain object-center transition-transform duration-500 ease-out group-hover:scale-105"
                     />
                   </div>
                 </div>
-                <div className="px-2.5 pb-2.5 sm:px-4 sm:pb-4 pt-0 mt-auto flex flex-col gap-0.5">
-                  <h2 className="font-display text-[11px] sm:text-sm uppercase text-text-primary tracking-tight leading-tight">
+                <div className="w-full px-3 py-3 sm:px-4 sm:py-4 mt-auto flex flex-row items-start justify-between gap-3 border-t border-border-hairline bg-transparent cursor-pointer">
+                  <h2 className="text-[10px] sm:text-[12px] uppercase text-text-primary tracking-widest leading-snug font-medium text-left line-clamp-2">
                     {product.name}
                   </h2>
-                  <span className="text-xs sm:text-sm font-semibold text-text-primary tracking-tight">
+                  <span className="text-[11px] sm:text-[13px] font-bold text-text-primary whitespace-nowrap text-right">
                     {formatCurrency(product.price)}
                   </span>
                 </div>

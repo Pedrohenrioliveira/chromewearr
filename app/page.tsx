@@ -76,6 +76,12 @@ export default function HomePage() {
     if (allProducts.length === 0) return;
 
     const handleHashRoute = () => {
+      // Fechar menus, carrinhos e modais ao mudar de "página" (rota hash)
+      setSearchOpen(false);
+      setCartOpen(false);
+      setInfoModalType(null);
+      setAccountModalOpen(false);
+
       const hash = window.location.hash;
       const prodMatch = hash.match(/^#produto-(.+)$/);
       if (prodMatch) {
@@ -238,7 +244,7 @@ export default function HomePage() {
         {view === 'home' && (
           <>
             {!searchQuery && !activeCategory && (
-              <HeroMain />
+              <HeroMain onCollectionClick={openCollection} />
             )}
             <ProductGrid
               products={products}

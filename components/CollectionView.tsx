@@ -106,11 +106,11 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
                   />
                 </div>
               </div>
-              <div className="px-2.5 pb-2.5 sm:px-4 sm:pb-4 pt-0 mt-auto flex flex-col gap-0.5">
-                <h2 className="font-display text-[11px] sm:text-sm uppercase text-text-primary tracking-tight leading-tight">
+              <div className="w-full px-3 py-3 sm:px-4 sm:py-4 mt-auto flex flex-row items-start justify-between gap-3 border-t border-border-hairline bg-transparent">
+                <h2 className="text-[10px] sm:text-[12px] uppercase text-text-primary tracking-widest leading-snug font-medium text-left line-clamp-2">
                   {p.name}
                 </h2>
-                <span className="text-xs sm:text-sm font-semibold text-text-primary tracking-tight">
+                <span className="text-[11px] sm:text-[13px] font-bold text-text-primary whitespace-nowrap text-right">
                   {formatCurrency(p.price)}
                 </span>
               </div>
