@@ -9,6 +9,8 @@ export default function ForgotPasswordPage() {
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -72,7 +74,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen bg-surface-off flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-surface-pure p-8 rounded-lg shadow-md border border-border-hairline">
         <div>
-          <h2 className="mt-2 text-center text-3xl font-extrabold text-text-primary uppercase tracking-widest">
+          <h2 className="mt-2 text-center text-3xl font-display font-extrabold text-text-primary uppercase tracking-widest">
             {step === 1 ? 'Recuperar Senha' : step === 2 ? 'Digite o Código' : 'Sucesso!'}
           </h2>
           <p className="mt-4 text-center text-sm text-text-secondary">
@@ -141,32 +143,54 @@ export default function ForgotPasswordPage() {
                 />
               </div>
               
-              <div>
+              <div className="relative">
                 <label htmlFor="new-password" className="sr-only">Nova Senha</label>
                 <input
                   id="new-password"
                   name="newPassword"
-                  type="password"
+                  type={showNewPass ? "text" : "password"}
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="appearance-none relative block w-full px-3 py-3 border border-border-hairline placeholder-text-secondary text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm bg-surface-off transition-colors"
+                  className="appearance-none relative block w-full px-3 py-3 pr-10 border border-border-hairline placeholder-text-secondary text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm bg-surface-off transition-colors"
                   placeholder="Nova Senha"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPass(!showNewPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"
+                >
+                  {showNewPass ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  )}
+                </button>
               </div>
 
-              <div>
+              <div className="relative">
                 <label htmlFor="confirm-password" className="sr-only">Confirmar Nova Senha</label>
                 <input
                   id="confirm-password"
                   name="confirmPassword"
-                  type="password"
+                  type={showConfirmPass ? "text" : "password"}
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="appearance-none relative block w-full px-3 py-3 border border-border-hairline placeholder-text-secondary text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm bg-surface-off transition-colors"
+                  className="appearance-none relative block w-full px-3 py-3 pr-10 border border-border-hairline placeholder-text-secondary text-text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm bg-surface-off transition-colors"
                   placeholder="Confirmar Nova Senha"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPass(!showConfirmPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"
+                >
+                  {showConfirmPass ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  )}
+                </button>
               </div>
             </div>
 
