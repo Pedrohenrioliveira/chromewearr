@@ -50,6 +50,16 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       setRegError('');
       setVerifyError('');
       setVerifyCode('');
+      setLoginEmail('');
+      setLoginPassword('');
+      setRegName('');
+      setRegEmail('');
+      setRegPhone('');
+      setRegPassword('');
+      setRegConfirmPassword('');
+      setShowLoginPass(false);
+      setShowRegPass(false);
+      setShowRegConfirmPass(false);
     }
   }, [isOpen, user]);
 
