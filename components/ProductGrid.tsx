@@ -23,23 +23,77 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   onSelectCategory,
   onSelectProduct,
 }) => {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = React.useState(false);
+  const [isTouching, setIsTouching] = React.useState(false);
+
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || products.length === 0) return;
+
+    let animationId: number;
+    const scrollSpeed = 1;
+
+    const handleScroll = () => {
+      const segmentWidth = el.scrollWidth / 3;
+      if (el.scrollLeft >= segmentWidth * 2) {
+        el.scrollLeft -= segmentWidth;
+      } else if (el.scrollLeft <= 0) {
+        el.scrollLeft += segmentWidth;
+      }
+    };
+
+    const loop = () => {
+      if (!isHovered && !isTouching) {
+        el.scrollLeft += scrollSpeed;
+      }
+      animationId = requestAnimationFrame(loop);
+    };
+
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    animationId = requestAnimationFrame(loop);
+
+    return () => {
+      el.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(animationId);
+    };
+  }, [isHovered, isTouching, products.length]);
+
+  // Mouse drag
+  const isDown = React.useRef(false);
+  const startX = React.useRef(0);
+  const scrollLeftRef = React.useRef(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDown.current = true;
+    setIsTouching(true);
+    if (scrollRef.current) {
+      startX.current = e.pageX - scrollRef.current.offsetLeft;
+      scrollLeftRef.current = scrollRef.current.scrollLeft;
+    }
+  };
+
+  const handleMouseLeave = () => {
+    isDown.current = false;
+    setIsHovered(false);
+    setIsTouching(false);
+  };
+
+  const handleMouseUp = () => {
+    isDown.current = false;
+    setIsTouching(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDown.current || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.5;
+    scrollRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
   return (
     <>
-      <style>{`
-        @keyframes auto-scroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-33.3333%); }
-        }
-        .animate-auto-scroll {
-          animation: auto-scroll 30s linear infinite;
-        }
-        .animate-auto-scroll:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
-
-      {/* Categories nav removed to see how it looks without it */}
-
       {searchQuery && (
         <div className="w-full px-4 md:px-12 py-4 bg-surface-off border-b border-border-hairline">
           <p className="text-sm text-text-secondary">
@@ -50,8 +104,16 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
 
       <section className="w-full bg-surface-pure overflow-hidden">
         <div
-          className="flex overflow-visible border-t border-b border-border-hairline animate-auto-scroll w-max"
-          id="product-grid"
+          ref={scrollRef}
+          className="flex overflow-x-auto no-scrollbar border-t border-b border-border-hairline cursor-grab active:cursor-grabbing"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={handleMouseLeave}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          onTouchStart={() => setIsTouching(true)}
+          onTouchEnd={() => setIsTouching(false)}
+          style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {products.length === 0 ? (
             <div className="w-[100vw] py-32 flex flex-col items-center justify-center bg-surface-pure border-r-0">
