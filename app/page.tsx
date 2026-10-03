@@ -48,17 +48,17 @@ export default function HomePage() {
   useEffect(() => {
     try {
       const savedUser = localStorage.getItem('chromewear_user');
-      let currentUser = null;
       if (savedUser) {
-        currentUser = JSON.parse(savedUser);
+        const currentUser = JSON.parse(savedUser);
         setUser(currentUser);
+        
+        const cartKey = `chromewear_cart_${currentUser.email}`;
+        const savedCart = localStorage.getItem(cartKey);
+        if (savedCart) {
+          setCartItems(JSON.parse(savedCart));
+        }
       }
-      
-      const cartKey = `chromewear_cart_${currentUser ? currentUser.email : 'guest'}`;
-      const savedCart = localStorage.getItem(cartKey);
-      if (savedCart) {
-        setCartItems(JSON.parse(savedCart));
-      }
+      // If guest, cart remains empty (temporary)
     } catch (e) {
       console.error('Erro ao carregar dados locais:', e);
     }
@@ -67,10 +67,10 @@ export default function HomePage() {
   // Save Cart to localStorage and DB on changes
   useEffect(() => {
     try {
-      const cartKey = `chromewear_cart_${user ? user.email : 'guest'}`;
-      localStorage.setItem(cartKey, JSON.stringify(cartItems));
-
       if (user) {
+        const cartKey = `chromewear_cart_${user.email}`;
+        localStorage.setItem(cartKey, JSON.stringify(cartItems));
+
         fetch('/api/cart', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -94,16 +94,11 @@ export default function HomePage() {
             dbCart = data.cart || [];
           }
           
-          const guestCartStr = localStorage.getItem('chromewear_cart_guest');
-          let guestCart: CartItem[] = [];
-          if (guestCartStr) {
-            guestCart = JSON.parse(guestCartStr);
-            localStorage.removeItem('chromewear_cart_guest'); 
-          }
-          
-          if (guestCart.length > 0) {
+          // Merge current guest cart into the DB cart
+          setCartItems(prev => {
+            if (prev.length === 0) return dbCart;
             const merged = [...dbCart];
-            guestCart.forEach(gItem => {
+            prev.forEach(gItem => {
               const existingIndex = merged.findIndex(i => i.id === gItem.id);
               if (existingIndex > -1) {
                 merged[existingIndex].quantity += gItem.quantity;
@@ -111,23 +106,19 @@ export default function HomePage() {
                 merged.push(gItem);
               }
             });
-            setCartItems(merged);
-          } else {
-            setCartItems(dbCart);
-          }
+            return merged;
+          });
         } else {
-          const guestCartStr = localStorage.getItem('chromewear_cart_guest');
-          if (guestCartStr) {
-            setCartItems(JSON.parse(guestCartStr));
-          } else {
-            setCartItems([]);
-          }
+          // Logged out -> clear cart (starts fresh)
+          setCartItems([]);
         }
       } catch (e) {
         console.error('Erro ao carregar sacola:', e);
       }
     };
     
+    // We only want to run fetchCart if the user state actually changed to logged in/out.
+    // However, on initial load, `user` becomes non-null, triggering this to fetch from DB.
     fetchCart();
   }, [user]);
 
