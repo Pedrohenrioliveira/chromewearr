@@ -16,7 +16,12 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   onLoginSuccess,
   onLogout,
 }) => {
-  const [tab, setTab] = useState<'login' | 'register'>('login');
+  const [tab, setTab] = useState<'login' | 'register' | 'verify'>('login');
+  
+  // Verify state
+  const [verifyEmail, setVerifyEmail] = useState('');
+  const [verifyCode, setVerifyCode] = useState('');
+  const [verifyError, setVerifyError] = useState('');
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -56,7 +61,15 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       });
       const data = await res.json();
       
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) {
+        if (data.requiresVerification) {
+          setVerifyEmail(data.email);
+          setVerifyError('Sua conta não foi verificada. Verifique seu e-mail e insira o código.');
+          setTab('verify');
+          return;
+        }
+        throw new Error(data.error);
+      }
 
       // Save user to localStorage to keep the logged-in state across reloads
       localStorage.setItem('chromewear_user', JSON.stringify(data.user));
@@ -96,7 +109,20 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       });
       const data = await res.json();
       
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) {
+        if (data.requiresVerification) {
+          setVerifyEmail(data.email);
+          setTab('verify');
+          return;
+        }
+        throw new Error(data.error);
+      }
+      
+      if (data.requiresVerification) {
+        setVerifyEmail(data.email);
+        setTab('verify');
+        return;
+      }
 
       // Save user to localStorage to keep the logged-in state across reloads
       localStorage.setItem('chromewear_user', JSON.stringify(data.user));
@@ -109,6 +135,35 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       setRegConfirmPassword('');
     } catch (err: any) {
       setRegError(err.message || 'Erro ao criar conta.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    setVerifyError('');
+    if (!verifyCode) {
+      setVerifyError('Digite o código de verificação.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: verifyEmail, code: verifyCode }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error);
+
+      // Verificado com sucesso, realiza o login automático
+      localStorage.setItem('chromewear_user', JSON.stringify(data.user));
+      onLoginSuccess(data.user);
+      onClose();
+    } catch (err: any) {
+      setVerifyError(err.message || 'Código inválido.');
     } finally {
       setIsLoading(false);
     }
@@ -299,6 +354,37 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                   className="w-full h-11 bg-secondary hover:bg-primary text-on-primary text-xs md:text-sm uppercase tracking-wider font-semibold transition-colors disabled:opacity-50"
                 >
                   {isLoading ? 'Criando Conta...' : 'Criar Conta'}
+                </button>
+              </div>
+            )}
+
+            {tab === 'verify' && (
+              <div className="space-y-3">
+                <p className="text-sm text-text-secondary text-center mb-4">
+                  Enviamos um código de verificação para o e-mail: <br />
+                  <strong className="text-text-primary">{verifyEmail}</strong>
+                </p>
+                <input
+                  type="text"
+                  placeholder="Código de 6 dígitos"
+                  value={verifyCode}
+                  onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="w-full h-11 px-3 bg-surface-off border border-border-hairline text-sm focus:outline-none focus:border-primary text-text-primary text-center tracking-[0.5em] font-mono text-lg"
+                  maxLength={6}
+                />
+                {verifyError && <p className="text-[11px] text-[#ba1a1a] font-medium text-center">{verifyError}</p>}
+                <button
+                  onClick={handleVerify}
+                  disabled={isLoading}
+                  className="w-full h-11 bg-secondary hover:bg-primary text-on-primary text-xs md:text-sm uppercase tracking-wider font-semibold transition-colors disabled:opacity-50 mt-2"
+                >
+                  {isLoading ? 'Verificando...' : 'Verificar Conta'}
+                </button>
+                <button
+                  onClick={() => setTab('login')}
+                  className="w-full h-11 border border-border-hairline text-xs uppercase hover:bg-surface-off mt-2"
+                >
+                  Voltar para o Login
                 </button>
               </div>
             )}

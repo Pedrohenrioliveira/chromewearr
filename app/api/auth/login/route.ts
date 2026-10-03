@@ -26,6 +26,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'E-mail ou senha incorretos' }, { status: 400 });
     }
 
+    if (!user.isVerified) {
+      return NextResponse.json({ 
+        error: 'Sua conta ainda não foi verificada. Re-registre-se para receber um novo código ou digite o código recebido.',
+        requiresVerification: true,
+        email: user.email
+      }, { status: 403 });
+    }
+
     return NextResponse.json({
       message: 'Login efetuado com sucesso!',
       user: { id: user.id, name: user.name, email: user.email }
