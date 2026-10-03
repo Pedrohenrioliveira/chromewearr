@@ -41,7 +41,17 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   const [showRegPass, setShowRegPass] = useState(false);
   const [showRegConfirmPass, setShowRegConfirmPass] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isOpen || !user) {
+      setTab('login');
+      setLoginError('');
+      setRegError('');
+      setVerifyError('');
+      setVerifyCode('');
+    }
+  }, [isOpen, user]);
 
   if (!isOpen) return null;
 

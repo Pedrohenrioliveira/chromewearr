@@ -371,6 +371,7 @@ export default function HomePage() {
         onLoginSuccess={(u) => setUser(u)}
         onLogout={() => {
           setUser(null);
+          setAccountModalOpen(false);
           try {
             localStorage.removeItem('chromewear_user');
           } catch (e) {}
