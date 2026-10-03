@@ -1,6 +1,6 @@
 import { Product, Category } from '@/types';
 
-export const WHATSAPP_NUMBER = '5527998535551';
+export const WHATSAPP_NUMBER = '5527992490201';
 
 export const STORE_CATEGORIES = [
   'Camisetas CW',
@@ -27,7 +27,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     collection: 'Sanctum',
     sub: 'Algodão 240g/m² Oversized',
     description: 'Camiseta com modelagem Oversized confeccionada em malha 100% Algodão, com gramatura de 240g/m².',
-    price: 139.90,
+    price: 130.00,
     imageUrl: '/images/product-0.webp',
     img: '/images/product-0.webp',
     about: 'Camiseta com modelagem Oversized confeccionada em malha 100% Algodão, com gramatura de 240g/m².',
@@ -49,7 +49,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     collection: 'Sanctum',
     sub: 'Algodão 240g/m² Oversized',
     description: 'Camiseta com modelagem Oversized confeccionada em malha 100% Algodão, com gramatura de 240g/m².',
-    price: 139.90,
+    price: 130.00,
     imageUrl: '/images/product-1.webp',
     img: '/images/product-1.webp',
     about: 'Camiseta com modelagem Oversized confeccionada em malha 100% Algodão, com gramatura de 240g/m².',
@@ -71,7 +71,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     collection: 'Sanctum',
     sub: 'Algodão 240g/m² Oversized',
     description: 'Camiseta com modelagem Oversized confeccionada em malha 100% Algodão, com gramatura de 240g/m².',
-    price: 139.90,
+    price: 130.00,
     imageUrl: '/images/product-2.webp',
     img: '/images/product-2.webp',
     about: 'Camiseta com modelagem Oversized confeccionada em malha 100% Algodão, com gramatura de 240g/m².',
@@ -93,7 +93,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     collection: 'Sanctum',
     sub: 'Algodão 240g/m² Oversized',
     description: 'Camiseta com modelagem Oversized confeccionada em malha 100% Algodão, com gramatura de 240g/m².',
-    price: 139.90,
+    price: 130.00,
     imageUrl: '/images/product-3.webp',
     img: '/images/product-3.webp',
     about: 'Camiseta com modelagem Oversized confeccionada em malha 100% Algodão, com gramatura de 240g/m².',
