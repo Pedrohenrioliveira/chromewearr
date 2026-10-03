@@ -18,13 +18,15 @@ export async function GET(req: Request) {
 
   try {
     const fetchCorreios = async (servico: string) => {
-      // 04510 = PAC, 04014 = SEDEX
       const url = `http://ws.correios.com.br/calculador/CalcPrecoPrazo.aspx?nCdEmpresa=&sDsSenha=&sCepOrigem=${cepOrigem}&sCepDestino=${cleanCep}&nVlPeso=1&nCdFormato=1&nVlComprimento=20&nVlAltura=10&nVlLargura=20&sCdMaoPropria=n&nVlValorDeclarado=0&sCdAvisoRecebimento=n&nCdServico=${servico}&nVlDiametro=0`;
       
-      const res = await fetch(url);
-      const xml = await res.text();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-      // Extrair Valor
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
+      const xml = await res.text();
       const valorMatch = xml.match(/<Valor>(.*?)<\/Valor>/);
       const prazoMatch = xml.match(/<PrazoEntrega>(.*?)<\/PrazoEntrega>/);
       const erroMatch = xml.match(/<MsgErro>(.*?)<\/MsgErro>/);
@@ -32,6 +34,10 @@ export async function GET(req: Request) {
       const valorStr = valorMatch ? valorMatch[1] : '0,00';
       const prazoStr = prazoMatch ? prazoMatch[1] : '0';
       const erro = erroMatch ? erroMatch[1] : '';
+
+      if (parseFloat(valorStr.replace(',', '.')) === 0 && erro) {
+        throw new Error(erro);
+      }
 
       return {
         valor: parseFloat(valorStr.replace(',', '.')),
@@ -46,22 +52,45 @@ export async function GET(req: Request) {
     ]);
 
     if (pac.erro && sedex.erro) {
-      return NextResponse.json({ error: 'Correios: ' + pac.erro }, { status: 400 });
+      throw new Error('Correios retornou erro para ambos os serviços');
     }
 
     return NextResponse.json({
-      pac: {
-        price: pac.valor,
-        days: pac.prazo
-      },
-      sedex: {
-        price: sedex.valor,
-        days: sedex.prazo
-      }
+      pac: { price: pac.valor, days: pac.prazo },
+      sedex: { price: sedex.valor, days: sedex.prazo }
     });
 
   } catch (error) {
-    console.error('Correios Error:', error);
-    return NextResponse.json({ error: 'Falha ao conectar com os Correios' }, { status: 500 });
+    console.error('Correios Error, using fallback:', error);
+    
+    // Fallback based on region (ViaCEP)
+    try {
+      const viaCepRes = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const viaCepData = await viaCepRes.json();
+      
+      if (viaCepData.erro) throw new Error('CEP não encontrado');
+      
+      const uf = viaCepData.uf;
+      let pacPrice = 35.50; let pacDays = 8;
+      let sedexPrice = 75.90; let sedexDays = 4;
+
+      if (uf === 'ES') {
+        pacPrice = 18.50; pacDays = 3;
+        sedexPrice = 24.90; sedexDays = 1;
+      } else if (['SP', 'RJ', 'MG', 'BA'].includes(uf)) {
+        pacPrice = 25.90; pacDays = 5;
+        sedexPrice = 45.50; sedexDays = 2;
+      } else if (['PR', 'SC', 'RS', 'GO', 'DF'].includes(uf)) {
+        pacPrice = 32.00; pacDays = 6;
+        sedexPrice = 55.00; sedexDays = 3;
+      }
+
+      return NextResponse.json({
+        pac: { price: pacPrice, days: pacDays },
+        sedex: { price: sedexPrice, days: sedexDays }
+      });
+    } catch (fallbackError) {
+      return NextResponse.json({ error: 'CEP inválido ou indisponível' }, { status: 400 });
+    }
   }
 }
