@@ -8,6 +8,7 @@ import Image from 'next/image';
 interface CollectionViewProps {
   collectionName: string;
   products: Product[];
+  searchQuery?: string;
   onClose: () => void;
   onSelectProduct: (product: Product) => void;
   onAddToCart: (product: Product, size: string) => void;
@@ -16,6 +17,7 @@ interface CollectionViewProps {
 export const CollectionView: React.FC<CollectionViewProps> = ({
   collectionName,
   products,
+  searchQuery = '',
   onClose,
   onSelectProduct,
   onAddToCart,
@@ -28,6 +30,16 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
   let filteredProducts = products;
   if (activeCategory !== 'Todos') {
     filteredProducts = filteredProducts.filter((p) => (p.categoryName || p.cat) === activeCategory);
+  }
+
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filteredProducts = filteredProducts.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.sub && p.sub.toLowerCase().includes(q)) ||
+        (p.categoryName || p.cat || '').toLowerCase().includes(q)
+    );
   }
 
   if (sortOption === 'menor-preco') {

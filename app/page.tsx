@@ -251,11 +251,11 @@ export default function HomePage() {
         }}
         cartCount={totalCartCount}
         user={user}
-        showSearchIcon={view !== 'home'}
+        showSearchIcon={view === 'collection'}
       />
 
       <SearchBar
-        isOpen={searchOpen && view === 'home'}
+        isOpen={searchOpen && view === 'collection'}
         value={searchQuery}
         onChange={setSearchQuery}
       />
@@ -295,6 +295,7 @@ export default function HomePage() {
           <CollectionView
             collectionName={collectionName}
             products={allProducts.filter((p) => p.collection === collectionName)}
+            searchQuery={searchQuery}
             onClose={navigateHome}
             onSelectProduct={openProduct}
             onAddToCart={handleAddToCart}
