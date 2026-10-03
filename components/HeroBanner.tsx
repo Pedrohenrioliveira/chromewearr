@@ -25,8 +25,8 @@ export const HeroMain: React.FC<HeroMainProps> = ({ onCollectionClick }) => {
         >
           SANCTUM
         </button>
-        <p className="text-white/90 text-[10px] sm:text-xs md:text-sm uppercase tracking-widest drop-shadow-md mt-1">
-          Onde o mundo lá fora para de fazer barulho.
+        <p className="text-white/90 text-[9px] sm:text-[11px] md:text-xs uppercase tracking-[0.15em] drop-shadow-md mt-2 max-w-lg leading-relaxed border-l-2 border-white/40 pl-3 py-1">
+          "Disseram no seu coração: 'Destruamos tudo!'<br className="hidden sm:block" /> e incendiaram neste país todos os lugares de culto"
         </p>
       </div>
     </section>
