@@ -21,12 +21,16 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
     }
 
-    let cart = [];
+    let cart: any = [];
     if (user.cartData) {
       if (typeof user.cartData === 'string') {
-         cart = JSON.parse(user.cartData);
+         try {
+           cart = JSON.parse(user.cartData);
+         } catch(e) {
+           cart = [];
+         }
       } else {
-         cart = user.cartData;
+         cart = user.cartData as any;
       }
     }
 
