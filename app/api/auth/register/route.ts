@@ -38,10 +38,10 @@ export async function POST(req: Request) {
       message: 'Conta criada com sucesso!',
       user: { id: user.id, name: user.name, email: user.email }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Register error:', error);
     return NextResponse.json(
-      { error: 'Erro ao criar conta no banco de dados' },
+      { error: `Erro ao criar conta: ${error.message || String(error)}` },
       { status: 500 }
     );
   }
