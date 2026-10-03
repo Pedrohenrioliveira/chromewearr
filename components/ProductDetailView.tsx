@@ -87,8 +87,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
                   {formatCurrency(product.price)}
                 </span>
                 <span className="text-[11px] text-text-secondary uppercase">
-                  ou {formatCurrency(product.price * 0.95)} no PIX <br />
-                  ou 6x de {formatCurrency(product.price / 6)} s/ juros
+                  ou 3x de {formatCurrency(product.price / 3)} s/ juros
                 </span>
               </div>
             </div>
