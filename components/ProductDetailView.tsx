@@ -18,7 +18,10 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<'sobre' | 'composicao' | 'medidas' | 'lavagem'>('sobre');
-  const [shippingResult, setShippingResult] = useState<boolean>(false);
+  const [shippingResult, setShippingResult] = useState<any>(null);
+  const [cep, setCep] = useState('');
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingError, setShippingError] = useState('');
 
   const handleQtyChange = (delta: number) => {
     const next = quantity + delta;
@@ -35,8 +38,24 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
     onAddToCart(product, selectedSize, quantity);
   };
 
-  const calculateShipping = () => {
-    setShippingResult(true);
+  const calculateShipping = async () => {
+    if (cep.replace(/\D/g, '').length !== 8) {
+      setShippingError('CEP inválido');
+      return;
+    }
+    setShippingError('');
+    setShippingLoading(true);
+    try {
+      const res = await fetch(`/api/shipping?cep=${cep}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setShippingResult(data);
+    } catch (e: any) {
+      setShippingError(e.message || 'Erro ao calcular frete');
+      setShippingResult(null);
+    } finally {
+      setShippingLoading(false);
+    }
   };
 
   // Find the selected size stock
@@ -174,23 +193,32 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
                   maxLength={9}
                   placeholder="Digite seu CEP"
                   type="text"
+                  value={cep}
+                  onChange={(e) => {
+                    // formata CEP (ex: 29900-000)
+                    let v = e.target.value.replace(/\D/g, '');
+                    if (v.length > 5) v = v.slice(0, 5) + '-' + v.slice(5, 8);
+                    setCep(v);
+                  }}
                 />
                 <button
-                  className="h-12 px-4 bg-surface-container hover:bg-surface-variant text-text-primary border border-l-0 border-border-hairline text-[11px] uppercase font-bold tracking-wider transition-colors flex-shrink-0"
+                  className="h-12 px-4 bg-surface-container hover:bg-surface-variant text-text-primary border border-l-0 border-border-hairline text-[11px] uppercase font-bold tracking-wider transition-colors flex-shrink-0 disabled:opacity-50"
                   onClick={calculateShipping}
+                  disabled={shippingLoading}
                 >
-                  Calcular
+                  {shippingLoading ? 'Calculando...' : 'Calcular'}
                 </button>
               </div>
+              {shippingError && <p className="text-[#ba1a1a] text-[11px] font-medium">{shippingError}</p>}
               {shippingResult && (
                 <div className="pt-1 text-[11px] text-text-secondary space-y-1">
                   <div className="flex justify-between py-1 border-b border-border-hairline">
-                    <span>Sedex Express (até 2 dias úteis)</span>
-                    <span className="font-semibold text-text-primary">R$ 24,90</span>
+                    <span>Sedex (até {shippingResult.sedex.days} dias úteis)</span>
+                    <span className="font-semibold text-text-primary">{formatCurrency(shippingResult.sedex.price)}</span>
                   </div>
                   <div className="flex justify-between py-1">
-                    <span>PAC Convencional (até 5 dias úteis)</span>
-                    <span className="font-semibold text-text-primary">R$ 14,50</span>
+                    <span>PAC (até {shippingResult.pac.days} dias úteis)</span>
+                    <span className="font-semibold text-text-primary">{formatCurrency(shippingResult.pac.price)}</span>
                   </div>
                 </div>
               )}

@@ -201,34 +201,36 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         ) : (
           /* LOGIN / CADASTRO FORM */
           <div>
-            <div className="flex items-center gap-4 border-b border-border-hairline mb-4">
-              <button
-                onClick={() => {
-                  setTab('login');
-                  setLoginError('');
-                }}
-                className={`text-[11px] uppercase tracking-wide pb-2 -mb-[1px] transition-colors ${
-                  tab === 'login'
-                    ? 'text-primary border-b-2 border-primary font-bold'
-                    : 'text-text-secondary hover:text-primary font-medium'
-                }`}
-              >
-                Entrar
-              </button>
-              <button
-                onClick={() => {
-                  setTab('register');
-                  setRegError('');
-                }}
-                className={`text-[11px] uppercase tracking-wide pb-2 -mb-[1px] transition-colors ${
-                  tab === 'register'
-                    ? 'text-primary border-b-2 border-primary font-bold'
-                    : 'text-text-secondary hover:text-primary font-medium'
-                }`}
-              >
-                Criar Conta
-              </button>
-            </div>
+            {tab !== 'verify' && (
+              <div className="flex items-center gap-4 border-b border-border-hairline mb-4">
+                <button
+                  onClick={() => {
+                    setTab('login');
+                    setLoginError('');
+                  }}
+                  className={`text-[11px] uppercase tracking-wide pb-2 -mb-[1px] transition-colors ${
+                    tab === 'login'
+                      ? 'text-primary border-b-2 border-primary font-bold'
+                      : 'text-text-secondary hover:text-primary font-medium'
+                  }`}
+                >
+                  Entrar
+                </button>
+                <button
+                  onClick={() => {
+                    setTab('register');
+                    setRegError('');
+                  }}
+                  className={`text-[11px] uppercase tracking-wide pb-2 -mb-[1px] transition-colors ${
+                    tab === 'register'
+                      ? 'text-primary border-b-2 border-primary font-bold'
+                      : 'text-text-secondary hover:text-primary font-medium'
+                  }`}
+                >
+                  Criar Conta
+                </button>
+              </div>
+            )}
 
             {tab === 'login' && (
               <div className="space-y-3">
