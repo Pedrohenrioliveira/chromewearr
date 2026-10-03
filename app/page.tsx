@@ -47,13 +47,17 @@ export default function HomePage() {
   // 1. Initial Load: Cart from localStorage, Logged User from localStorage
   useEffect(() => {
     try {
-      const savedCart = localStorage.getItem('chromewear_cart');
+      const savedUser = localStorage.getItem('chromewear_user');
+      let currentUser = null;
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        setUser(currentUser);
+      }
+      
+      const cartKey = `chromewear_cart_${currentUser ? currentUser.email : 'guest'}`;
+      const savedCart = localStorage.getItem(cartKey);
       if (savedCart) {
         setCartItems(JSON.parse(savedCart));
-      }
-      const savedUser = localStorage.getItem('chromewear_user');
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
       }
     } catch (e) {
       console.error('Erro ao carregar dados locais:', e);
@@ -63,11 +67,27 @@ export default function HomePage() {
   // Save Cart to localStorage on changes
   useEffect(() => {
     try {
-      localStorage.setItem('chromewear_cart', JSON.stringify(cartItems));
+      const cartKey = `chromewear_cart_${user ? user.email : 'guest'}`;
+      localStorage.setItem(cartKey, JSON.stringify(cartItems));
     } catch (e) {
       console.error('Erro ao salvar sacola:', e);
     }
-  }, [cartItems]);
+  }, [cartItems, user]);
+
+  // Load specific cart when user changes (login/logout)
+  useEffect(() => {
+    try {
+      const cartKey = `chromewear_cart_${user ? user.email : 'guest'}`;
+      const savedCart = localStorage.getItem(cartKey);
+      if (savedCart) {
+        setCartItems(JSON.parse(savedCart));
+      } else {
+        setCartItems([]);
+      }
+    } catch (e) {
+      console.error('Erro ao carregar sacola do usuario:', e);
+    }
+  }, [user]);
 
 
 
@@ -228,10 +248,10 @@ export default function HomePage() {
         onOpenCart={() => setCartOpen(true)}
         onToggleSearch={() => {
           setSearchOpen((prev) => !prev);
-          navigateHome();
         }}
         cartCount={totalCartCount}
         user={user}
+        showSearchIcon={view !== 'home'}
       />
 
       <SearchBar

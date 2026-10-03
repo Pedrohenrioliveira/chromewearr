@@ -26,8 +26,15 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   // Register form state
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
+  const [regPhone, setRegPhone] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regError, setRegError] = useState('');
+
+  // Password visibility
+  const [showLoginPass, setShowLoginPass] = useState(false);
+  const [showRegPass, setShowRegPass] = useState(false);
+  const [showRegConfirmPass, setShowRegConfirmPass] = useState(false);
 
   if (!isOpen) return null;
 
@@ -67,8 +74,12 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 
   const handleRegister = () => {
     setRegError('');
-    if (!regName || !regEmail || !regPassword) {
-      setRegError('Preencha nome, e-mail e senha.');
+    if (!regName || !regEmail || !regPhone || !regPassword || !regConfirmPassword) {
+      setRegError('Preencha todos os campos.');
+      return;
+    }
+    if (regPassword !== regConfirmPassword) {
+      setRegError('As senhas não coincidem.');
       return;
     }
 
@@ -79,14 +90,16 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       return;
     }
 
-    users.push({ name: regName, email, password: regPassword });
+    users.push({ name: regName, email, phone: regPhone, password: regPassword });
     saveUsers(users);
 
     onLoginSuccess({ id: email, name: regName, email });
     onClose();
     setRegName('');
     setRegEmail('');
+    setRegPhone('');
     setRegPassword('');
+    setRegConfirmPassword('');
   };
 
   return (
@@ -159,13 +172,26 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                   onChange={(e) => setLoginEmail(e.target.value)}
                   className="w-full h-11 px-3 bg-surface-off border border-border-hairline text-sm focus:outline-none focus:border-primary text-text-primary"
                 />
-                <input
-                  type="password"
-                  placeholder="Senha"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full h-11 px-3 bg-surface-off border border-border-hairline text-sm focus:outline-none focus:border-primary text-text-primary"
-                />
+                <div className="relative">
+                  <input
+                    type={showLoginPass ? "text" : "password"}
+                    placeholder="Senha"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    className="w-full h-11 px-3 pr-10 bg-surface-off border border-border-hairline text-sm focus:outline-none focus:border-primary text-text-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPass(!showLoginPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"
+                  >
+                    {showLoginPass ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    )}
+                  </button>
+                </div>
                 {loginError && (
                   <p className="text-[11px] text-[#ba1a1a] font-medium hidden">
                     {/* Wait, the HTML uses a hidden toggle. But React conditional is better. */}
@@ -207,12 +233,52 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                   className="w-full h-11 px-3 bg-surface-off border border-border-hairline text-sm focus:outline-none focus:border-primary text-text-primary"
                 />
                 <input
-                  type="password"
-                  placeholder="Senha"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
+                  type="tel"
+                  placeholder="Telefone / WhatsApp"
+                  value={regPhone}
+                  onChange={(e) => setRegPhone(e.target.value)}
                   className="w-full h-11 px-3 bg-surface-off border border-border-hairline text-sm focus:outline-none focus:border-primary text-text-primary"
                 />
+                <div className="relative">
+                  <input
+                    type={showRegPass ? "text" : "password"}
+                    placeholder="Senha"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    className="w-full h-11 px-3 pr-10 bg-surface-off border border-border-hairline text-sm focus:outline-none focus:border-primary text-text-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegPass(!showRegPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"
+                  >
+                    {showRegPass ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    )}
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showRegConfirmPass ? "text" : "password"}
+                    placeholder="Confirmar Senha"
+                    value={regConfirmPassword}
+                    onChange={(e) => setRegConfirmPassword(e.target.value)}
+                    className="w-full h-11 px-3 pr-10 bg-surface-off border border-border-hairline text-sm focus:outline-none focus:border-primary text-text-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegConfirmPass(!showRegConfirmPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary"
+                  >
+                    {showRegConfirmPass ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    )}
+                  </button>
+                </div>
                 {regError && <p className="text-[11px] text-[#ba1a1a] font-medium">{regError}</p>}
                 <button
                   onClick={handleRegister}
