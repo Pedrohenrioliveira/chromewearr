@@ -97,8 +97,8 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
 
       <div className="grid grid-cols-2 lg:grid-cols-3 border-l border-t border-border-hairline">
         {filteredProducts.length === 0 ? (
-          <div className="col-span-full py-16 text-center text-text-secondary text-sm">
-            Nenhum produto encontrado.
+          <div className="col-span-full py-32 flex flex-col items-center justify-center border-b border-r border-border-hairline">
+            <span className="font-display text-2xl uppercase tracking-widest text-primary">Em breve...</span>
           </div>
         ) : (
           filteredProducts.map((p) => (

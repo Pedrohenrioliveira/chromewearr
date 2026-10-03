@@ -37,7 +37,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
           animation-play-state: paused;
         }
       `}</style>
-      
+
       {/* Categories nav removed to see how it looks without it */}
 
       {searchQuery && (
@@ -49,13 +49,13 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
       )}
 
       <section className="w-full bg-surface-pure overflow-hidden">
-        <div 
-          className="flex overflow-visible border-t border-b border-border-hairline animate-auto-scroll w-max" 
+        <div
+          className="flex overflow-visible border-t border-b border-border-hairline animate-auto-scroll w-max"
           id="product-grid"
         >
           {products.length === 0 ? (
-            <div className="w-full py-16 text-center text-text-secondary text-sm bg-surface-pure">
-              Nenhum produto encontrado.
+            <div className="w-[100vw] py-32 flex flex-col items-center justify-center bg-surface-pure border-r-0">
+              <span className="font-display text-2xl uppercase tracking-widest text-primary">Em breve...</span>
             </div>
           ) : (
             [...products, ...products, ...products].map((product, index) => (
