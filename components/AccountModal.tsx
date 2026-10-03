@@ -36,43 +36,42 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   const [showRegPass, setShowRegPass] = useState(false);
   const [showRegConfirmPass, setShowRegConfirmPass] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   if (!isOpen) return null;
 
-  const getUsers = (): any[] => {
-    try {
-      return JSON.parse(localStorage.getItem('cw_users') || '[]');
-    } catch (e) {
-      return [];
-    }
-  };
-
-  const saveUsers = (list: any[]) => {
-    localStorage.setItem('cw_users', JSON.stringify(list));
-  };
-
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setLoginError('');
     if (!loginEmail || !loginPassword) {
       setLoginError('Preencha e-mail e senha.');
       return;
     }
 
-    const email = loginEmail.trim().toLowerCase();
-    const users = getUsers();
-    const found = users.find((u) => u.email === email && u.password === loginPassword);
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail.trim().toLowerCase(), password: loginPassword }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error);
 
-    if (!found) {
-      setLoginError('E-mail ou senha incorretos.');
-      return;
+      // Save user to localStorage to keep the logged-in state across reloads
+      localStorage.setItem('chromewear_user', JSON.stringify(data.user));
+      onLoginSuccess(data.user);
+      onClose();
+      setLoginEmail('');
+      setLoginPassword('');
+    } catch (err: any) {
+      setLoginError(err.message || 'Erro ao entrar.');
+    } finally {
+      setIsLoading(false);
     }
-
-    onLoginSuccess({ id: found.email, name: found.name, email: found.email });
-    onClose();
-    setLoginEmail('');
-    setLoginPassword('');
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     setRegError('');
     if (!regName || !regEmail || !regPhone || !regPassword || !regConfirmPassword) {
       setRegError('Preencha todos os campos.');
@@ -83,23 +82,36 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       return;
     }
 
-    const email = regEmail.trim().toLowerCase();
-    const users = getUsers();
-    if (users.some((u) => u.email === email)) {
-      setRegError('Este e-mail já está em uso.');
-      return;
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: regName, 
+          email: regEmail.trim().toLowerCase(), 
+          phone: regPhone, 
+          password: regPassword 
+        }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error);
+
+      // Save user to localStorage to keep the logged-in state across reloads
+      localStorage.setItem('chromewear_user', JSON.stringify(data.user));
+      onLoginSuccess(data.user);
+      onClose();
+      setRegName('');
+      setRegEmail('');
+      setRegPhone('');
+      setRegPassword('');
+      setRegConfirmPassword('');
+    } catch (err: any) {
+      setRegError(err.message || 'Erro ao criar conta.');
+    } finally {
+      setIsLoading(false);
     }
-
-    users.push({ name: regName, email, phone: regPhone, password: regPassword });
-    saveUsers(users);
-
-    onLoginSuccess({ id: email, name: regName, email });
-    onClose();
-    setRegName('');
-    setRegEmail('');
-    setRegPhone('');
-    setRegPassword('');
-    setRegConfirmPassword('');
   };
 
   return (
@@ -200,9 +212,10 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                 {loginError && <p className="text-[11px] text-[#ba1a1a] font-medium">{loginError}</p>}
                 <button
                   onClick={handleLogin}
-                  className="w-full h-11 bg-secondary hover:bg-primary text-on-primary text-xs md:text-sm uppercase tracking-wider font-semibold transition-colors"
+                  disabled={isLoading}
+                  className="w-full h-11 bg-secondary hover:bg-primary text-on-primary text-xs md:text-sm uppercase tracking-wider font-semibold transition-colors disabled:opacity-50"
                 >
-                  Entrar
+                  {isLoading ? 'Entrando...' : 'Entrar'}
                 </button>
                 <div className="text-center mt-3">
                   <a 
@@ -282,9 +295,10 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                 {regError && <p className="text-[11px] text-[#ba1a1a] font-medium">{regError}</p>}
                 <button
                   onClick={handleRegister}
-                  className="w-full h-11 bg-secondary hover:bg-primary text-on-primary text-xs md:text-sm uppercase tracking-wider font-semibold transition-colors"
+                  disabled={isLoading}
+                  className="w-full h-11 bg-secondary hover:bg-primary text-on-primary text-xs md:text-sm uppercase tracking-wider font-semibold transition-colors disabled:opacity-50"
                 >
-                  Criar Conta
+                  {isLoading ? 'Criando Conta...' : 'Criar Conta'}
                 </button>
               </div>
             )}

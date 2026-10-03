@@ -68,3 +68,9 @@ body {
   max-height: 80vh;
   overflow-y: auto;
 }
+
+/* Hide native password reveal eye icon in Edge/Chrome */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}

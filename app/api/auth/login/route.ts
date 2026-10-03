@@ -1,65 +1,39 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
-export async function POST(request: NextRequest) {
+const prisma = new PrismaClient();
+
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    const { email, password } = await req.json();
 
     if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Preencha e-mail e senha.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Preencha e-mail e senha' }, { status: 400 });
     }
 
-    try {
-      const user = await prisma.user.findUnique({
-        where: { email: email.toLowerCase() },
-      });
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
-      if (!user) {
-        return NextResponse.json(
-          { error: 'E-mail ou senha incorretos.' },
-          { status: 401 }
-        );
-      }
-
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return NextResponse.json(
-          { error: 'E-mail ou senha incorretos.' },
-          { status: 401 }
-        );
-      }
-
-      return NextResponse.json({
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        },
-      });
-    } catch (dbError) {
-      // Fallback for demo mode if DB is disconnected
-      if (email.includes('@') && password.length >= 4) {
-        return NextResponse.json({
-          user: {
-            id: 'user-demo',
-            name: email.split('@')[0],
-            email: email,
-          },
-        });
-      }
-      return NextResponse.json(
-        { error: 'E-mail ou senha incorretos.' },
-        { status: 401 }
-      );
+    if (!user) {
+      return NextResponse.json({ error: 'E-mail ou senha incorretos' }, { status: 400 });
     }
+
+    const isValid = await bcrypt.compare(password, user.password);
+
+    if (!isValid) {
+      return NextResponse.json({ error: 'E-mail ou senha incorretos' }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      message: 'Login efetuado com sucesso!',
+      user: { id: user.id, name: user.name, email: user.email }
+    });
   } catch (error) {
+    console.error('Login error:', error);
     return NextResponse.json(
-      { error: 'Erro interno ao processar login.' },
+      { error: 'Erro interno ao realizar login' },
       { status: 500 }
     );
   }
