@@ -70,11 +70,11 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="absolute top-full left-0 mt-2 bg-surface-pure border border-border-hairline shadow-lg z-50 min-w-[180px] py-1">
                 <button
                   onClick={() => {
-                    onSelectCategory(null);
+                    onSelectCategory('all');
                     setShopMenuOpen(false);
                   }}
                   className={`w-full text-left px-4 py-2 text-xs uppercase tracking-wide transition-colors ${
-                    activeCategory === null
+                    activeCategory === 'all'
                       ? 'text-primary font-bold bg-surface-off'
                       : 'text-text-secondary hover:text-primary hover:bg-surface-off'
                   }`}

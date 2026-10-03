@@ -189,7 +189,7 @@ export default function HomePage() {
   // Apply filters for home grid
   useEffect(() => {
     let filtered = allProducts;
-    if (activeCategory) {
+    if (activeCategory && activeCategory !== 'all') {
       filtered = filtered.filter((p) => (p.categoryName || p.cat) === activeCategory);
     }
     if (searchQuery) {
@@ -305,21 +305,33 @@ export default function HomePage() {
       <main className="w-full pt-16 flex-1">
         {view === 'home' && (
           <>
-            {!searchQuery && !activeCategory && (
-              <HeroMain onCollectionClick={openCollection} />
-            )}
-            <ProductGrid
-              products={products}
-              categories={categories}
-              activeCategory={activeCategory}
-              searchQuery={searchQuery}
-              onSelectCategory={setActiveCategory}
-              onSelectProduct={openProduct}
-              onAddToCart={handleAddToCart}
-            />
-            {!searchQuery && !activeCategory && (
-              <HeroCollection
-                onCollectionClick={(name) => openCollection(name)}
+            {!searchQuery && !activeCategory ? (
+              <>
+                <HeroMain onCollectionClick={openCollection} />
+                <ProductGrid
+                  products={products}
+                  categories={categories}
+                  activeCategory={activeCategory}
+                  searchQuery={searchQuery}
+                  onSelectCategory={setActiveCategory}
+                  onSelectProduct={openProduct}
+                  onAddToCart={handleAddToCart}
+                />
+                <HeroCollection
+                  onCollectionClick={(name) => openCollection(name)}
+                />
+              </>
+            ) : (
+              <CollectionView
+                collectionName={activeCategory === 'all' ? 'Shop All' : activeCategory || 'Busca'}
+                products={products}
+                searchQuery={searchQuery}
+                onClose={() => {
+                  setActiveCategory(null);
+                  setSearchQuery('');
+                }}
+                onSelectProduct={openProduct}
+                onAddToCart={handleAddToCart}
               />
             )}
           </>
