@@ -7,6 +7,17 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum Role {
+  USER
+  VENDOR
+  ADMIN
+}
+
+enum ProductStatus {
+  ACTIVE
+  DRAFT
+}
+
 model User {
   id        String   @id @default(cuid())
   name      String
@@ -14,6 +25,7 @@ model User {
   phone     String?
   password  String
   isVerified Boolean @default(false)
+  role      Role     @default(USER)
   cartData  Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -42,18 +54,50 @@ model Category {
   updatedAt DateTime  @updatedAt
 }
 
+model Collection {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 model Product {
   id          String   @id @default(cuid())
+  numId       Int      @unique
+  ref         String?
   name        String
   slug        String   @unique
+  collectionId String?
+  collection   Collection? @relation(fields: [collectionId], references: [id])
+  sub         String?
   description String   @db.Text
+  about       String?  @db.Text
+  composition String?  @db.Text
   price       Float
   imageUrl    String
+  images      Json?    // Array of extra images
+  sizes       String   @default("P,M,G,GG")
+  sizeMatrix  Json?    // Complex size/stock matrix like [{s: 'M', q: 5}]
   inStock     Boolean  @default(true)
   isFeatured  Boolean  @default(false)
-  sizes       String   @default("P,M,G,GG")
+  status      ProductStatus @default(ACTIVE)
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Banner {
+  id          String   @id @default(cuid())
+  title       String
+  subtitle    String?
+  quote       String?  @db.Text
+  buttonText  String?
+  buttonLink  String?
+  imageUrl    String
+  isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

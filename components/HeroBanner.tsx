@@ -3,31 +3,49 @@ import Image from 'next/image';
 
 interface HeroMainProps {
   onCollectionClick: (collectionName: string) => void;
+  banner?: any;
 }
 
-export const HeroMain: React.FC<HeroMainProps> = ({ onCollectionClick }) => {
+export const HeroMain: React.FC<HeroMainProps> = ({ onCollectionClick, banner }) => {
+  const imageUrl = banner?.imageUrl || '/images/hero-main.webp';
+  const title = banner?.title || 'SANCTUM';
+  const quote = banner?.quote || "Disseram no seu coração: 'Destruamos tudo!'\n e incendiaram neste país todos os lugares de culto";
+  const buttonText = banner?.buttonText || title;
+  const buttonLink = banner?.buttonLink || 'Sanctum';
+
+  if (banner && banner.isActive === false) {
+    return null; // Hide if inactive
+  }
+
   return (
     <section className="relative w-full bg-primary flex items-end overflow-hidden aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9] max-h-[85vh]">
       <Image
-        src="/images/hero-main.webp"
-        alt="ChromeWear Sanctum"
+        src={imageUrl}
+        alt={title}
         fill
         className="object-cover object-center"
         priority
         quality={100}
       />
       
-      {/* Overlay com botão e frase */}
       <div className="absolute bottom-6 left-4 sm:bottom-10 sm:left-10 z-10 flex flex-col items-start">
         <button 
-          onClick={() => onCollectionClick('Sanctum')}
+          onClick={() => {
+            if (buttonLink.startsWith('http') || buttonLink.startsWith('/')) {
+              window.location.href = buttonLink;
+            } else {
+              onCollectionClick(buttonLink);
+            }
+          }}
           className="text-white font-display text-2xl sm:text-4xl md:text-5xl font-bold uppercase tracking-[0.15em] hover:text-white/80 transition-colors drop-shadow-lg text-left"
         >
-          SANCTUM
+          {buttonText}
         </button>
-        <p className="text-white/90 text-[9px] sm:text-[11px] md:text-xs uppercase tracking-[0.15em] drop-shadow-md mt-2 max-w-lg leading-relaxed border-l-2 border-white/40 pl-3 py-1">
-          "Disseram no seu coração: 'Destruamos tudo!'<br className="hidden sm:block" /> e incendiaram neste país todos os lugares de culto"
-        </p>
+        {quote && (
+          <p className="text-white/90 text-[9px] sm:text-[11px] md:text-xs uppercase tracking-[0.15em] drop-shadow-md mt-2 max-w-lg leading-relaxed border-l-2 border-white/40 pl-3 py-1 whitespace-pre-wrap">
+            {quote}
+          </p>
+        )}
       </div>
     </section>
   );

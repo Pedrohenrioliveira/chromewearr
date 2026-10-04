@@ -12,7 +12,6 @@ import { InfoModal } from '@/components/InfoModal';
 import { AccountModal } from '@/components/AccountModal';
 import { Footer } from '@/components/Footer';
 import { Category, Product, CartItem, User, ModalType } from '@/types';
-import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from '@/lib/data';
 
 type ViewMode = 'home' | 'product' | 'collection';
 
@@ -23,7 +22,7 @@ export default function HomePage() {
   const [collectionName, setCollectionName] = useState<string | null>(null);
 
   // Navigation & Category filter state
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   // Search state
@@ -31,9 +30,12 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Products state
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  const [allProducts, setAllProducts] = useState<Product[]>(INITIAL_PRODUCTS); // To find products by id easily
-  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+
+  // Banner state
+  const [banner, setBanner] = useState<any>(null);
 
   // Cart state
   const [cartOpen, setCartOpen] = useState(false);
@@ -44,7 +46,7 @@ export default function HomePage() {
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
-  // 1. Initial Load: Cart from localStorage, Logged User from localStorage
+  // 1. Initial Load: Cart from localStorage, Logged User from localStorage, and Data from APIs
   useEffect(() => {
     try {
       const savedUser = localStorage.getItem('chromewear_user');
@@ -58,10 +60,38 @@ export default function HomePage() {
           setCartItems(JSON.parse(savedCart));
         }
       }
-      // If guest, cart remains empty (temporary)
     } catch (e) {
       console.error('Erro ao carregar dados locais:', e);
     }
+
+    // Fetch initial data
+    const fetchInitialData = async () => {
+      try {
+        const [prodRes, catRes, banRes] = await Promise.all([
+          fetch('/api/products'),
+          fetch('/api/admin/categories'),
+          fetch('/api/admin/banner')
+        ]);
+        
+        if (prodRes.ok) {
+          const prodData = await prodRes.json();
+          setAllProducts(prodData);
+          setProducts(prodData);
+        }
+        if (catRes.ok) {
+          setCategories(await catRes.json());
+        }
+        if (banRes.ok) {
+          setBanner(await banRes.json());
+        }
+      } catch (err) {
+        console.error('Erro ao carregar dados do banco:', err);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+    
+    fetchInitialData();
   }, []);
 
   // Save Cart to localStorage and DB on changes
@@ -298,16 +328,22 @@ export default function HomePage() {
           <>
             {!searchQuery && !activeCategory ? (
               <>
-                <HeroMain onCollectionClick={openCollection} />
-                <ProductGrid
-                  products={products}
-                  categories={categories}
-                  activeCategory={activeCategory}
-                  searchQuery={searchQuery}
-                  onSelectCategory={setActiveCategory}
-                  onSelectProduct={openProduct}
-                  onAddToCart={handleAddToCart}
-                />
+                <HeroMain onCollectionClick={openCollection} banner={banner} />
+                {loadingProducts ? (
+                  <div className="w-full py-24 flex items-center justify-center">
+                    <p className="font-display uppercase tracking-widest text-sm animate-pulse">Carregando Acervo...</p>
+                  </div>
+                ) : (
+                  <ProductGrid
+                    products={products}
+                    categories={categories}
+                    activeCategory={activeCategory}
+                    searchQuery={searchQuery}
+                    onSelectCategory={setActiveCategory}
+                    onSelectProduct={openProduct}
+                    onAddToCart={handleAddToCart}
+                  />
+                )}
                 <HeroCollection
                   onCollectionClick={(name) => openCollection(name)}
                 />

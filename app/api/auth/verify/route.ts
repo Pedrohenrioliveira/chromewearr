@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     }
 
     if (user.isVerified) {
-      return NextResponse.json({ message: 'Conta já verificada!', user: { id: user.id, name: user.name, email: user.email } });
+      return NextResponse.json({ message: 'Conta já verificada!', user: { id: user.id, name: user.name, email: user.email, role: user.role } });
     }
 
     // Find token
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       message: 'Conta verificada com sucesso!',
-      user: { id: user.id, name: user.name, email: user.email }
+      user: { id: user.id, name: user.name, email: user.email, role: user.role }
     });
   } catch (error: any) {
     console.error('Verify error:', error);
