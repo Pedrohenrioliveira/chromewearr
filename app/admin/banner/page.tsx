@@ -96,10 +96,10 @@ export default function BannerAdmin() {
     img.src = banner.imageUrl;
   };
 
-  if (loading) return <div className="p-8">Carregando...</div>;
+  if (loading) return <div className="p-4 md:p-8">Carregando...</div>;
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-4 md:p-8 max-w-4xl">
       <h1 className="font-display uppercase tracking-widest text-2xl font-bold mb-8">Gerenciar Banner Principal</h1>
 
       {message && (

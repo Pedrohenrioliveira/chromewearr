@@ -78,7 +78,7 @@ export default function CollectionsAdmin() {
   };
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-4 md:p-8 max-w-5xl">
       <h1 className="font-display uppercase tracking-widest text-2xl font-bold mb-8">Gerenciar Coleções</h1>
 
       {message && (

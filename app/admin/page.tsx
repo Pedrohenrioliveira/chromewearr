@@ -30,11 +30,11 @@ export default function AdminDashboard() {
   }, []);
 
   if (loading) {
-    return <div className="p-8">Carregando métricas...</div>;
+    return <div className="p-4 md:p-8">Carregando métricas...</div>;
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <h1 className="font-display uppercase tracking-widest text-2xl font-bold mb-8">Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
