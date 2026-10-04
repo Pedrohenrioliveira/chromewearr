@@ -25,6 +25,7 @@ export async function POST(req: Request) {
     
     const product = await prisma.product.create({
       data: {
+        numId: Date.now() % 2000000000,
         name: data.name,
         slug: data.slug,
         ref: data.ref,
