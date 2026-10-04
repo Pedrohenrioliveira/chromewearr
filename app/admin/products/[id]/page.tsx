@@ -4,23 +4,19 @@ import React, { useEffect, useState } from 'react';
 import { ProductForm } from '@/components/admin/ProductForm';
 import Link from 'next/link';
 
-export default function EditProductPage({ params }: { params: { id: string } }) {
+export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Unwrap params in Next 15+ if needed, but since it's client component we might have to use React.use()
-    // For now we assume params.id is available directly or we unwrap it
-    const resolveParams = async () => {
-      const { id } = await params;
+    params.then(({ id }) => {
       fetch(`/api/admin/products/${id}`)
         .then(res => res.json())
         .then(data => {
           setProduct(data);
           setLoading(false);
         });
-    };
-    resolveParams();
+    });
   }, [params]);
 
   if (loading) return <div className="p-8">Carregando produto...</div>;
