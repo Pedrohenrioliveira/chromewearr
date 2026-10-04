@@ -59,6 +59,8 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
+import { SecurityProvider } from '@/components/SecurityProvider';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -67,6 +69,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${hanken.variable} ${cinzel.variable}`}>
       <body className="bg-surface-pure text-text-primary antialiased min-h-screen flex flex-col">
+        <SecurityProvider />
         {children}
       </body>
     </html>
