@@ -14,6 +14,7 @@ export default function BannerAdmin() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -26,6 +27,36 @@ export default function BannerAdmin() {
         setLoading(false);
       });
   }, []);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setMessage('');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        setBanner({ ...banner, imageUrl: data.url });
+        setMessage('Upload concluído com sucesso!');
+      } else {
+        setMessage(data.error || 'Erro no upload.');
+      }
+    } catch (err) {
+      setMessage('Erro de conexão ao enviar arquivo.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,15 +116,36 @@ export default function BannerAdmin() {
               <p className="text-xs text-text-secondary uppercase tracking-widest font-semibold mb-1">⚠️ Instrução de Imagem</p>
               <p className="text-sm text-text-primary">O banner precisa ser no formato Ultra-Wide (aprox. 21:9).<br/><b>Tamanho Recomendado:</b> 2560x1080 pixels.<br/><b>Tamanho Mínimo Permitido:</b> 1920x820 pixels.</p>
             </div>
-            <label className="block text-[10px] text-text-secondary uppercase tracking-widest font-semibold mb-2">Imagem do Banner (URL)</label>
-            <input
-              type="text"
-              value={banner.imageUrl || ''}
-              onChange={(e) => setBanner({ ...banner, imageUrl: e.target.value })}
-              className="w-full border border-border-hairline bg-surface-off p-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
-              placeholder="/images/hero-main.webp"
-              required
-            />
+            <label className="block text-[10px] text-text-secondary uppercase tracking-widest font-semibold mb-2">Imagem do Banner</label>
+            <div className="flex flex-col md:flex-row gap-4 mb-4">
+              <input
+                type="text"
+                value={banner.imageUrl || ''}
+                onChange={(e) => setBanner({ ...banner, imageUrl: e.target.value })}
+                className="flex-1 border border-border-hairline bg-surface-off p-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
+                placeholder="URL da imagem ou faça o upload abaixo..."
+                required
+              />
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUpload}
+                  disabled={uploading}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                />
+                <button
+                  type="button"
+                  disabled={uploading}
+                  className="w-full md:w-auto bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold py-3 px-6 hover:bg-border-hairline transition-colors disabled:opacity-50 pointer-events-none"
+                >
+                  {uploading ? 'Enviando...' : 'Fazer Upload'}
+                </button>
+              </div>
+            </div>
+            {banner.imageUrl && (
+              <img src={banner.imageUrl} alt="Preview do Banner" className="w-full h-auto max-h-[300px] object-cover border border-border-hairline" />
+            )}
           </div>
 
           <div>

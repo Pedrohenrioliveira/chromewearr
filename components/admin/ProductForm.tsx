@@ -9,6 +9,7 @@ export function ProductForm({ initialData }: { initialData?: any }) {
   const [categories, setCategories] = useState<any[]>([]);
   const [collections, setCollections] = useState<any[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -47,6 +48,36 @@ export function ProductForm({ initialData }: { initialData?: any }) {
       });
     }
   }, [initialData]);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setMessage('');
+    
+    const uploadData = new FormData();
+    uploadData.append('file', file);
+
+    try {
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: uploadData,
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        setFormData({ ...formData, imageUrl: data.url });
+        setMessage('Upload de imagem concluído!');
+      } else {
+        setMessage(data.error || 'Erro no upload.');
+      }
+    } catch (err) {
+      setMessage('Erro de conexão ao enviar arquivo.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -149,14 +180,33 @@ export function ProductForm({ initialData }: { initialData?: any }) {
         <h2 className="font-display uppercase font-bold text-lg border-b border-border-hairline pb-2 mb-4">Mídia e Imagens</h2>
         
         <div>
-          <label className="block text-[10px] text-text-secondary uppercase tracking-widest font-semibold mb-2">Imagem Principal (URL)</label>
-          <input
-            type="text"
-            value={formData.imageUrl}
-            onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-            className="w-full border border-border-hairline bg-surface-off p-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
-            required
-          />
+          <label className="block text-[10px] text-text-secondary uppercase tracking-widest font-semibold mb-2">Imagem Principal</label>
+          <div className="flex flex-col md:flex-row gap-4">
+            <input
+              type="text"
+              value={formData.imageUrl}
+              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+              className="flex-1 border border-border-hairline bg-surface-off p-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
+              placeholder="URL da imagem ou faça o upload..."
+              required
+            />
+            <div className="relative">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleUpload}
+                disabled={uploading}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+              />
+              <button
+                type="button"
+                disabled={uploading}
+                className="w-full md:w-auto bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold py-3 px-6 hover:bg-border-hairline transition-colors disabled:opacity-50 pointer-events-none"
+              >
+                {uploading ? 'Enviando...' : 'Fazer Upload'}
+              </button>
+            </div>
+          </div>
           {formData.imageUrl && (
             <img src={formData.imageUrl} alt="Preview" className="mt-4 w-32 h-32 object-cover border border-border-hairline" />
           )}
