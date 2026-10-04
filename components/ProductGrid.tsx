@@ -133,7 +133,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                       alt={product.name}
                       fill
                       sizes="(max-width: 768px) 50vw, 25vw"
-                      className="object-contain object-center transition-transform duration-500 ease-out group-hover:scale-105"
+                      className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-105"
                     />
                   </div>
                 </div>

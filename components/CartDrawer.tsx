@@ -100,7 +100,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     src={item.imageUrl}
                     alt={item.name}
                     fill
-                    className="object-contain"
+                    className="object-cover"
                   />
                 </div>
                 <div className="flex-1 min-w-0">

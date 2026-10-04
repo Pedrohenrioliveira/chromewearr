@@ -114,7 +114,7 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
                     alt={p.name}
                     fill
                     sizes="(max-width: 768px) 50vw, 33vw"
-                    className="object-contain object-center transition-transform duration-500 ease-out group-hover:scale-105"
+                    className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-105"
                   />
                 </div>
               </div>

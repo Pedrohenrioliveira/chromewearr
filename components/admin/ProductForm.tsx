@@ -179,6 +179,11 @@ export function ProductForm({ initialData }: { initialData?: any }) {
       <div className="bg-surface-pure border border-border-hairline p-6 shadow-sm space-y-4">
         <h2 className="font-display uppercase font-bold text-lg border-b border-border-hairline pb-2 mb-4">Mídia e Imagens</h2>
         
+        <div className="mb-4 p-4 bg-surface-off border border-border-hairline">
+          <p className="text-xs text-text-secondary uppercase tracking-widest font-semibold mb-1">⚠️ Instrução de Imagem</p>
+          <p className="text-sm text-text-primary">Para que nenhuma roupa fique maior ou menor que as outras na vitrine, envie as imagens sempre na proporção <b>4:5 (Exemplo: 1080x1350 pixels)</b>.<br/>O site possui um sistema que recorta (Cover) e adapta imagens fora de formato, mas mandar no tamanho certo garante 100% de qualidade.</p>
+        </div>
+
         <div>
           <label className="block text-[10px] text-text-secondary uppercase tracking-widest font-semibold mb-2">Imagem Principal</label>
           <div className="flex flex-col md:flex-row gap-4">

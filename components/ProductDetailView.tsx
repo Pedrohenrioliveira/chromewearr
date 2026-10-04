@@ -88,7 +88,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
                 src={product.imageUrl}
                 alt={product.name}
                 fill
-                className="object-contain p-6 transition-transform duration-300 group-hover:scale-105"
+                className="object-cover p-6 transition-transform duration-300 group-hover:scale-105"
               />
               <div className="absolute top-3 left-3 text-[10px] uppercase text-text-secondary bg-surface-pure/90 px-2 py-1 tracking-widest border border-border-hairline">
                 SÉRIE EXP. 024 // BR
