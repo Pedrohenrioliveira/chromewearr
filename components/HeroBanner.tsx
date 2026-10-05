@@ -7,7 +7,7 @@ interface HeroMainProps {
 }
 
 export const HeroMain: React.FC<HeroMainProps> = ({ onCollectionClick, banner }) => {
-  const imageUrl = banner?.imageUrl || '/images/hero-main.webp';
+  const imageUrl = banner?.imageUrl || '/images/hero-main.png';
   const title = banner?.title || 'SANCTUM';
   const quote = banner?.quote || "Disseram no seu coração: 'Destruamos tudo!'\n e incendiaram neste país todos os lugares de culto";
   const buttonText = banner?.buttonText || title;
