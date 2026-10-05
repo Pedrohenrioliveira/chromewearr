@@ -7,11 +7,7 @@ interface HeroMainProps {
 }
 
 export const HeroMain: React.FC<HeroMainProps> = ({ onCollectionClick, banner }) => {
-  // Se o banco de dados retornar a imagem antiga (.webp), forçamos a nova (.png) para evitar a "travada" e troca de imagens.
-  // Se for uma imagem totalmente nova enviada pelo admin, ela será mantida.
-  const imageUrl = (banner?.imageUrl === '/images/hero-main.webp' || !banner?.imageUrl)
-    ? '/images/hero-main.png' 
-    : banner.imageUrl;
+  const imageUrl = banner?.imageUrl || '/images/hero-main.png';
   const title = banner?.title || 'SANCTUM';
   const quote = banner?.quote || "Disseram no seu coração: 'Destruamos tudo!'\n e incendiaram neste país todos os lugares de culto";
   const buttonText = banner?.buttonText || title;
