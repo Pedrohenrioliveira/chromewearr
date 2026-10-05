@@ -26,6 +26,7 @@ export const HeroMain: React.FC<HeroMainProps> = ({ onCollectionClick, banner })
         className="object-cover object-center"
         priority
         quality={100}
+        unoptimized
       />
       
       <div className="absolute bottom-6 left-4 sm:bottom-10 sm:left-10 z-10 flex flex-col items-start">
