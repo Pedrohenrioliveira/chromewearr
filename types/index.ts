@@ -1,6 +1,8 @@
 export interface SizeStock {
   s: string; // Size label: "M", "G", "GG"
   q: number; // Available quantity
+  w?: string; // Width measurement
+  l?: string; // Length measurement
 }
 
 export interface Product {
