@@ -44,9 +44,17 @@ export async function GET(request: NextRequest) {
     });
 
     const formatted = dbProducts.map((p) => {
-      let sizeMatrixParsed = [];
+      let sizeMatrixParsed: any[] = [];
       try {
-        sizeMatrixParsed = p.sizeMatrix ? JSON.parse(p.sizeMatrix as string) : [];
+        if (p.sizeMatrix) {
+          let parsed = typeof p.sizeMatrix === 'string' ? JSON.parse(p.sizeMatrix) : p.sizeMatrix;
+          if (typeof parsed === 'string') {
+            parsed = JSON.parse(parsed); // Handle double-stringified JSON from admin panel
+          }
+          if (Array.isArray(parsed)) {
+            sizeMatrixParsed = parsed;
+          }
+        }
       } catch (e) {}
 
       return {

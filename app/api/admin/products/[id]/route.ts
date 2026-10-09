@@ -37,7 +37,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         imageUrl: data.imageUrl || '',
         images: data.images ? JSON.stringify(data.images) : undefined,
         sizes: data.sizes || 'P,M,G,GG',
-        sizeMatrix: data.sizeMatrix ? JSON.stringify(data.sizeMatrix) : undefined,
+        sizeMatrix: data.sizeMatrix ? (typeof data.sizeMatrix === 'string' ? JSON.parse(data.sizeMatrix) : data.sizeMatrix) : undefined,
         inStock: data.inStock,
         isFeatured: data.isFeatured,
         status: data.status || 'ACTIVE',
