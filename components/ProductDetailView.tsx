@@ -266,21 +266,33 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
                         </tr>
                       </thead>
                       <tbody>
-                        <tr className="border-b border-border-hairline">
-                          <td className="py-2">M</td>
-                          <td>60 cm</td>
-                          <td>74 cm</td>
-                        </tr>
-                        <tr className="border-b border-border-hairline">
-                          <td className="py-2">G</td>
-                          <td>64 cm</td>
-                          <td>76 cm</td>
-                        </tr>
-                        <tr>
-                          <td className="py-2">GG</td>
-                          <td>68 cm</td>
-                          <td>78 cm</td>
-                        </tr>
+                        {product.sizeMatrix && product.sizeMatrix.length > 0 ? (
+                          product.sizeMatrix.map((sz, idx) => (
+                            <tr key={idx} className="border-b border-border-hairline">
+                              <td className="py-2">{sz.s}</td>
+                              <td>{sz.w || '-'}</td>
+                              <td>{sz.l || '-'}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <>
+                            <tr className="border-b border-border-hairline">
+                              <td className="py-2">M</td>
+                              <td>60 cm</td>
+                              <td>74 cm</td>
+                            </tr>
+                            <tr className="border-b border-border-hairline">
+                              <td className="py-2">G</td>
+                              <td>64 cm</td>
+                              <td>76 cm</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2">GG</td>
+                              <td>68 cm</td>
+                              <td>78 cm</td>
+                            </tr>
+                          </>
+                        )}
                       </tbody>
                     </table>
                     <p className="text-[11px] text-text-secondary mt-2">

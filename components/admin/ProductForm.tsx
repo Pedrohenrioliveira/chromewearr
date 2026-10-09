@@ -24,6 +24,7 @@ export function ProductForm({ initialData }: { initialData?: any }) {
     composition: '',
     imageUrl: '',
     sizes: 'P,M,G,GG',
+    sizeMatrix: [] as any[],
     inStock: true,
     isFeatured: false,
     status: 'ACTIVE'
@@ -44,7 +45,8 @@ export function ProductForm({ initialData }: { initialData?: any }) {
     if (initialData) {
       setFormData({
         ...initialData,
-        price: initialData.price.toString()
+        price: initialData.price.toString(),
+        sizeMatrix: initialData.sizeMatrix ? (typeof initialData.sizeMatrix === 'string' ? JSON.parse(initialData.sizeMatrix) : initialData.sizeMatrix) : []
       });
     }
   }, [initialData]);
@@ -287,14 +289,79 @@ export function ProductForm({ initialData }: { initialData?: any }) {
         <h2 className="font-display uppercase font-bold text-lg border-b border-border-hairline pb-2 mb-4">Variações e Status</h2>
         
         <div>
-          <label className="block text-[10px] text-text-secondary uppercase tracking-widest font-semibold mb-2">Tamanhos Disponíveis (separados por vírgula)</label>
-          <input
-            type="text"
-            value={formData.sizes}
-            onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
-            className="w-full border border-border-hairline bg-surface-off p-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
-            placeholder="P,M,G,GG"
-          />
+          <label className="block text-[10px] text-text-secondary uppercase tracking-widest font-semibold mb-2">Grade, Estoque e Medidas</label>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-[10px] text-text-secondary uppercase tracking-widest font-semibold mb-1">Tamanhos (separados por vírgula)</label>
+              <input
+                type="text"
+                value={formData.sizes}
+                onChange={(e) => {
+                  const newSizes = e.target.value;
+                  const sizeArray = newSizes.split(',').map(s => s.trim()).filter(Boolean);
+                  
+                  // Keep existing matrix items or add new ones
+                  const newMatrix = sizeArray.map(size => {
+                    const existing = formData.sizeMatrix.find((m: any) => m.s === size);
+                    return existing || { s: size, q: 10, w: '', l: '' };
+                  });
+                  
+                  setFormData({ ...formData, sizes: newSizes, sizeMatrix: newMatrix });
+                }}
+                className="w-full border border-border-hairline bg-surface-off p-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
+                placeholder="P,M,G,GG"
+              />
+            </div>
+            
+            {formData.sizeMatrix && formData.sizeMatrix.length > 0 && (
+              <div className="border border-border-hairline p-4 bg-surface-off space-y-3">
+                <div className="grid grid-cols-4 gap-2 text-[10px] text-text-secondary uppercase tracking-widest font-semibold pb-2 border-b border-border-hairline">
+                  <div>Tamanho</div>
+                  <div>Estoque</div>
+                  <div>Largura (Busto)</div>
+                  <div>Comprimento</div>
+                </div>
+                {formData.sizeMatrix.map((matrixItem: any, idx: number) => (
+                  <div key={idx} className="grid grid-cols-4 gap-2 items-center">
+                    <div className="font-bold">{matrixItem.s}</div>
+                    <input
+                      type="number"
+                      value={matrixItem.q}
+                      onChange={(e) => {
+                        const newMatrix = [...formData.sizeMatrix];
+                        newMatrix[idx].q = parseInt(e.target.value) || 0;
+                        setFormData({ ...formData, sizeMatrix: newMatrix });
+                      }}
+                      className="border border-border-hairline bg-surface-pure p-2 text-sm w-full"
+                      placeholder="0"
+                    />
+                    <input
+                      type="text"
+                      value={matrixItem.w || ''}
+                      onChange={(e) => {
+                        const newMatrix = [...formData.sizeMatrix];
+                        newMatrix[idx].w = e.target.value;
+                        setFormData({ ...formData, sizeMatrix: newMatrix });
+                      }}
+                      className="border border-border-hairline bg-surface-pure p-2 text-sm w-full"
+                      placeholder="Ex: 60 cm"
+                    />
+                    <input
+                      type="text"
+                      value={matrixItem.l || ''}
+                      onChange={(e) => {
+                        const newMatrix = [...formData.sizeMatrix];
+                        newMatrix[idx].l = e.target.value;
+                        setFormData({ ...formData, sizeMatrix: newMatrix });
+                      }}
+                      className="border border-border-hairline bg-surface-pure p-2 text-sm w-full"
+                      placeholder="Ex: 74 cm"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex gap-6 mt-4">
