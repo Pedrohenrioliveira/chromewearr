@@ -43,10 +43,25 @@ export function ProductForm({ initialData }: { initialData?: any }) {
 
   useEffect(() => {
     if (initialData) {
+      let parsedSizeMatrix = [];
+      try {
+        if (initialData.sizeMatrix) {
+          let parsed = typeof initialData.sizeMatrix === 'string' ? JSON.parse(initialData.sizeMatrix) : initialData.sizeMatrix;
+          if (typeof parsed === 'string') {
+            parsed = JSON.parse(parsed); // lidar com json duplamente stringificado
+          }
+          if (Array.isArray(parsed)) {
+            parsedSizeMatrix = parsed;
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing sizeMatrix:', e);
+      }
+
       setFormData({
         ...initialData,
         price: initialData.price.toString(),
-        sizeMatrix: initialData.sizeMatrix ? (typeof initialData.sizeMatrix === 'string' ? JSON.parse(initialData.sizeMatrix) : initialData.sizeMatrix) : []
+        sizeMatrix: parsedSizeMatrix
       });
     }
   }, [initialData]);
