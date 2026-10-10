@@ -148,7 +148,7 @@ export const Header: React.FC<HeaderProps> = ({
             alt="ChromeWear"
             width={300}
             height={300}
-            className="w-40 h-40 md:w-48 md:h-48 object-contain scale-[1.8] md:scale-[2]"
+            className="w-32 h-32 md:w-40 md:h-40 object-contain scale-125 md:scale-150"
             priority
             unoptimized={true}
           />
