@@ -369,13 +369,12 @@ export default function HomePage() {
         <div className="w-full flex flex-col items-center flex-1 justify-center max-w-md">
           <div className="mb-12 flex justify-center">
             <Image
-              src="/images/logo.gif"
+              src="/images/logo.webp"
               alt="ChromeWear"
-              width={600}
-              height={600}
-              className="w-48 h-48 md:w-72 md:h-72 object-contain"
+              width={280}
+              height={100}
+              className="h-14 md:h-20 w-auto object-contain"
               priority
-              unoptimized={true}
             />
           </div>
           

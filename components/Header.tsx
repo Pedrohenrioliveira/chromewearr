@@ -141,14 +141,14 @@ export const Header: React.FC<HeaderProps> = ({
             setMobileNavOpen(false);
             setShopMenuOpen(false);
           }}
-          className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center h-24 md:h-28"
+          className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center h-24 md:h-28 overflow-visible"
         >
           <Image
             src="/images/logo.gif"
             alt="ChromeWear"
             width={300}
             height={300}
-            className="w-20 h-20 md:w-24 md:h-24 object-contain"
+            className="w-40 h-40 md:w-48 md:h-48 object-contain scale-[1.8] md:scale-[2]"
             priority
             unoptimized={true}
           />
