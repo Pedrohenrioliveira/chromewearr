@@ -46,8 +46,43 @@ export default function HomePage() {
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
-  // 1. Initial Load: Cart from localStorage, Logged User from localStorage, and Data from APIs
+  // Site Lock State
+  const [siteLocked, setSiteLocked] = useState(false);
+  const [checkingLock, setCheckingLock] = useState(true);
+  const [accessCodeInput, setAccessCodeInput] = useState('');
+  const [lockError, setLockError] = useState('');
+  const [unlocking, setUnlocking] = useState(false);
+
+  // 1. Initial Load: Site Lock, Cart, User, and Data
   useEffect(() => {
+    const checkLockAndInit = async () => {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.isLocked) {
+            const savedCode = localStorage.getItem('chromewear_access_code');
+            if (savedCode) {
+              const verifyRes = await fetch('/api/settings/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: savedCode })
+              });
+              if (!verifyRes.ok) {
+                setSiteLocked(true);
+              }
+            } else {
+              setSiteLocked(true);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Erro ao verificar bloqueio:', e);
+      } finally {
+        setCheckingLock(false);
+      }
+    };
+    checkLockAndInit();
     try {
       const savedUser = localStorage.getItem('chromewear_user');
       if (savedUser) {
@@ -295,6 +330,67 @@ export default function HomePage() {
   };
 
   const totalCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleUnlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUnlocking(true);
+    setLockError('');
+    try {
+      const res = await fetch('/api/settings/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: accessCodeInput })
+      });
+      if (res.ok) {
+        localStorage.setItem('chromewear_access_code', accessCodeInput);
+        setSiteLocked(false);
+      } else {
+        setLockError('Código de acesso inválido.');
+      }
+    } catch (e) {
+      setLockError('Erro ao verificar código.');
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
+  if (checkingLock) {
+    return <div className="w-full min-h-screen flex items-center justify-center bg-surface-pure text-text-primary text-xs uppercase tracking-widest font-bold animate-pulse">Carregando...</div>;
+  }
+
+  if (siteLocked) {
+    return (
+      <div className="w-full min-h-screen bg-surface-pure flex flex-col items-center justify-center p-4 text-text-primary">
+        <div className="max-w-md w-full bg-surface-off border border-border-hairline p-8 shadow-sm">
+          <h1 className="font-display uppercase text-2xl font-bold mb-2 text-center text-text-primary">Acesso Antecipado</h1>
+          <p className="text-sm text-text-secondary mb-8 text-center">O site está bloqueado no momento. Insira sua senha de acesso para continuar.</p>
+          
+          <form onSubmit={handleUnlock} className="space-y-4">
+            {lockError && (
+              <div className="p-3 bg-[#ba1a1a]/10 text-[#ba1a1a] text-xs font-bold uppercase text-center border border-[#ba1a1a]/20">{lockError}</div>
+            )}
+            <div>
+              <input
+                type="password"
+                value={accessCodeInput}
+                onChange={(e) => setAccessCodeInput(e.target.value)}
+                placeholder="CÓDIGO DE ACESSO"
+                className="w-full border border-border-hairline bg-surface-pure p-4 text-center text-sm text-text-primary focus:outline-none focus:border-primary transition-colors tracking-widest"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={unlocking}
+              className="w-full bg-primary text-white py-4 text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors disabled:opacity-50"
+            >
+              {unlocking ? 'Verificando...' : 'Entrar'}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen flex flex-col bg-surface-pure text-text-primary">

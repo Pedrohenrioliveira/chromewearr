@@ -57,14 +57,14 @@ export default function AdminDashboard() {
         <Link href="/admin/products/new" className="bg-primary text-white text-center py-4 px-6 text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors">
           Cadastrar Produto
         </Link>
+        <Link href="/admin/settings" className="bg-surface-pure border border-border-hairline text-center py-4 px-6 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors">
+          Travar Loja (Senhas)
+        </Link>
         <Link href="/admin/banner" className="bg-surface-pure border border-border-hairline text-center py-4 px-6 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors">
           Editar Banner
         </Link>
         <Link href="/admin/categories" className="bg-surface-pure border border-border-hairline text-center py-4 px-6 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors">
           Gerenciar Categorias
-        </Link>
-        <Link href="/admin/users" className="bg-surface-pure border border-border-hairline text-center py-4 px-6 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors">
-          Gerenciar Vendedores
         </Link>
       </div>
     </div>
