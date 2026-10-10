@@ -66,7 +66,7 @@ export default function HomePage() {
             if (data.lockMessage) {
               setLockMessage(data.lockMessage);
             }
-            const savedCode = localStorage.getItem('chromewear_access_code');
+            const savedCode = sessionStorage.getItem('chromewear_access_code');
             if (savedCode) {
               const verifyRes = await fetch('/api/settings/verify', {
                 method: 'POST',
@@ -347,7 +347,7 @@ export default function HomePage() {
         body: JSON.stringify({ code: accessCodeInput })
       });
       if (res.ok) {
-        localStorage.setItem('chromewear_access_code', accessCodeInput);
+        sessionStorage.setItem('chromewear_access_code', accessCodeInput);
         setSiteLocked(false);
       } else {
         setLockError('Código de acesso inválido.');
