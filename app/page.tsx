@@ -371,16 +371,12 @@ export default function HomePage() {
             <Image
               src="/images/logo.webp"
               alt="ChromeWear"
-              width={200}
-              height={70}
-              className="h-10 md:h-12 w-auto object-contain"
+              width={280}
+              height={100}
+              className="h-14 md:h-20 w-auto object-contain"
               priority
             />
           </div>
-          
-          <h1 className="font-display uppercase tracking-widest text-2xl font-bold mb-10 text-center text-text-primary">
-            {lockMessage || 'ACESSO ANTECIPADO'}
-          </h1>
           
           <form onSubmit={handleUnlock} className="w-full space-y-5">
             {lockError && (
