@@ -366,20 +366,20 @@ export default function HomePage() {
   if (siteLocked) {
     return (
       <div className="w-full min-h-screen bg-surface-pure flex flex-col items-center justify-center p-4 text-text-primary">
+        <div className="mb-8 flex justify-center">
+          <Image
+            src="/images/logo.webp"
+            alt="ChromeWear"
+            width={200}
+            height={70}
+            className="h-12 md:h-16 w-auto object-contain"
+            priority
+          />
+        </div>
+        
         <div className="max-w-md w-full bg-surface-off border border-border-hairline p-8 shadow-sm flex flex-col items-center">
-          <div className="mb-8 w-full flex justify-center">
-            <Image
-              src="/images/logo.webp"
-              alt="ChromeWear"
-              width={200}
-              height={70}
-              className="h-10 md:h-12 w-auto object-contain"
-              priority
-            />
-          </div>
-          
-          <h1 className="font-sans text-xl font-bold mb-6 text-center text-text-primary">
-            {lockMessage || 'Acesso Restrito'}
+          <h1 className="font-display uppercase tracking-widest text-2xl font-bold mb-8 text-center text-text-primary">
+            {lockMessage || 'ACESSO ANTECIPADO'}
           </h1>
           
           <form onSubmit={handleUnlock} className="w-full space-y-4">
