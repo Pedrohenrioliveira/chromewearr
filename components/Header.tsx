@@ -135,21 +135,20 @@ export const Header: React.FC<HeaderProps> = ({
           </svg>
         </button>
 
-        {/* Centered Logo */}
         <button
           onClick={() => {
             onSelectCategory(null);
             setMobileNavOpen(false);
             setShopMenuOpen(false);
           }}
-          className="absolute left-1/2 -translate-x-1/2 flex items-center h-14"
+          className="absolute left-1/2 -translate-x-1/2 flex items-center h-20 md:h-24"
         >
           <Image
             src="/images/logo.gif"
             alt="ChromeWear"
-            width={120}
-            height={120}
-            className="h-10 md:h-14 w-auto object-contain"
+            width={300}
+            height={300}
+            className="h-20 md:h-24 w-auto object-contain"
             priority
             unoptimized={true}
           />

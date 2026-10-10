@@ -371,9 +371,9 @@ export default function HomePage() {
             <Image
               src="/images/logo.gif"
               alt="ChromeWear"
-              width={200}
-              height={200}
-              className="h-20 md:h-28 w-auto object-contain"
+              width={400}
+              height={400}
+              className="h-32 md:h-48 w-auto object-contain"
               priority
               unoptimized={true}
             />
