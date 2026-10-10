@@ -371,9 +371,9 @@ export default function HomePage() {
             <Image
               src="/images/logo.gif"
               alt="ChromeWear"
-              width={400}
-              height={400}
-              className="h-32 md:h-48 w-auto object-contain"
+              width={600}
+              height={600}
+              className="w-48 h-48 md:w-72 md:h-72 object-contain"
               priority
               unoptimized={true}
             />
@@ -446,7 +446,7 @@ export default function HomePage() {
         onChange={setSearchQuery}
       />
 
-      <main className="w-full pt-16 flex-1">
+      <main className="w-full pt-24 md:pt-28 flex-1">
         {view === 'home' && (
           <>
             {!searchQuery && !activeCategory ? (

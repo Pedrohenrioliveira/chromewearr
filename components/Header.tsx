@@ -34,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-surface-pure border-b border-border-hairline">
-      <div className="h-16 w-full px-4 md:px-8 lg:px-12 flex items-center justify-between relative">
+      <div className="h-24 md:h-28 w-full px-4 md:px-8 lg:px-12 flex items-center justify-between relative">
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           <button
@@ -141,14 +141,14 @@ export const Header: React.FC<HeaderProps> = ({
             setMobileNavOpen(false);
             setShopMenuOpen(false);
           }}
-          className="absolute left-1/2 -translate-x-1/2 flex items-center h-20 md:h-24"
+          className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center h-24 md:h-28"
         >
           <Image
             src="/images/logo.gif"
             alt="ChromeWear"
             width={300}
             height={300}
-            className="h-20 md:h-24 w-auto object-contain"
+            className="w-20 h-20 md:w-24 md:h-24 object-contain"
             priority
             unoptimized={true}
           />
