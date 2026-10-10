@@ -365,45 +365,58 @@ export default function HomePage() {
 
   if (siteLocked) {
     return (
-      <div className="w-full min-h-screen bg-surface-pure flex flex-col items-center justify-center p-4 text-text-primary">
-        <div className="mb-8 flex justify-center">
-          <Image
-            src="/images/logo.webp"
-            alt="ChromeWear"
-            width={200}
-            height={70}
-            className="h-12 md:h-16 w-auto object-contain"
-            priority
-          />
-        </div>
-        
-        <div className="max-w-md w-full bg-surface-off border border-border-hairline p-8 shadow-sm flex flex-col items-center">
-          <h1 className="font-display uppercase tracking-widest text-2xl font-bold mb-8 text-center text-text-primary">
+      <div className="w-full min-h-screen bg-surface-pure flex flex-col items-center justify-between p-4 text-text-primary">
+        <div className="w-full flex flex-col items-center flex-1 justify-center max-w-md">
+          <div className="mb-12 flex justify-center">
+            <Image
+              src="/images/logo.webp"
+              alt="ChromeWear"
+              width={200}
+              height={70}
+              className="h-10 md:h-12 w-auto object-contain"
+              priority
+            />
+          </div>
+          
+          <h1 className="font-display uppercase tracking-widest text-2xl font-bold mb-10 text-center text-text-primary">
             {lockMessage || 'ACESSO ANTECIPADO'}
           </h1>
           
-          <form onSubmit={handleUnlock} className="w-full space-y-4">
+          <form onSubmit={handleUnlock} className="w-full space-y-5">
             {lockError && (
               <div className="p-3 bg-[#ba1a1a]/10 text-[#ba1a1a] text-xs font-bold uppercase text-center border border-[#ba1a1a]/20">{lockError}</div>
             )}
             <div>
+              <label className="block text-xs text-text-secondary mb-2 text-left">Senha de acesso</label>
               <input
                 type="password"
                 value={accessCodeInput}
                 onChange={(e) => setAccessCodeInput(e.target.value)}
-                placeholder="CÓDIGO DE ACESSO"
-                className="w-full border border-border-hairline bg-surface-pure p-4 text-center text-sm text-text-primary focus:outline-none focus:border-primary transition-colors tracking-widest"
+                placeholder="ex.: suasenha"
+                className="w-full border border-border-hairline bg-surface-pure p-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
                 required
               />
             </div>
             <button
               type="submit"
               disabled={unlocking}
-              className="w-full bg-primary text-white py-4 text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors disabled:opacity-50"
+              className="w-full bg-[#2a3f47] text-white py-4 text-sm font-sans hover:bg-[#1a282e] transition-colors disabled:opacity-50"
             >
               {unlocking ? 'Verificando...' : 'Destravar'}
             </button>
           </form>
+        </div>
+
+        {/* Footer info (Instagram & Copyright) */}
+        <div className="mt-8 flex flex-col items-center gap-4 pb-4">
+          <a href="https://instagram.com/chromewearr" target="_blank" rel="noopener noreferrer" className="text-text-primary hover:opacity-75 transition-opacity">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+            </svg>
+          </a>
+          <p className="text-[10px] text-text-secondary">Copyright ChromeWear - 2024. Todos os direitos reservados.</p>
         </div>
       </div>
     );
