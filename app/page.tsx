@@ -366,51 +366,44 @@ export default function HomePage() {
   if (siteLocked) {
     return (
       <div className="w-full min-h-screen bg-surface-pure flex flex-col items-center justify-center p-4 text-text-primary">
-        <div className="max-w-md w-full bg-surface-pure p-8 flex flex-col items-center">
+        <div className="max-w-md w-full bg-surface-off border border-border-hairline p-8 shadow-sm flex flex-col items-center">
           <div className="mb-8 w-full flex justify-center">
             <Image
               src="/images/logo.webp"
               alt="ChromeWear"
               width={200}
               height={70}
-              className="h-12 md:h-16 w-auto object-contain"
+              className="h-10 md:h-12 w-auto object-contain"
               priority
             />
           </div>
           
-          <h1 className="font-sans text-xl mb-8 text-center text-text-primary">
+          <h1 className="font-sans text-xl font-bold mb-6 text-center text-text-primary">
             {lockMessage || 'Acesso Restrito'}
           </h1>
           
           <form onSubmit={handleUnlock} className="w-full space-y-4">
             {lockError && (
-              <div className="p-3 bg-[#ba1a1a]/10 text-[#ba1a1a] text-xs font-bold text-center border border-[#ba1a1a]/20">{lockError}</div>
+              <div className="p-3 bg-[#ba1a1a]/10 text-[#ba1a1a] text-xs font-bold uppercase text-center border border-[#ba1a1a]/20">{lockError}</div>
             )}
             <div>
-              <label className="block text-xs text-text-secondary mb-2 text-left">Senha de acesso</label>
-              <div className="relative">
-                <input
-                  type="password"
-                  value={accessCodeInput}
-                  onChange={(e) => setAccessCodeInput(e.target.value)}
-                  placeholder="ex.: suasenha"
-                  className="w-full border border-border-hairline bg-surface-pure p-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
-                  required
-                />
-              </div>
+              <input
+                type="password"
+                value={accessCodeInput}
+                onChange={(e) => setAccessCodeInput(e.target.value)}
+                placeholder="CÓDIGO DE ACESSO"
+                className="w-full border border-border-hairline bg-surface-pure p-4 text-center text-sm text-text-primary focus:outline-none focus:border-primary transition-colors tracking-widest"
+                required
+              />
             </div>
             <button
               type="submit"
               disabled={unlocking}
-              className="w-full bg-[#2a3f47] text-white py-4 text-sm font-sans hover:bg-[#1a282e] transition-colors disabled:opacity-50"
+              className="w-full bg-primary text-white py-4 text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors disabled:opacity-50"
             >
               {unlocking ? 'Verificando...' : 'Destravar'}
             </button>
           </form>
-          
-          <div className="mt-16 flex flex-col items-center opacity-60">
-            <p className="text-[10px] text-text-secondary">Copyright CHROMEWEAR - 2024. Todos os direitos reservados.</p>
-          </div>
         </div>
       </div>
     );
