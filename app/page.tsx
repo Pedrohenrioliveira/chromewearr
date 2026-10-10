@@ -396,7 +396,7 @@ export default function HomePage() {
             <button
               type="submit"
               disabled={unlocking}
-              className="w-full bg-[#2a3f47] text-white py-4 text-sm font-sans hover:bg-[#1a282e] transition-colors disabled:opacity-50"
+              className="w-full bg-black text-white py-4 text-sm font-display tracking-widest uppercase hover:opacity-80 transition-opacity disabled:opacity-50"
             >
               {unlocking ? 'Verificando...' : 'Destravar'}
             </button>
@@ -405,7 +405,7 @@ export default function HomePage() {
 
         {/* Footer info (Instagram & Copyright) */}
         <div className="mt-8 flex flex-col items-center gap-4 pb-4">
-          <a href="https://instagram.com/chromewearr" target="_blank" rel="noopener noreferrer" className="text-text-primary hover:opacity-75 transition-opacity">
+          <a href="https://www.instagram.com/chrome.wr/" target="_blank" rel="noopener noreferrer" className="text-text-primary hover:opacity-75 transition-opacity">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
               <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
