@@ -6,6 +6,7 @@ import Link from 'next/link';
 export default function SettingsPage() {
   const [isLocked, setIsLocked] = useState(false);
   const [accessCode, setAccessCode] = useState('');
+  const [lockMessage, setLockMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
@@ -16,6 +17,7 @@ export default function SettingsPage() {
       .then(data => {
         setIsLocked(data.isLocked || false);
         setAccessCode(data.accessCode || '');
+        setLockMessage(data.lockMessage || '');
       })
       .finally(() => setLoading(false));
   }, []);
@@ -29,7 +31,7 @@ export default function SettingsPage() {
       const res = await fetch('/api/admin/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isLocked, accessCode })
+        body: JSON.stringify({ isLocked, accessCode, lockMessage })
       });
       if (res.ok) {
         setMessage('Configurações salvas com sucesso!');
@@ -74,16 +76,28 @@ export default function SettingsPage() {
           </label>
 
           {isLocked && (
-            <div className="space-y-2">
-              <label className="block text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Senha de Acesso</label>
-              <input
-                type="text"
-                value={accessCode}
-                onChange={(e) => setAccessCode(e.target.value)}
-                className="w-full border border-border-hairline bg-surface-off p-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
-                placeholder="Ex: VIP2024"
-                required={isLocked}
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="block text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Frase de Boas-Vindas (Mensagem)</label>
+                <input
+                  type="text"
+                  value={lockMessage}
+                  onChange={(e) => setLockMessage(e.target.value)}
+                  className="w-full border border-border-hairline bg-surface-off p-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
+                  placeholder="Ex: Em breve..."
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Senha de Acesso</label>
+                <input
+                  type="text"
+                  value={accessCode}
+                  onChange={(e) => setAccessCode(e.target.value)}
+                  className="w-full border border-border-hairline bg-surface-off p-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
+                  placeholder="Ex: VIP2024"
+                  required={isLocked}
+                />
+              </div>
             </div>
           )}
         </div>

@@ -120,6 +120,7 @@ model SiteSetting {
   id         String   @id @default("global")
   isLocked   Boolean  @default(false)
   accessCode String?
+  lockMessage String?
   updatedAt  DateTime @updatedAt
 }
 

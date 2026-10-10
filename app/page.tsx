@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Header } from '@/components/Header';
 import { SearchBar } from '@/components/SearchBar';
 import { HeroMain, HeroCollection } from '@/components/HeroBanner';
@@ -50,6 +51,7 @@ export default function HomePage() {
   const [siteLocked, setSiteLocked] = useState(false);
   const [checkingLock, setCheckingLock] = useState(true);
   const [accessCodeInput, setAccessCodeInput] = useState('');
+  const [lockMessage, setLockMessage] = useState('');
   const [lockError, setLockError] = useState('');
   const [unlocking, setUnlocking] = useState(false);
 
@@ -61,6 +63,9 @@ export default function HomePage() {
         if (res.ok) {
           const data = await res.json();
           if (data.isLocked) {
+            if (data.lockMessage) {
+              setLockMessage(data.lockMessage);
+            }
             const savedCode = localStorage.getItem('chromewear_access_code');
             if (savedCode) {
               const verifyRes = await fetch('/api/settings/verify', {
@@ -361,32 +366,51 @@ export default function HomePage() {
   if (siteLocked) {
     return (
       <div className="w-full min-h-screen bg-surface-pure flex flex-col items-center justify-center p-4 text-text-primary">
-        <div className="max-w-md w-full bg-surface-off border border-border-hairline p-8 shadow-sm">
-          <h1 className="font-display uppercase text-2xl font-bold mb-2 text-center text-text-primary">Acesso Antecipado</h1>
-          <p className="text-sm text-text-secondary mb-8 text-center">O site está bloqueado no momento. Insira sua senha de acesso para continuar.</p>
+        <div className="max-w-md w-full bg-surface-pure p-8 flex flex-col items-center">
+          <div className="mb-8 w-full flex justify-center">
+            <Image
+              src="/images/logo.webp"
+              alt="ChromeWear"
+              width={200}
+              height={70}
+              className="h-12 md:h-16 w-auto object-contain"
+              priority
+            />
+          </div>
           
-          <form onSubmit={handleUnlock} className="space-y-4">
+          <h1 className="font-sans text-xl mb-8 text-center text-text-primary">
+            {lockMessage || 'Acesso Restrito'}
+          </h1>
+          
+          <form onSubmit={handleUnlock} className="w-full space-y-4">
             {lockError && (
-              <div className="p-3 bg-[#ba1a1a]/10 text-[#ba1a1a] text-xs font-bold uppercase text-center border border-[#ba1a1a]/20">{lockError}</div>
+              <div className="p-3 bg-[#ba1a1a]/10 text-[#ba1a1a] text-xs font-bold text-center border border-[#ba1a1a]/20">{lockError}</div>
             )}
             <div>
-              <input
-                type="password"
-                value={accessCodeInput}
-                onChange={(e) => setAccessCodeInput(e.target.value)}
-                placeholder="CÓDIGO DE ACESSO"
-                className="w-full border border-border-hairline bg-surface-pure p-4 text-center text-sm text-text-primary focus:outline-none focus:border-primary transition-colors tracking-widest"
-                required
-              />
+              <label className="block text-xs text-text-secondary mb-2 text-left">Senha de acesso</label>
+              <div className="relative">
+                <input
+                  type="password"
+                  value={accessCodeInput}
+                  onChange={(e) => setAccessCodeInput(e.target.value)}
+                  placeholder="ex.: suasenha"
+                  className="w-full border border-border-hairline bg-surface-pure p-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
+                  required
+                />
+              </div>
             </div>
             <button
               type="submit"
               disabled={unlocking}
-              className="w-full bg-primary text-white py-4 text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors disabled:opacity-50"
+              className="w-full bg-[#2a3f47] text-white py-4 text-sm font-sans hover:bg-[#1a282e] transition-colors disabled:opacity-50"
             >
-              {unlocking ? 'Verificando...' : 'Entrar'}
+              {unlocking ? 'Verificando...' : 'Destravar'}
             </button>
           </form>
+          
+          <div className="mt-16 flex flex-col items-center opacity-60">
+            <p className="text-[10px] text-text-secondary">Copyright CHROMEWEAR - 2024. Todos os direitos reservados.</p>
+          </div>
         </div>
       </div>
     );

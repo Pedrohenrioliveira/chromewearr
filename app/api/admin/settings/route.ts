@@ -8,7 +8,7 @@ export async function GET() {
     const settings = await prisma.siteSetting.findUnique({
       where: { id: 'global' }
     });
-    return NextResponse.json(settings || { isLocked: false, accessCode: '' });
+    return NextResponse.json(settings || { isLocked: false, accessCode: '', lockMessage: '' });
   } catch (error) {
     return NextResponse.json({ error: 'Erro ao buscar configurações' }, { status: 500 });
   }
@@ -16,11 +16,11 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
-    const { isLocked, accessCode } = await req.json();
+    const { isLocked, accessCode, lockMessage } = await req.json();
     const settings = await prisma.siteSetting.upsert({
       where: { id: 'global' },
-      update: { isLocked, accessCode },
-      create: { id: 'global', isLocked, accessCode }
+      update: { isLocked, accessCode, lockMessage },
+      create: { id: 'global', isLocked, accessCode, lockMessage }
     });
     return NextResponse.json(settings);
   } catch (error) {

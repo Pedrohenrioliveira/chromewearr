@@ -11,8 +11,9 @@ export async function GET() {
 
     return NextResponse.json({
       isLocked: settings?.isLocked || false,
+      lockMessage: settings?.lockMessage || '',
     });
   } catch (error) {
-    return NextResponse.json({ isLocked: false });
+    return NextResponse.json({ isLocked: false, lockMessage: '' });
   }
 }
