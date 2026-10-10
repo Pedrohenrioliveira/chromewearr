@@ -145,12 +145,13 @@ export const Header: React.FC<HeaderProps> = ({
           className="absolute left-1/2 -translate-x-1/2 flex items-center h-14"
         >
           <Image
-            src="/images/logo.webp"
+            src="/images/logo.gif"
             alt="ChromeWear"
-            width={180}
-            height={56}
-            className="h-8 md:h-14 w-auto object-contain"
+            width={120}
+            height={120}
+            className="h-10 md:h-14 w-auto object-contain"
             priority
+            unoptimized={true}
           />
         </button>
 
