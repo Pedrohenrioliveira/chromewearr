@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Hanken_Grotesk, Cinzel } from 'next/font/google';
+import Script from 'next/script';
 import './globals.css';
 
 const hanken = Hanken_Grotesk({
@@ -69,6 +70,19 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${hanken.variable} ${cinzel.variable}`}>
       <body className="bg-surface-pure text-text-primary antialiased min-h-screen flex flex-col">
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-VY5JR3X0H3"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-VY5JR3X0H3');
+          `}
+        </Script>
         <SecurityProvider />
         {children}
       </body>
