@@ -234,10 +234,10 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full md:w-auto">
           <Link
             href="/admin/users"
-            className="bg-black text-white text-xs uppercase tracking-wider font-bold py-3.5 px-5 hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-sm"
+            className="w-full sm:w-auto justify-center bg-black text-white text-xs uppercase tracking-wider font-bold py-3.5 px-5 hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-sm"
           >
             <span>Gerenciar Usuários & Sacolas</span>
             <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -245,29 +245,29 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* KPI Cards Grid (5 cards, without 30d) */}
+      {/* KPI Cards Grid (5 cards, balanced on mobile) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
-        <div className="bg-surface-pure border border-border-hairline p-5 shadow-sm">
+        <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm">
           <h2 className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold mb-1">Produtos</h2>
           <p className="text-2xl md:text-3xl font-display font-bold">{stats.products}</p>
         </div>
 
-        <div className="bg-surface-pure border border-border-hairline p-5 shadow-sm">
+        <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm">
           <h2 className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold mb-1">Categorias</h2>
           <p className="text-2xl md:text-3xl font-display font-bold">{stats.categories}</p>
         </div>
 
-        <div className="bg-surface-pure border border-border-hairline p-5 shadow-sm">
+        <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm">
           <h2 className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold mb-1">Clientes Loja</h2>
           <p className="text-2xl md:text-3xl font-display font-bold text-text-primary">{tabCounts.customers}</p>
         </div>
 
-        <div className="bg-surface-pure border border-border-hairline p-5 shadow-sm">
+        <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm">
           <h2 className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold mb-1">Carrinhos Ativos</h2>
           <p className="text-2xl md:text-3xl font-display font-bold text-text-primary">{tabCounts.withCart}</p>
         </div>
 
-        <div className="bg-surface-pure border border-border-hairline p-5 shadow-sm">
+        <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm col-span-2 sm:col-span-1">
           <h2 className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold mb-1">Staff / Admins</h2>
           <p className="text-2xl md:text-3xl font-display font-bold text-text-primary">{stats.users || 0}</p>
         </div>
@@ -309,7 +309,7 @@ export default function AdminDashboard() {
           </Link>
           <Link
             href="/admin/categories"
-            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary"
+            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary col-span-2 sm:col-span-1"
           >
             <span className="material-symbols-outlined text-base text-text-secondary">sell</span>
             <span>Categorias</span>
@@ -320,7 +320,7 @@ export default function AdminDashboard() {
       {/* ========================================================================= */}
       {/* SEÇÃO: ATIVIDADE DOS CLIENTES NO SITE (GOOGLE ICONS, SEM EMOJIS, SEM 30D) */}
       {/* ========================================================================= */}
-      <div className="bg-surface-pure border border-border-hairline p-6 shadow-sm space-y-6">
+      <div className="bg-surface-pure border border-border-hairline p-4 sm:p-6 shadow-sm space-y-6">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border-hairline pb-4">
           <div>
@@ -337,20 +337,20 @@ export default function AdminDashboard() {
 
           <Link
             href="/admin/users"
-            className="text-xs uppercase font-bold tracking-wider text-text-secondary hover:text-text-primary flex items-center gap-1"
+            className="text-xs uppercase font-bold tracking-wider text-text-secondary hover:text-text-primary flex items-center gap-1 self-start md:self-auto"
           >
             <span>Ver tabela completa em Usuários</span>
             <span className="material-symbols-outlined text-sm">arrow_forward</span>
           </Link>
         </div>
 
-        {/* Filter Tabs & Search Bar (no 30d tab) */}
+        {/* Filter Tabs & Search Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Tabs */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Tabs: horizontal swipe on mobile, wrap on desktop */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap no-scrollbar">
             <button
               onClick={() => setActiveTab('ALL')}
-              className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors ${
+              className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'ALL'
                   ? 'bg-black text-white border-black'
                   : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
@@ -360,7 +360,7 @@ export default function AdminDashboard() {
             </button>
             <button
               onClick={() => setActiveTab('WITH_CART')}
-              className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors ${
+              className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'WITH_CART'
                   ? 'bg-black text-white border-black'
                   : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
@@ -370,7 +370,7 @@ export default function AdminDashboard() {
             </button>
             <button
               onClick={() => setActiveTab('WITH_ORDERS')}
-              className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors ${
+              className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'WITH_ORDERS'
                   ? 'bg-black text-white border-black'
                   : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
@@ -380,7 +380,7 @@ export default function AdminDashboard() {
             </button>
             <button
               onClick={() => setActiveTab('CUSTOMERS')}
-              className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors ${
+              className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'CUSTOMERS'
                   ? 'bg-black text-white border-black'
                   : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
@@ -389,6 +389,7 @@ export default function AdminDashboard() {
               Clientes Loja ({tabCounts.customers})
             </button>
           </div>
+
 
           {/* Search Input */}
           <div className="relative w-full md:w-72">
@@ -407,10 +408,7 @@ export default function AdminDashboard() {
                 &times;
               </button>
             )}
-          </div>
-        </div>
-
-        {/* Client Activity Table */}
+          </d        {/* Client Activity Table & Mobile Cards */}
         {filteredUsers.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-border-hairline bg-surface-off/50">
             <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">
@@ -418,160 +416,283 @@ export default function AdminDashboard() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto border border-border-hairline">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-border-hairline bg-surface-off text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                  <th className="p-3.5">Cliente</th>
-                  <th className="p-3.5">Criação da Conta</th>
-                  <th className="p-3.5">Tempo de Atividade</th>
-                  <th className="p-3.5">Compras</th>
-                  <th className="p-3.5">Produtos no Carrinho</th>
-                  <th className="p-3.5 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-hairline text-xs">
-                {filteredUsers.slice(0, 30).map((user) => {
-                  const cart = getParsedCart(user.cartData);
-                  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                  const timeInfo = getTimeInCart(cart[0]?.addedAt, user.updatedAt);
-                  const accountAge = getAccountAge(user.createdAt);
-                  const activityStatus = getActivityStatus(user.updatedAt);
-                  const cleanPhone = getCleanPhone(user.phone);
+          <>
+            {/* MOBILE CLIENT ACTIVITY CARDS (Visible only on mobile screens < md) */}
+            <div className="block md:hidden space-y-3">
+              {filteredUsers.slice(0, 30).map((user) => {
+                const cart = getParsedCart(user.cartData);
+                const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                const timeInfo = getTimeInCart(cart[0]?.addedAt, user.updatedAt);
+                const accountAge = getAccountAge(user.createdAt);
+                const activityStatus = getActivityStatus(user.updatedAt);
+                const cleanPhone = getCleanPhone(user.phone);
+                const totalSpent = (user.orders || []).reduce((acc, order) => acc + (order.totalPrice || 0), 0);
 
-                  // Calculate total spent in purchases
-                  const totalSpent = (user.orders || []).reduce((acc, order) => acc + (order.totalPrice || 0), 0);
-
-                  return (
-                    <tr key={user.id} className="hover:bg-surface-off/40 transition-colors">
-                      {/* Cliente Info */}
-                      <td className="p-3.5">
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-surface-container border border-border-hairline flex items-center justify-center font-bold text-xs uppercase text-text-primary flex-shrink-0">
-                            {user.name ? user.name.charAt(0) : 'U'}
-                          </div>
-                          <div>
-                            <span className="font-bold text-text-primary block">{user.name}</span>
-                            <span className="text-[11px] text-text-secondary font-mono block">{user.email}</span>
-                            {user.phone ? (
-                              <span className="text-[10px] text-text-secondary flex items-center gap-1 mt-0.5 font-mono">
-                                <span className="material-symbols-outlined text-[12px] text-text-secondary">call</span>
-                                {user.phone}
-                              </span>
-                            ) : (
-                              <span className="text-[10px] text-neutral-400 block mt-0.5">Sem telefone</span>
-                            )}
-                          </div>
+                return (
+                  <div key={user.id} className="border border-border-hairline bg-surface-pure p-4 space-y-3 shadow-sm">
+                    {/* Header: Avatar, Name, Activity badge */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 bg-surface-container border border-border-hairline flex items-center justify-center font-bold text-xs uppercase text-text-primary flex-shrink-0">
+                          {user.name ? user.name.charAt(0) : 'U'}
                         </div>
-                      </td>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-xs text-text-primary truncate">{user.name}</p>
+                          <p className="text-[11px] text-text-secondary truncate">{user.email}</p>
+                        </div>
+                      </div>
+                      <span
+                        className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 border flex-shrink-0 bg-surface-off text-text-secondary border-border-hairline font-mono"
+                      >
+                        {activityStatus.label}
+                      </span>
+                    </div>
 
-                      {/* Criação da Conta */}
-                      <td className="p-3.5 whitespace-nowrap">
-                        <span className="font-semibold text-text-primary block">{accountAge.date}</span>
-                        <span className="text-[11px] text-text-secondary block font-mono">{accountAge.label}</span>
-                      </td>
+                    {/* Account meta & WhatsApp */}
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-border-hairline/60">
+                      <span className="text-[10px] text-text-secondary font-mono">
+                        Criado {accountAge.date} ({accountAge.label})
+                      </span>
+                      {cleanPhone ? (
+                        <a
+                          href={`https://wa.me/${cleanPhone}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[10px] uppercase font-bold text-text-primary hover:text-black flex items-center gap-1 border border-border-hairline bg-surface-off px-2 py-0.5"
+                        >
+                          <span className="material-symbols-outlined text-[12px]">chat</span>
+                          <span>WhatsApp</span>
+                        </a>
+                      ) : (
+                        <span className="text-[10px] text-neutral-400 font-mono">Sem tel</span>
+                      )}
+                    </div>
 
-                      {/* Tempo de Atividade */}
-                      <td className="p-3.5 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 border border-border-hairline bg-surface-off text-text-secondary">
-                          <span className="material-symbols-outlined text-[12px]">schedule</span>
-                          {activityStatus.label}
-                        </span>
-                        <span className="text-[10px] text-text-secondary font-mono block mt-1">
-                          Último update: {new Date(user.updatedAt).toLocaleDateString('pt-BR')}
-                        </span>
-                      </td>
-
-                      {/* Quantidade de Compras */}
-                      <td className="p-3.5 whitespace-nowrap">
-                        {user.ordersCount > 0 ? (
-                          <div>
-                            <span className="font-bold text-text-primary text-xs flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[14px]">shopping_bag</span>
-                              {user.ordersCount} {user.ordersCount === 1 ? 'compra' : 'compras'}
+                    {/* Cart Section */}
+                    {cart.length > 0 ? (
+                      <div className="bg-surface-off border border-border-hairline p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-[13px]">shopping_bag</span>
+                            <span className="text-xs font-bold text-text-primary">
+                              {cart.length} {cart.length === 1 ? 'item' : 'itens'}
                             </span>
-                            <span className="text-[11px] text-text-secondary font-mono block mt-0.5">
-                              Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalSpent)}
+                            <span className="text-xs font-mono font-bold text-text-primary">
+                              ({new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cartTotal)})
                             </span>
                           </div>
-                        ) : (
-                          <span className="text-[11px] text-text-secondary">Nenhuma compra</span>
-                        )}
-                      </td>
+                          <span className="text-[10px] font-mono text-text-secondary">
+                            Há {timeInfo.label}
+                          </span>
+                        </div>
 
-                      {/* Produtos no Carrinho */}
-                      <td className="p-3.5">
-                        {cart.length > 0 ? (
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-xs text-text-primary flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[14px]">shopping_cart</span>
-                                {cart.length} {cart.length === 1 ? 'item' : 'itens'}
-                              </span>
-                              <span className="text-[11px] text-text-secondary font-mono font-bold">
-                                ({new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cartTotal)})
-                              </span>
-                            </div>
+                        <p className="text-[11px] text-text-secondary font-mono truncate">
+                          {cart.map((i) => i.name).join(', ')}
+                        </p>
 
-                            {/* Clean time in cart counter */}
-                            <span className="text-[10px] font-mono text-text-secondary uppercase block">
-                              No carrinho há {timeInfo.label}
-                            </span>
-
-                            {/* Products teaser */}
-                            <p className="text-[11px] text-text-secondary line-clamp-1 max-w-xs font-mono">
-                              {cart.map((i) => i.name).join(', ')}
-                            </p>
-                          </div>
-                        ) : (
-                          <span className="text-[11px] text-neutral-400">Carrinho vazio</span>
-                        )}
-                      </td>
-
-                      {/* Ações */}
-                      <td className="p-3.5 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-2">
-                          {cart.length > 0 && (
-                            <button
-                              onClick={() => setViewingCartUser(user)}
-                              className="text-[10px] uppercase font-bold px-2.5 py-1.5 bg-surface-pure border border-border-hairline hover:border-primary transition-colors text-text-primary flex items-center gap-1"
-                              title="Ver produtos salvos no carrinho"
-                            >
-                              <span className="material-symbols-outlined text-[13px]">visibility</span>
-                              <span>Ver Carrinho</span>
-                            </button>
-                          )}
-
-                          {cleanPhone ? (
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            onClick={() => setViewingCartUser(user)}
+                            className="flex-1 text-[11px] uppercase font-bold py-2 px-3 bg-surface-pure border border-border-hairline hover:border-primary transition-colors text-text-primary flex items-center justify-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">visibility</span>
+                            <span>Ver Carrinho</span>
+                          </button>
+                          {cleanPhone && (
                             <a
                               href={`https://wa.me/${cleanPhone}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-[10px] uppercase font-bold px-2.5 py-1.5 bg-black hover:bg-neutral-800 text-white transition-colors flex items-center gap-1"
-                              title="Chamar no WhatsApp"
+                              className="flex-1 text-[11px] uppercase font-bold py-2 px-3 bg-black text-white hover:bg-neutral-800 transition-colors flex items-center justify-center gap-1"
                             >
                               <span className="material-symbols-outlined text-[13px]">chat</span>
                               <span>WhatsApp</span>
                             </a>
-                          ) : (
-                            <span className="text-[10px] text-neutral-400 px-2 py-1.5">Sem WhatsApp</span>
                           )}
-
-                          <Link
-                            href={`/admin/users?search=${encodeURIComponent(user.email)}`}
-                            className="text-[10px] uppercase font-bold px-2 py-1.5 text-text-secondary hover:text-text-primary underline"
-                            title="Gerenciar cadastro completo"
-                          >
-                            Gerenciar
-                          </Link>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between text-[11px] text-text-secondary pt-1">
+                        <span>Carrinho: Vazio</span>
+                        <span>
+                          {user.ordersCount > 0
+                            ? `${user.ordersCount} ${user.ordersCount === 1 ? 'compra' : 'compras'} (${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalSpent)})`
+                            : 'Nenhuma compra'}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Bottom Actions for Mobile */}
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-hairline">
+                      <Link
+                        href={`/admin/users?search=${encodeURIComponent(user.email)}`}
+                        className="text-xs uppercase font-bold tracking-wider text-text-secondary hover:text-text-primary underline flex items-center gap-1"
+                      >
+                        <span>Gerenciar Cadastro Completo</span>
+                        <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* DESKTOP CLIENT ACTIVITY TABLE (Hidden on mobile, 100% UNCHANGED for PC!) */}
+            <div className="hidden md:block overflow-x-auto border border-border-hairline">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border-hairline bg-surface-off text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                    <th className="p-3.5">Cliente</th>
+                    <th className="p-3.5">Criação da Conta</th>
+                    <th className="p-3.5">Tempo de Atividade</th>
+                    <th className="p-3.5">Compras</th>
+                    <th className="p-3.5">Produtos no Carrinho</th>
+                    <th className="p-3.5 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-hairline text-xs">
+                  {filteredUsers.slice(0, 30).map((user) => {
+                    const cart = getParsedCart(user.cartData);
+                    const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                    const timeInfo = getTimeInCart(cart[0]?.addedAt, user.updatedAt);
+                    const accountAge = getAccountAge(user.createdAt);
+                    const activityStatus = getActivityStatus(user.updatedAt);
+                    const cleanPhone = getCleanPhone(user.phone);
+
+                    // Calculate total spent in purchases
+                    const totalSpent = (user.orders || []).reduce((acc, order) => acc + (order.totalPrice || 0), 0);
+
+                    return (
+                      <tr key={user.id} className="hover:bg-surface-off/40 transition-colors">
+                        {/* Cliente Info */}
+                        <td className="p-3.5">
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-surface-container border border-border-hairline flex items-center justify-center font-bold text-xs uppercase text-text-primary flex-shrink-0">
+                              {user.name ? user.name.charAt(0) : 'U'}
+                            </div>
+                            <div>
+                              <span className="font-bold text-text-primary block">{user.name}</span>
+                              <span className="text-[11px] text-text-secondary font-mono block">{user.email}</span>
+                              {user.phone ? (
+                                <span className="text-[10px] text-text-secondary flex items-center gap-1 mt-0.5 font-mono">
+                                  <span className="material-symbols-outlined text-[12px] text-text-secondary">call</span>
+                                  {user.phone}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-neutral-400 block mt-0.5">Sem telefone</span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Criação da Conta */}
+                        <td className="p-3.5 whitespace-nowrap">
+                          <span className="font-semibold text-text-primary block">{accountAge.date}</span>
+                          <span className="text-[11px] text-text-secondary block font-mono">{accountAge.label}</span>
+                        </td>
+
+                        {/* Tempo de Atividade */}
+                        <td className="p-3.5 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 border border-border-hairline bg-surface-off text-text-secondary">
+                            <span className="material-symbols-outlined text-[12px]">schedule</span>
+                            {activityStatus.label}
+                          </span>
+                          <span className="text-[10px] text-text-secondary font-mono block mt-1">
+                            Último update: {new Date(user.updatedAt).toLocaleDateString('pt-BR')}
+                          </span>
+                        </td>
+
+                        {/* Quantidade de Compras */}
+                        <td className="p-3.5 whitespace-nowrap">
+                          {user.ordersCount > 0 ? (
+                            <div>
+                              <span className="font-bold text-text-primary text-xs flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[14px]">shopping_bag</span>
+                                {user.ordersCount} {user.ordersCount === 1 ? 'compra' : 'compras'}
+                              </span>
+                              <span className="text-[11px] text-text-secondary font-mono block mt-0.5">
+                                Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalSpent)}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-text-secondary">Nenhuma compra</span>
+                          )}
+                        </td>
+
+                        {/* Produtos no Carrinho */}
+                        <td className="p-3.5">
+                          {cart.length > 0 ? (
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-xs text-text-primary flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[14px]">shopping_cart</span>
+                                  {cart.length} {cart.length === 1 ? 'item' : 'itens'}
+                                </span>
+                                <span className="text-[11px] text-text-secondary font-mono font-bold">
+                                  ({new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cartTotal)})
+                                </span>
+                              </div>
+
+                              {/* Clean time in cart counter */}
+                              <span className="text-[10px] font-mono text-text-secondary uppercase block">
+                                No carrinho há {timeInfo.label}
+                              </span>
+
+                              {/* Products teaser */}
+                              <p className="text-[11px] text-text-secondary line-clamp-1 max-w-xs font-mono">
+                                {cart.map((i) => i.name).join(', ')}
+                              </p>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-neutral-400">Carrinho vazio</span>
+                          )}
+                        </td>
+
+                        {/* Ações */}
+                        <td className="p-3.5 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-2">
+                            {cart.length > 0 && (
+                              <button
+                                onClick={() => setViewingCartUser(user)}
+                                className="text-[10px] uppercase font-bold px-2.5 py-1.5 bg-surface-pure border border-border-hairline hover:border-primary transition-colors text-text-primary flex items-center gap-1"
+                                title="Ver produtos salvos no carrinho"
+                              >
+                                <span className="material-symbols-outlined text-[13px]">visibility</span>
+                                <span>Ver Carrinho</span>
+                              </button>
+                            )}
+
+                            {cleanPhone ? (
+                              <a
+                                href={`https://wa.me/${cleanPhone}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[10px] uppercase font-bold px-2.5 py-1.5 bg-black hover:bg-neutral-800 text-white transition-colors flex items-center gap-1"
+                                title="Chamar no WhatsApp"
+                              >
+                                <span className="material-symbols-outlined text-[13px]">chat</span>
+                                <span>WhatsApp</span>
+                              </a>
+                            ) : (
+                              <span className="text-[10px] text-neutral-400 px-2 py-1.5">Sem WhatsApp</span>
+                            )}
+
+                            <Link
+                              href={`/admin/users?search=${encodeURIComponent(user.email)}`}
+                              className="text-[10px] uppercase font-bold px-2.5 py-1.5 text-text-secondary hover:text-text-primary underline"
+                              title="Gerenciar cadastro completo"
+                            >
+                              Gerenciar
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {filteredUsers.length > 30 && (
@@ -590,13 +711,13 @@ export default function AdminDashboard() {
       {/* QUICK CART PREVIEW MODAL */}
       {/* ========================================================================= */}
       {viewingCartUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => setViewingCartUser(null)}
           />
 
-          <div className="relative w-full max-w-xl bg-surface-pure border border-border-hairline shadow-2xl p-6 md:p-8 max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-xl bg-surface-pure border border-border-hairline shadow-2xl p-4 sm:p-6 md:p-8 max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-border-hairline pb-4 mb-5">
               <div>
@@ -674,18 +795,18 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center justify-end gap-3 pt-3 border-t border-border-hairline">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-3 border-t border-border-hairline">
                     <button
                       type="button"
                       onClick={() => setViewingCartUser(null)}
-                      className="border border-border-hairline bg-surface-off py-2.5 px-4 text-xs uppercase tracking-wider font-semibold hover:bg-surface-container transition-colors"
+                      className="w-full sm:w-auto border border-border-hairline bg-surface-off py-2.5 px-4 text-xs uppercase tracking-wider font-semibold hover:bg-surface-container transition-colors text-center"
                     >
                       Fechar
                     </button>
 
                     <Link
                       href={`/admin/users?search=${encodeURIComponent(viewingCartUser.email)}`}
-                      className="bg-black text-white py-2.5 px-5 text-xs uppercase tracking-wider font-bold hover:bg-neutral-800 transition-colors flex items-center gap-1.5"
+                      className="w-full sm:w-auto bg-black text-white py-2.5 px-5 text-xs uppercase tracking-wider font-bold hover:bg-neutral-800 transition-colors flex items-center justify-center gap-1.5 text-center"
                     >
                       <span>Abrir Recuperação em Usuários &rarr;</span>
                     </Link>

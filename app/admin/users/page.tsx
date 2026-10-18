@@ -567,13 +567,13 @@ export default function UsersAdmin() {
             Veja dados cadastrados, histórico de compras, itens salvos na sacola com tempo decorrido, recuperação via WhatsApp e envio automático por e-mail (Gmail/Hostinger) para itens parados há 30 dias.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto">
           <button
             onClick={() => {
               setIsTestModalOpen(true);
               setTestResult(null);
             }}
-            className="bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold py-3.5 px-4 hover:border-primary transition-colors flex items-center gap-2 shadow-sm"
+            className="w-full sm:w-auto justify-center bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold py-3.5 px-4 hover:border-primary transition-colors flex items-center gap-2 shadow-sm"
             title="Enviar e-mail de teste agora para verificar no Gmail"
           >
             <span className="material-symbols-outlined text-base text-text-secondary">mail</span>
@@ -582,7 +582,7 @@ export default function UsersAdmin() {
 
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="bg-primary text-white text-xs uppercase tracking-wider font-bold py-3.5 px-6 hover:bg-black transition-colors flex items-center gap-2 shadow-sm"
+            className="w-full sm:w-auto justify-center bg-primary text-white text-xs uppercase tracking-wider font-bold py-3.5 px-6 hover:bg-black transition-colors flex items-center gap-2 shadow-sm"
           >
             <span className="material-symbols-outlined text-base">person_add</span>
             <span>Novo Usuário / Vendedor</span>
@@ -637,11 +637,11 @@ export default function UsersAdmin() {
 
       {/* Toolbar: Filters and Search */}
       <div className="bg-surface-pure border border-border-hairline p-4 shadow-sm mb-6 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
-        {/* Role Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        {/* Role Tabs: horizontal scroll on mobile, flex wrap on desktop */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap no-scrollbar">
           <button
             onClick={() => setRoleFilter('ALL')}
-            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors ${
+            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
               roleFilter === 'ALL'
                 ? 'bg-primary text-white'
                 : 'bg-surface-off text-text-secondary hover:text-text-primary border border-border-hairline'
@@ -651,7 +651,7 @@ export default function UsersAdmin() {
           </button>
           <button
             onClick={() => setRoleFilter('HAS_CART')}
-            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors flex items-center gap-1.5 ${
+            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 ${
               roleFilter === 'HAS_CART'
                 ? 'bg-primary text-white'
                 : 'bg-surface-off text-text-secondary hover:text-text-primary border border-border-hairline'
@@ -662,7 +662,7 @@ export default function UsersAdmin() {
           </button>
           <button
             onClick={() => setRoleFilter('USER')}
-            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors ${
+            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
               roleFilter === 'USER'
                 ? 'bg-primary text-white'
                 : 'bg-surface-off text-text-secondary hover:text-text-primary border border-border-hairline'
@@ -672,7 +672,7 @@ export default function UsersAdmin() {
           </button>
           <button
             onClick={() => setRoleFilter('VENDOR')}
-            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors ${
+            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
               roleFilter === 'VENDOR'
                 ? 'bg-primary text-white'
                 : 'bg-surface-off text-text-secondary hover:text-text-primary border border-border-hairline'
@@ -682,7 +682,7 @@ export default function UsersAdmin() {
           </button>
           <button
             onClick={() => setRoleFilter('ADMIN')}
-            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors ${
+            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
               roleFilter === 'ADMIN'
                 ? 'bg-primary text-white'
                 : 'bg-surface-off text-text-secondary hover:text-text-primary border border-border-hairline'
@@ -698,7 +698,7 @@ export default function UsersAdmin() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="border border-border-hairline bg-surface-off p-2.5 text-xs text-text-primary focus:outline-none focus:border-primary uppercase tracking-wider font-semibold"
+            className="border border-border-hairline bg-surface-off p-2.5 text-xs text-text-primary focus:outline-none focus:border-primary uppercase tracking-wider font-semibold w-full sm:w-auto"
           >
             <option value="ALL">Status: Todos</option>
             <option value="VERIFIED">Apenas Verificados</option>
@@ -706,13 +706,13 @@ export default function UsersAdmin() {
           </select>
 
           {/* Search Input */}
-          <div className="relative min-w-[240px] sm:w-72">
+          <div className="relative w-full sm:w-72">
             <input
               type="text"
               placeholder="Buscar por nome, e-mail, telefone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full border border-border-hairline bg-surface-off p-2.5 pl-9 text-xs text-text-primary focus:outline-none focus:border-primary placeholder:text-text-secondary/60"
+              className="w-full border border-border-hairline bg-surface-off p-2.5 pl-9 text-sm sm:text-xs text-text-primary focus:outline-none focus:border-primary placeholder:text-text-secondary/60"
             />
             <svg
               className="w-4 h-4 text-text-secondary absolute left-3 top-1/2 -translate-y-1/2"
@@ -735,7 +735,7 @@ export default function UsersAdmin() {
           <button
             onClick={fetchUsers}
             title="Recarregar lista"
-            className="p-2.5 border border-border-hairline bg-surface-off hover:bg-surface-container text-text-secondary hover:text-text-primary transition-colors flex items-center justify-center"
+            className="p-2.5 border border-border-hairline bg-surface-off hover:bg-surface-container text-text-secondary hover:text-text-primary transition-colors flex items-center justify-center self-end sm:self-auto"
           >
             <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -744,8 +744,158 @@ export default function UsersAdmin() {
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="bg-surface-pure border border-border-hairline shadow-sm overflow-x-auto">
+      {/* Mobile User Cards List (Shown only on small/medium mobile screens < md) */}
+      <div className="block md:hidden space-y-3">
+        {loading ? (
+          <div className="p-8 text-center bg-surface-pure border border-border-hairline text-text-secondary animate-pulse uppercase tracking-wider font-semibold text-xs">
+            Carregando lista de usuários...
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="p-8 text-center bg-surface-pure border border-border-hairline text-text-secondary text-xs">
+            Nenhum usuário encontrado com os filtros selecionados.
+          </div>
+        ) : (
+          filteredUsers.map((u) => {
+            const isMainAdmin = u.email === 'admin@chromewear.com';
+            const cart = getParsedCart(u.cartData);
+            const hasCart = cart.length > 0;
+            const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const timeInfo = hasCart ? getTimeInCart(cart[0]?.addedAt, u.updatedAt) : null;
+            const cleanPhone = getCleanPhone(u.phone);
+
+            return (
+              <div key={u.id} className="bg-surface-pure border border-border-hairline p-4 shadow-sm space-y-3">
+                {/* Header row: Avatar, Name, Role */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 bg-surface-container border border-border-hairline flex items-center justify-center font-display font-bold text-sm uppercase text-primary flex-shrink-0">
+                      {u.name ? u.name.charAt(0) : 'U'}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="font-semibold text-text-primary text-sm truncate">{u.name}</p>
+                        {isMainAdmin && (
+                          <span className="text-[9px] bg-black text-white px-1.5 py-0.5 uppercase tracking-widest font-bold">
+                            Root
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-text-secondary truncate">{u.email}</p>
+                    </div>
+                  </div>
+                  <span
+                    className={`text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 flex-shrink-0 ${
+                      u.role === 'ADMIN'
+                        ? 'bg-black text-white'
+                        : u.role === 'VENDOR'
+                        ? 'bg-surface-off text-text-primary border border-border-hairline'
+                        : 'bg-surface-container text-text-primary border border-border-hairline'
+                    }`}
+                  >
+                    {u.role === 'ADMIN' ? 'Admin' : u.role === 'VENDOR' ? 'Vendedor' : 'Cliente'}
+                  </span>
+                </div>
+
+                {/* Contact & Status line */}
+                <div className="flex items-center justify-between text-xs pt-1 border-t border-border-hairline/60">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-text-secondary font-mono">
+                      {formatPhone(u.phone)}
+                    </span>
+                    {cleanPhone && (
+                      <a
+                        href={`https://wa.me/${cleanPhone}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-text-primary hover:text-black font-bold uppercase tracking-wider flex items-center gap-1 border border-border-hairline bg-surface-off px-1.5 py-0.5"
+                        title="Abrir WhatsApp"
+                      >
+                        <span className="material-symbols-outlined text-[12px]">chat</span>
+                        <span>WhatsApp</span>
+                      </a>
+                    )}
+                  </div>
+
+                  {u.isVerified ? (
+                    <span className="inline-flex items-center gap-1 text-[9px] uppercase font-mono font-bold text-text-primary">
+                      <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                      Verificado
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[9px] uppercase font-mono font-bold text-text-secondary">
+                      <span className="material-symbols-outlined text-[13px]">pending</span>
+                      Pendente
+                    </span>
+                  )}
+                </div>
+
+                {/* Cart Section if has cart */}
+                {hasCart ? (
+                  <div className="p-3 bg-surface-off border border-border-hairline space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[14px]">shopping_bag</span>
+                        <span className="text-xs font-bold text-text-primary">
+                          {cart.length} {cart.length === 1 ? 'item salvo' : 'itens salvos'}
+                        </span>
+                        <span className="text-xs font-mono font-bold text-text-primary">
+                          ({new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cartTotal)})
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-text-secondary">
+                        Há {timeInfo?.label}
+                      </span>
+                    </div>
+
+                    <div className="text-[11px] text-text-secondary font-mono truncate">
+                      {cart.map((i) => `${i.name} (${i.size})`).join(', ')}
+                    </div>
+
+                    <button
+                      onClick={() => setCartModalUser(u)}
+                      className="w-full bg-black hover:bg-neutral-800 text-white text-xs uppercase tracking-wider font-bold py-2.5 px-3 flex items-center justify-center gap-2 transition-colors shadow-sm"
+                    >
+                      <span className="material-symbols-outlined text-sm">chat</span>
+                      <span>Recuperar Carrinho via WhatsApp</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between text-[11px] text-text-secondary pt-1">
+                    <span>Carrinho: Vazio</span>
+                    <span>
+                      {u.ordersCount > 0 ? `${u.ordersCount} ${u.ordersCount === 1 ? 'pedido' : 'pedidos'}` : 'Sem compras'}
+                    </span>
+                  </div>
+                )}
+
+                {/* Bottom Actions for Mobile */}
+                <div className="flex items-center gap-2 pt-2 border-t border-border-hairline">
+                  <button
+                    onClick={() => handleOpenEdit(u)}
+                    className="flex-1 bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold py-2.5 px-3 hover:bg-primary hover:text-white transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-sm">edit</span>
+                    <span>Editar</span>
+                  </button>
+
+                  {!isMainAdmin && (
+                    <button
+                      onClick={() => handleDelete(u.id, u.email)}
+                      className="text-[#ba1a1a] hover:bg-[#ba1a1a]/10 border border-border-hairline text-xs uppercase tracking-wider font-bold py-2.5 px-3 transition-colors flex items-center justify-center"
+                      title="Excluir Usuário"
+                    >
+                      <span className="material-symbols-outlined text-sm">delete</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop Users Table (Unchanged for PC!) */}
+      <div className="hidden md:block bg-surface-pure border border-border-hairline shadow-sm overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead className="bg-surface-off border-b border-border-hairline">
             <tr>
@@ -944,13 +1094,13 @@ export default function UsersAdmin() {
 
       {/* ================= CART RECOVERY MODAL ================= */}
       {cartModalUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => setCartModalUser(null)}
           />
 
-          <div className="relative w-full max-w-3xl bg-surface-pure border border-border-hairline shadow-2xl p-6 md:p-8 max-h-[92vh] overflow-y-auto">
+          <div className="relative w-full max-w-3xl bg-surface-pure border border-border-hairline shadow-2xl p-4 sm:p-6 md:p-8 max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-border-hairline pb-4 mb-6">
               <div>
@@ -1157,13 +1307,13 @@ export default function UsersAdmin() {
 
       {/* ================= EDIT USER MODAL ================= */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => !editLoading && setEditingUser(null)}
           />
 
-          <div className="relative w-full max-w-2xl bg-surface-pure border border-border-hairline shadow-2xl p-6 md:p-8 max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-surface-pure border border-border-hairline shadow-2xl p-4 sm:p-6 md:p-8 max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-border-hairline pb-4 mb-6">
               <div>
@@ -1429,19 +1579,19 @@ export default function UsersAdmin() {
               )}
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border-hairline">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-border-hairline">
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
                   disabled={editLoading}
-                  className="border border-border-hairline bg-surface-off py-3 px-6 text-xs uppercase tracking-wider font-semibold hover:bg-surface-container transition-colors"
+                  className="w-full sm:w-auto border border-border-hairline bg-surface-off py-3 px-6 text-xs uppercase tracking-wider font-semibold hover:bg-surface-container transition-colors text-center justify-center flex items-center"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={editLoading}
-                  className="bg-primary text-white py-3 px-8 text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="w-full sm:w-auto bg-primary text-white py-3 px-8 text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {editLoading && (
                     <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1458,13 +1608,13 @@ export default function UsersAdmin() {
 
       {/* ================= CREATE USER MODAL ================= */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => !createLoading && setIsCreateModalOpen(false)}
           />
 
-          <div className="relative w-full max-w-xl bg-surface-pure border border-border-hairline shadow-2xl p-6 md:p-8 max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-xl bg-surface-pure border border-border-hairline shadow-2xl p-4 sm:p-6 md:p-8 max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-border-hairline pb-4 mb-6">
               <div>
@@ -1590,19 +1740,19 @@ export default function UsersAdmin() {
                 </label>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-6 border-t border-border-hairline">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-6 border-t border-border-hairline">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
                   disabled={createLoading}
-                  className="border border-border-hairline bg-surface-off py-3 px-6 text-xs uppercase tracking-wider font-semibold hover:bg-surface-container transition-colors"
+                  className="w-full sm:w-auto border border-border-hairline bg-surface-off py-3 px-6 text-xs uppercase tracking-wider font-semibold hover:bg-surface-container transition-colors text-center justify-center flex items-center"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={createLoading}
-                  className="bg-primary text-white py-3 px-8 text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="w-full sm:w-auto bg-primary text-white py-3 px-8 text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {createLoading && (
                     <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1619,13 +1769,13 @@ export default function UsersAdmin() {
 
       {/* ================= TEST EMAIL MODAL ================= */}
       {isTestModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => !testSendingLoading && setIsTestModalOpen(false)}
           />
 
-          <div className="relative w-full max-w-lg bg-surface-pure border border-border-hairline shadow-2xl p-6 md:p-8 max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-lg bg-surface-pure border border-border-hairline shadow-2xl p-4 sm:p-6 md:p-8 max-h-[92vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-start justify-between border-b border-border-hairline pb-4 mb-5">
               <div>
@@ -1743,12 +1893,12 @@ export default function UsersAdmin() {
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-border-hairline">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-border-hairline">
               <button
                 type="button"
                 onClick={() => setIsTestModalOpen(false)}
                 disabled={testSendingLoading}
-                className="border border-border-hairline bg-surface-off py-3 px-5 text-xs uppercase tracking-wider font-semibold hover:bg-surface-container transition-colors"
+                className="w-full sm:w-auto border border-border-hairline bg-surface-off py-3 px-5 text-xs uppercase tracking-wider font-semibold hover:bg-surface-container transition-colors text-center justify-center flex items-center"
               >
                 Fechar
               </button>
@@ -1756,7 +1906,7 @@ export default function UsersAdmin() {
                 type="button"
                 onClick={handleExecuteTestSend}
                 disabled={testSendingLoading}
-                className="bg-black text-white py-3 px-6 text-xs uppercase tracking-wider font-bold hover:bg-neutral-800 transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="w-full sm:w-auto bg-black text-white py-3 px-6 text-xs uppercase tracking-wider font-bold hover:bg-neutral-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {testSendingLoading && (
                   <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
