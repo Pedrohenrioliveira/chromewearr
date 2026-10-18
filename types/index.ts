@@ -51,7 +51,21 @@ export interface User {
   id?: string;
   name: string;
   email: string;
+  phone?: string | null;
+  role?: 'USER' | 'VENDOR' | 'ADMIN';
+  isVerified?: boolean;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  ordersCount?: number;
+  orders?: Array<{
+    id: string;
+    totalPrice: number;
+    status: string;
+    createdAt: string | Date;
+  }>;
+  cartData?: any;
 }
 
 export type ModalType = 'sobre' | 'contato' | null;
 export type ViewMode = 'home' | 'product' | 'collection';
+

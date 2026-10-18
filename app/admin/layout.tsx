@@ -108,7 +108,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 Banner Principal
               </Link>
               <Link href="/admin/users" onClick={() => setIsSidebarOpen(false)} className={`block px-4 py-3 text-xs uppercase tracking-wider font-semibold transition-colors ${pathname.startsWith('/admin/users') ? 'bg-primary text-white' : 'hover:bg-surface-container text-text-secondary hover:text-text-primary'}`}>
-                Vendedores
+                Usuários & Clientes
               </Link>
             </>
           )}
