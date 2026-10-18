@@ -273,43 +273,49 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Acesso Rápido Section with Google Icons */}
+      {/* Acesso Rápido Section with Google Icons (Swipeable on mobile, grid on PC) */}
       <div>
-        <h2 className="font-display uppercase tracking-widest text-xs font-bold mb-3 text-text-secondary">
-          Acesso Rápido às Configurações
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-display uppercase tracking-widest text-xs font-bold text-text-secondary">
+            Acesso Rápido às Configurações
+          </h2>
+          <span className="text-[10px] text-text-secondary font-mono md:hidden flex items-center gap-1">
+            <span className="material-symbols-outlined text-[13px]">swipe</span>
+            <span>Arraste para os lados</span>
+          </span>
+        </div>
+        <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 md:grid md:grid-cols-5 md:overflow-visible md:pb-0 no-scrollbar">
           <Link
             href="/admin/products/new"
-            className="bg-primary text-white text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors flex items-center justify-center gap-2"
+            className="bg-primary text-white text-center py-3.5 px-5 text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0 min-w-[180px] md:min-w-0"
           >
             <span className="material-symbols-outlined text-base">add</span>
             <span>Cadastrar Produto</span>
           </Link>
           <Link
             href="/admin/users"
-            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary"
+            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-5 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary whitespace-nowrap flex-shrink-0 min-w-[180px] md:min-w-0"
           >
             <span className="material-symbols-outlined text-base text-text-secondary">group</span>
             <span>Gerenciar Usuários</span>
           </Link>
           <Link
             href="/admin/settings"
-            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary"
+            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-5 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary whitespace-nowrap flex-shrink-0 min-w-[180px] md:min-w-0"
           >
             <span className="material-symbols-outlined text-base text-text-secondary">lock</span>
             <span>Senhas & Acessos</span>
           </Link>
           <Link
             href="/admin/banner"
-            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary"
+            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-5 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary whitespace-nowrap flex-shrink-0 min-w-[180px] md:min-w-0"
           >
             <span className="material-symbols-outlined text-base text-text-secondary">image</span>
             <span>Editar Banner</span>
           </Link>
           <Link
             href="/admin/categories"
-            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary col-span-2 sm:col-span-1"
+            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-5 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary whitespace-nowrap flex-shrink-0 min-w-[180px] md:min-w-0"
           >
             <span className="material-symbols-outlined text-base text-text-secondary">sell</span>
             <span>Categorias</span>
