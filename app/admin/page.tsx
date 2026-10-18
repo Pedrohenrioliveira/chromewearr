@@ -408,7 +408,10 @@ export default function AdminDashboard() {
                 &times;
               </button>
             )}
-          </d        {/* Client Activity Table & Mobile Cards */}
+          </div>
+        </div>
+
+        {/* Client Activity Table & Mobile Cards */}
         {filteredUsers.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-border-hairline bg-surface-off/50">
             <p className="text-xs uppercase tracking-wider font-semibold text-text-secondary">
