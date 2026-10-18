@@ -9,6 +9,19 @@ interface OrderSummary {
   createdAt: string;
 }
 
+interface CartProductItem {
+  id: string;
+  productId: string;
+  numId: number;
+  ref: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  size: string;
+  quantity: number;
+  addedAt?: string;
+}
+
 interface UserItem {
   id: string;
   name: string;
@@ -23,15 +36,112 @@ interface UserItem {
   cartData?: any;
 }
 
+// Helper to parse cart data safely
+function getParsedCart(cartData: any): CartProductItem[] {
+  if (!cartData) return [];
+  if (Array.isArray(cartData)) return cartData;
+  if (typeof cartData === 'string') {
+    try {
+      const parsed = JSON.parse(cartData);
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && Array.isArray(parsed.items)) return parsed.items;
+      return [];
+    } catch {
+      return [];
+    }
+  }
+  if (typeof cartData === 'object' && Array.isArray(cartData.items)) {
+    return cartData.items;
+  }
+  return [];
+}
+
+// Helper to calculate elapsed time in cart
+function getTimeInCart(addedAt?: string | null, updatedAt?: string | null): { label: string; exactDate: string; hoursAgo: number } {
+  const dateStr = addedAt || updatedAt;
+  if (!dateStr) {
+    return { label: 'Tempo não identificado', exactDate: 'Data indisponível', hoursAgo: 0 };
+  }
+
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = Math.max(0, now.getTime() - date.getTime());
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  let label = '';
+  if (diffMins < 1) label = 'Menos de 1 minuto';
+  else if (diffMins < 60) label = `${diffMins} min`;
+  else if (diffHours === 1) label = '1 hora';
+  else if (diffHours < 24) label = `${diffHours} horas`;
+  else if (diffDays === 1) label = '1 dia';
+  else if (diffDays < 30) label = `${diffDays} dias`;
+  else label = `${Math.floor(diffDays / 30)} meses`;
+
+  const exactDate = date.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return { label, exactDate, hoursAgo: diffHours };
+}
+
+// Generate full cart recovery WhatsApp text
+function buildFullCartRecoveryText(user: UserItem, items: CartProductItem[]): string {
+  const timeInfo = getTimeInCart(items[0]?.addedAt, user.updatedAt);
+  const firstName = user.name ? user.name.split(' ')[0] : 'Cliente';
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const formattedTotal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total);
+
+  const itemsList = items
+    .map((i) => `• *${i.name}* (Tam: ${i.size}) - ${i.quantity}x de R$ ${i.price.toFixed(2).replace('.', ',')}`)
+    .join('\n');
+
+  return `Olá, ${firstName}! Tudo bem? 
+
+Aqui é da equipe da *ChromeWear* ⚡
+
+Notamos que você adicionou itens à sua sacola em nossa loja há cerca de *${timeInfo.label}* e seu carrinho continua reservado para você:
+
+${itemsList}
+*Total:* ${formattedTotal}
+
+Gostaria de saber se você ainda teria interesse em garantir e finalizar essa compra? 
+
+Nosso estoque deste drop é limitado. Se precisar de ajuda com tamanhos, frete ou quiser finalizar rapidamente por aqui via PIX ou cartão, estou à disposição para te atender! 🖤`;
+}
+
+// Generate single item recovery WhatsApp text
+function buildSingleItemRecoveryText(user: UserItem, item: CartProductItem): string {
+  const timeInfo = getTimeInCart(item.addedAt, user.updatedAt);
+  const firstName = user.name ? user.name.split(' ')[0] : 'Cliente';
+  const formattedPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price);
+
+  return `Olá, ${firstName}! Tudo bem? 
+
+Aqui é da equipe da *ChromeWear* ⚡
+
+Vi que você adicionou a *${item.name}* (Tamanho: *${item.size}* - ${formattedPrice}) à sua sacola há cerca de *${timeInfo.label}*, mas o pedido ainda não foi concluído.
+
+Você ainda teria interesse em garantir essa peça? Nossas unidades são de tiragem limitada e posso segurar para você!
+
+Se tiver alguma dúvida sobre caimento, medidas ou frete, é só me avisar por aqui que te ajudo a finalizar agora mesmo! 🖤`;
+}
+
 export default function UsersAdmin() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'ALL' | 'USER' | 'VENDOR' | 'ADMIN'>('ALL');
+  const [roleFilter, setRoleFilter] = useState<'ALL' | 'USER' | 'VENDOR' | 'ADMIN' | 'HAS_CART'>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'VERIFIED' | 'PENDING'>('ALL');
 
   // Modals state
   const [editingUser, setEditingUser] = useState<UserItem | null>(null);
+  const [cartModalUser, setCartModalUser] = useState<UserItem | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Edit form state
@@ -93,8 +203,13 @@ export default function UsersAdmin() {
   // Filtered list
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
-      // Role filter
-      if (roleFilter !== 'ALL' && u.role !== roleFilter) return false;
+      // Role / Cart filter
+      if (roleFilter === 'HAS_CART') {
+        const cart = getParsedCart(u.cartData);
+        if (cart.length === 0) return false;
+      } else if (roleFilter !== 'ALL' && u.role !== roleFilter) {
+        return false;
+      }
 
       // Status filter
       if (statusFilter === 'VERIFIED' && !u.isVerified) return false;
@@ -120,6 +235,7 @@ export default function UsersAdmin() {
       customers: users.filter((u) => u.role === 'USER').length,
       vendors: users.filter((u) => u.role === 'VENDOR').length,
       admins: users.filter((u) => u.role === 'ADMIN').length,
+      withCart: users.filter((u) => getParsedCart(u.cartData).length > 0).length,
       verified: users.filter((u) => u.isVerified).length,
       pending: users.filter((u) => !u.isVerified).length,
     };
@@ -140,7 +256,7 @@ export default function UsersAdmin() {
     setCopiedPassword(false);
   };
 
-  // Generate random secure password
+  // Generate random password
   const generateRandomPassword = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*';
     let pass = 'CW@';
@@ -278,7 +394,7 @@ export default function UsersAdmin() {
     }
   };
 
-  // Format phone number helper
+  // Phone helpers
   const formatPhone = (phone: string | null) => {
     if (!phone) return 'Não informado';
     const digits = phone.replace(/\D/g, '');
@@ -291,15 +407,39 @@ export default function UsersAdmin() {
     return phone;
   };
 
-  // WhatsApp link helper
-  const getWhatsAppLink = (phone: string | null) => {
+  const getCleanPhone = (phone: string | null) => {
     if (!phone) return null;
     const digits = phone.replace(/\D/g, '');
     if (digits.length >= 10) {
-      const fullNumber = digits.startsWith('55') ? digits : `55${digits}`;
-      return `https://wa.me/${fullNumber}`;
+      return digits.startsWith('55') ? digits : `55${digits}`;
     }
     return null;
+  };
+
+  // Open WhatsApp Link
+  const handleSendRecoveryWhatsApp = (user: UserItem, item?: CartProductItem) => {
+    const cleanPhone = getCleanPhone(user.phone);
+    if (!cleanPhone) {
+      alert(`O usuário ${user.name} não possui um telefone ou WhatsApp cadastrado. Você pode copiar o texto da mensagem e enviar por e-mail!`);
+      return;
+    }
+
+    const cart = getParsedCart(user.cartData);
+    if (cart.length === 0) return;
+
+    const message = item ? buildSingleItemRecoveryText(user, item) : buildFullCartRecoveryText(user, cart);
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
+  // Copy Recovery Message
+  const handleCopyRecoveryMessage = (user: UserItem, item?: CartProductItem) => {
+    const cart = getParsedCart(user.cartData);
+    if (cart.length === 0) return;
+
+    const message = item ? buildSingleItemRecoveryText(user, item) : buildFullCartRecoveryText(user, cart);
+    navigator.clipboard.writeText(message);
+    showToast('success', 'Mensagem de recuperação copiada para a área de transferência!');
   };
 
   return (
@@ -324,13 +464,13 @@ export default function UsersAdmin() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <span className="text-[10px] text-text-secondary uppercase tracking-[0.25em] font-semibold block mb-1">
-            Controle de Acessos & Perfis
+            Gestão de Clientes & Recuperação de Vendas
           </span>
           <h1 className="font-display uppercase tracking-widest text-2xl md:text-3xl font-bold">
             Gerenciar Usuários & Clientes
           </h1>
           <p className="text-xs text-text-secondary mt-1">
-            Acesse todos os dados cadastrados pelos clientes e equipe. Edite dados de contato, permissões ou redefina senhas com segurança criptografada.
+            Veja dados cadastrados, histórico de compras, itens salvos na sacola com tempo decorrido e envie mensagens no WhatsApp para recuperar carrinhos abandonados.
           </p>
         </div>
         <button
@@ -362,21 +502,26 @@ export default function UsersAdmin() {
 
         <div className="bg-surface-pure border border-border-hairline p-4 shadow-sm">
           <span className="text-[9px] uppercase tracking-widest text-text-secondary font-bold block mb-1">
-            Vendedores
+            Carrinhos Ativos
           </span>
-          <p className="text-2xl md:text-3xl font-display font-bold text-blue-600">{counts.vendors}</p>
+          <p className="text-2xl md:text-3xl font-display font-bold text-amber-600 flex items-center gap-2">
+            {counts.withCart}
+            <span className="text-[10px] bg-amber-500/10 text-amber-700 px-1.5 py-0.5 uppercase tracking-wider font-bold border border-amber-500/20">
+              Oportunidade
+            </span>
+          </p>
         </div>
 
         <div className="bg-surface-pure border border-border-hairline p-4 shadow-sm">
           <span className="text-[9px] uppercase tracking-widest text-text-secondary font-bold block mb-1">
-            Administradores
+            Vendedores / Admins
           </span>
-          <p className="text-2xl md:text-3xl font-display font-bold text-purple-600">{counts.admins}</p>
+          <p className="text-2xl md:text-3xl font-display font-bold text-blue-600">{counts.vendors + counts.admins}</p>
         </div>
 
         <div className="bg-surface-pure border border-border-hairline p-4 shadow-sm col-span-2 sm:col-span-1">
           <span className="text-[9px] uppercase tracking-widest text-text-secondary font-bold block mb-1">
-            Verificados
+            Contas Verificadas
           </span>
           <p className="text-2xl md:text-3xl font-display font-bold text-[#146c2e]">
             {counts.verified}{' '}
@@ -400,6 +545,16 @@ export default function UsersAdmin() {
             }`}
           >
             Todos ({counts.all})
+          </button>
+          <button
+            onClick={() => setRoleFilter('HAS_CART')}
+            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors flex items-center gap-1.5 ${
+              roleFilter === 'HAS_CART'
+                ? 'bg-amber-600 text-white'
+                : 'bg-amber-500/10 text-amber-800 hover:bg-amber-500/20 border border-amber-500/30'
+            }`}
+          >
+            <span>🛒 Com Carrinho ({counts.withCart})</span>
           </button>
           <button
             onClick={() => setRoleFilter('USER')}
@@ -492,10 +647,10 @@ export default function UsersAdmin() {
             <tr>
               <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Usuário</th>
               <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Contato</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Sacola / Carrinho</th>
               <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Nível / Cargo</th>
               <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Status</th>
               <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Pedidos</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Data Cadastro</th>
               <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold text-right">Ações</th>
             </tr>
           </thead>
@@ -514,8 +669,12 @@ export default function UsersAdmin() {
               </tr>
             ) : (
               filteredUsers.map((u) => {
-                const waLink = getWhatsAppLink(u.phone);
                 const isMainAdmin = u.email === 'admin@chromewear.com';
+                const cart = getParsedCart(u.cartData);
+                const hasCart = cart.length > 0;
+                const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                const timeInfo = hasCart ? getTimeInCart(cart[0]?.addedAt, u.updatedAt) : null;
+                const cleanPhone = getCleanPhone(u.phone);
 
                 return (
                   <tr key={u.id} className="hover:bg-surface-off/60 transition-colors">
@@ -547,9 +706,9 @@ export default function UsersAdmin() {
                         <p className="font-medium text-text-primary">{u.email}</p>
                         <div className="flex items-center gap-2">
                           <span className="text-[11px] text-text-secondary">{formatPhone(u.phone)}</span>
-                          {waLink && (
+                          {cleanPhone && (
                             <a
-                              href={waLink}
+                              href={`https://wa.me/${cleanPhone}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold uppercase tracking-wider flex items-center gap-0.5"
@@ -561,6 +720,35 @@ export default function UsersAdmin() {
                           )}
                         </div>
                       </div>
+                    </td>
+
+                    {/* Cart Info / Status */}
+                    <td className="p-4">
+                      {hasCart ? (
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-amber-500/15 text-amber-800 border border-amber-500/30 flex items-center gap-1">
+                              🛒 {cart.length} {cart.length === 1 ? 'item' : 'itens'}
+                            </span>
+                            <span className="font-semibold text-text-primary text-[11px]">
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cartTotal)}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-[10px] text-text-secondary">
+                            <span>⏳ Há {timeInfo?.label}</span>
+                            <span>•</span>
+                            <button
+                              onClick={() => setCartModalUser(u)}
+                              className="text-primary font-bold uppercase hover:underline"
+                            >
+                              Ver Detalhes
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-text-secondary/60 text-[11px]">Vazio</span>
+                      )}
                     </td>
 
                     {/* Role */}
@@ -606,17 +794,21 @@ export default function UsersAdmin() {
                       )}
                     </td>
 
-                    {/* Registration Date */}
-                    <td className="p-4 text-text-secondary">
-                      {new Date(u.createdAt).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                      })}
-                    </td>
-
                     {/* Actions */}
                     <td className="p-4 text-right space-x-2 whitespace-nowrap">
+                      {hasCart && (
+                        <button
+                          onClick={() => setCartModalUser(u)}
+                          title="Recuperar Carrinho via WhatsApp"
+                          className="bg-emerald-600 text-white text-xs uppercase tracking-wider font-bold py-1.5 px-3 hover:bg-emerald-700 transition-colors inline-flex items-center gap-1 shadow-sm"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
+                          </svg>
+                          Recuperar
+                        </button>
+                      )}
+
                       <button
                         onClick={() => handleOpenEdit(u)}
                         className="bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold py-1.5 px-3 hover:bg-primary hover:text-white transition-colors"
@@ -640,6 +832,187 @@ export default function UsersAdmin() {
           </tbody>
         </table>
       </div>
+
+      {/* ================= CART RECOVERY MODAL ================= */}
+      {cartModalUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setCartModalUser(null)}
+          />
+
+          <div className="relative w-full max-w-3xl bg-surface-pure border border-border-hairline shadow-2xl p-6 md:p-8 max-h-[92vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-border-hairline pb-4 mb-6">
+              <div>
+                <span className="text-[10px] text-amber-600 uppercase tracking-[0.2em] font-bold block">
+                  Recuperação de Carrinho Abandonado
+                </span>
+                <h2 className="font-display uppercase tracking-widest text-xl font-bold mt-1">
+                  Sacola de {cartModalUser.name}
+                </h2>
+                <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-text-secondary">
+                  <span>{cartModalUser.email}</span>
+                  <span>•</span>
+                  <span>{formatPhone(cartModalUser.phone)}</span>
+                  <span>•</span>
+                  <span>ID: {cartModalUser.id.slice(0, 8)}...</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setCartModalUser(null)}
+                className="text-text-secondary hover:text-text-primary p-2 text-xl leading-none"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Cart Items List */}
+            {(() => {
+              const cart = getParsedCart(cartModalUser.cartData);
+              const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+              const cleanPhone = getCleanPhone(cartModalUser.phone);
+
+              if (cart.length === 0) {
+                return (
+                  <div className="text-center py-12 text-text-secondary">
+                    <p className="text-sm">A sacola deste cliente está vazia no momento.</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-6">
+                  {/* Items list */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-text-secondary uppercase tracking-widest font-semibold">
+                        Itens Salvos na Sacola ({cart.length})
+                      </span>
+                      <span className="text-xs font-bold text-text-primary">
+                        Total:{' '}
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}
+                      </span>
+                    </div>
+
+                    <div className="divide-y divide-border-hairline border border-border-hairline bg-surface-off">
+                      {cart.map((item) => {
+                        const timeInfo = getTimeInCart(item.addedAt, cartModalUser.updatedAt);
+
+                        return (
+                          <div key={item.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                              <div className="relative w-16 h-16 bg-surface-container border border-border-hairline flex-shrink-0 overflow-hidden">
+                                {item.imageUrl ? (
+                                  <img
+                                    src={item.imageUrl}
+                                    alt={item.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-xs text-text-secondary font-mono">
+                                    IMG
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-sm text-text-primary">{item.name}</h4>
+                                <p className="text-xs text-text-secondary mt-0.5">
+                                  Tamanho: <span className="font-bold text-text-primary">{item.size}</span> | Qtd: {item.quantity} | Ref: {item.ref}
+                                </p>
+                                <div className="mt-1.5 flex items-center gap-2">
+                                  <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold text-amber-700 bg-amber-500/10 px-2 py-0.5 border border-amber-500/20">
+                                    ⏳ No carrinho há {timeInfo.label}
+                                  </span>
+                                  <span className="text-[10px] text-text-secondary font-mono">
+                                    ({timeInfo.exactDate})
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
+                              <span className="text-sm font-bold text-text-primary">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                  item.price * item.quantity
+                                )}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSendRecoveryWhatsApp(cartModalUser, item)}
+                                  className="text-[10px] uppercase tracking-wider font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 transition-colors flex items-center gap-1"
+                                >
+                                  📲 Recuperar Item
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyRecoveryMessage(cartModalUser, item)}
+                                  className="text-[10px] uppercase tracking-wider font-semibold border border-border-hairline bg-surface-pure hover:bg-surface-off px-2 py-1.5 transition-colors"
+                                  title="Copiar texto para este item"
+                                >
+                                  📋 Copiar
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* WhatsApp Message Preview Box */}
+                  <div className="bg-surface-off border border-border-hairline p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary">
+                          Prévia da Mensagem de Recuperação (WhatsApp)
+                        </h3>
+                      </div>
+                      <span className="text-[10px] text-text-secondary uppercase tracking-widest font-semibold">
+                        Personalizada com tempo decorrido
+                      </span>
+                    </div>
+
+                    <div className="bg-white border border-border-hairline p-4 rounded-none font-sans text-xs text-text-primary whitespace-pre-wrap leading-relaxed shadow-inner">
+                      {buildFullCartRecoveryText(cartModalUser, cart)}
+                    </div>
+
+                    {!cleanPhone && (
+                      <p className="text-[11px] text-[#ba1a1a] font-semibold bg-[#ba1a1a]/10 p-2.5 border border-[#ba1a1a]/20">
+                        ⚠️ Atenção: Este cliente não possui um telefone/WhatsApp cadastrado. Copie a mensagem acima para enviá-la via E-mail ou Direct no Instagram.
+                      </p>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => handleCopyRecoveryMessage(cartModalUser)}
+                        className="w-full sm:w-auto border border-border-hairline bg-surface-pure py-3 px-6 text-xs uppercase tracking-wider font-bold hover:bg-surface-container transition-colors flex items-center justify-center gap-2"
+                      >
+                        📋 Copiar Mensagem Completa
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSendRecoveryWhatsApp(cartModalUser)}
+                        disabled={!cleanPhone}
+                        className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-8 text-xs uppercase tracking-wider font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
+                        </svg>
+                        Abrir e Enviar no WhatsApp
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* ================= EDIT USER MODAL ================= */}
       {editingUser && (
@@ -759,7 +1132,7 @@ export default function UsersAdmin() {
                 </label>
               </div>
 
-              {/* Password Section (Notice about encryption and ability to modify) */}
+              {/* Password Section */}
               <div className="bg-surface-off border border-border-hairline p-5 space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-primary/10 text-primary mt-0.5">
@@ -825,13 +1198,61 @@ export default function UsersAdmin() {
                       </button>
                     )}
                   </div>
-                  {editFormData.newPassword && (
-                    <span className="text-[10px] text-emerald-600 block mt-1.5 font-medium">
-                      ✓ A nova senha será criptografada com Bcrypt antes de ser salva no banco de dados.
-                    </span>
-                  )}
                 </div>
               </div>
+
+              {/* Active Cart Section in Edit Modal */}
+              {(() => {
+                const cart = getParsedCart(editingUser.cartData);
+                if (cart.length === 0) return null;
+                const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+                return (
+                  <div className="border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🛒</span>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-text-primary">
+                          Sacola Ativa do Cliente ({cart.length} itens - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)})
+                        </h4>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCartModalUser(editingUser);
+                          setEditingUser(null);
+                        }}
+                        className="text-[10px] uppercase font-bold text-amber-800 hover:underline"
+                      >
+                        Abrir Recuperação Completa &rarr;
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {cart.map((item) => {
+                        const timeInfo = getTimeInCart(item.addedAt, editingUser.updatedAt);
+                        return (
+                          <div key={item.id} className="flex items-center justify-between text-xs bg-white p-2.5 border border-border-hairline">
+                            <div>
+                              <p className="font-semibold text-text-primary">{item.name}</p>
+                              <p className="text-[10px] text-text-secondary">
+                                Tam: {item.size} • Qtd: {item.quantity} • No carrinho há {timeInfo.label}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleSendRecoveryWhatsApp(editingUser, item)}
+                              className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase"
+                            >
+                              📲 WhatsApp
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Orders summary if available */}
               {editingUser.orders && editingUser.orders.length > 0 && (

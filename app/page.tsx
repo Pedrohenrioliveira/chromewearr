@@ -268,11 +268,15 @@ export default function HomePage() {
   // Cart Handler Functions
   const handleAddToCart = (product: Product, size: string, quantity: number = 1) => {
     const itemId = `${product.id}-${size}`;
+    const nowIso = new Date().toISOString();
     setCartItems((prevItems) => {
       const existingIndex = prevItems.findIndex((item) => item.id === itemId);
       if (existingIndex > -1) {
         const updated = [...prevItems];
         updated[existingIndex].quantity += quantity;
+        if (!updated[existingIndex].addedAt) {
+          updated[existingIndex].addedAt = nowIso;
+        }
         return updated;
       } else {
         return [
@@ -287,6 +291,7 @@ export default function HomePage() {
             size,
             quantity,
             ref: product.ref || '01/25',
+            addedAt: nowIso,
           },
         ];
       }

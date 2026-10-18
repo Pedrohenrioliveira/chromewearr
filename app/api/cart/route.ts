@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 export async function GET(req: Request) {
   try {
@@ -14,27 +12,30 @@ export async function GET(req: Request) {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { cartData: true }
+      select: { cartData: true, updatedAt: true }
     });
 
     if (!user) {
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
     }
 
-    let cart: any = [];
+    let cart: any[] = [];
     if (user.cartData) {
       if (typeof user.cartData === 'string') {
-         try {
-           cart = JSON.parse(user.cartData);
-         } catch(e) {
-           cart = [];
-         }
-      } else {
-         cart = user.cartData as any;
+        try {
+          const parsed = JSON.parse(user.cartData);
+          cart = Array.isArray(parsed) ? parsed : (parsed.items || []);
+        } catch {
+          cart = [];
+        }
+      } else if (Array.isArray(user.cartData)) {
+        cart = user.cartData as any[];
+      } else if (typeof user.cartData === 'object' && user.cartData !== null) {
+        cart = (user.cartData as any).items || [];
       }
     }
 
-    return NextResponse.json({ cart });
+    return NextResponse.json({ cart, updatedAt: user.updatedAt });
   } catch (error: any) {
     console.error('Fetch cart error:', error);
     return NextResponse.json({ error: 'Erro ao buscar carrinho' }, { status: 500 });
@@ -49,10 +50,20 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'Email é obrigatório' }, { status: 400 });
     }
 
-    const updatedUser = await prisma.user.update({
+    // Ensure all items have addedAt
+    let normalizedCart = cartData;
+    if (Array.isArray(cartData)) {
+      const nowIso = new Date().toISOString();
+      normalizedCart = cartData.map(item => ({
+        ...item,
+        addedAt: item.addedAt || nowIso
+      }));
+    }
+
+    await prisma.user.update({
       where: { email },
       data: {
-        cartData: cartData // Prisma converts JSON automatically
+        cartData: normalizedCart
       }
     });
 
@@ -62,3 +73,4 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: 'Erro ao atualizar carrinho' }, { status: 500 });
   }
 }
+

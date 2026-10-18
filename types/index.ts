@@ -45,6 +45,7 @@ export interface CartItem {
   imageUrl: string;
   size: string;
   quantity: number;
+  addedAt?: string;
 }
 
 export interface User {
