@@ -138,7 +138,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<UserActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'ALL' | 'WITH_CART' | 'CART_30D' | 'WITH_ORDERS' | 'CUSTOMERS'>('ALL');
+  const [activeTab, setActiveTab] = useState<'ALL' | 'WITH_CART' | 'WITH_ORDERS' | 'CUSTOMERS'>('ALL');
 
   // Quick Cart Modal inside Dashboard
   const [viewingCartUser, setViewingCartUser] = useState<UserActivityItem | null>(null);
@@ -169,17 +169,12 @@ export default function AdminDashboard() {
     fetchDashboardData();
   }, []);
 
-  // Filtered users calculation
+  // Filtered users calculation (without 30d filter)
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       // Tab filter
       const cart = getParsedCart(u.cartData);
       if (activeTab === 'WITH_CART' && cart.length === 0) return false;
-      if (activeTab === 'CART_30D') {
-        if (cart.length === 0) return false;
-        const timeInfo = getTimeInCart(cart[0]?.addedAt, u.updatedAt);
-        if (timeInfo.daysAgo < 30) return false;
-      }
       if (activeTab === 'WITH_ORDERS' && (u.ordersCount || 0) === 0) return false;
       if (activeTab === 'CUSTOMERS' && u.role !== 'USER') return false;
 
@@ -196,21 +191,15 @@ export default function AdminDashboard() {
     });
   }, [users, activeTab, searchTerm]);
 
-  // Tab counts
+  // Tab counts (without 30d)
   const tabCounts = useMemo(() => {
     const withCart = users.filter((u) => getParsedCart(u.cartData).length > 0);
-    const cart30d = withCart.filter((u) => {
-      const cart = getParsedCart(u.cartData);
-      const timeInfo = getTimeInCart(cart[0]?.addedAt, u.updatedAt);
-      return timeInfo.daysAgo >= 30;
-    });
     const withOrders = users.filter((u) => (u.ordersCount || 0) > 0);
     const customers = users.filter((u) => u.role === 'USER');
 
     return {
       all: users.length,
       withCart: withCart.length,
-      cart30d: cart30d.length,
       withOrders: withOrders.length,
       customers: customers.length,
     };
@@ -222,7 +211,7 @@ export default function AdminDashboard() {
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent animate-spin rounded-full" />
           <span className="text-xs uppercase tracking-widest font-bold text-text-secondary">
-            Carregando Métricas & Atividade dos Clientes...
+            Carregando Métricas & Atividade...
           </span>
         </div>
       </div>
@@ -250,45 +239,41 @@ export default function AdminDashboard() {
             href="/admin/users"
             className="bg-black text-white text-xs uppercase tracking-wider font-bold py-3.5 px-5 hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-sm"
           >
-            <span>Gerenciar Usuários & Sacolas &rarr;</span>
+            <span>Gerenciar Usuários & Sacolas</span>
+            <span className="material-symbols-outlined text-sm">arrow_forward</span>
           </Link>
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-        <div className="bg-surface-pure border border-border-hairline p-4 md:p-5 shadow-sm">
+      {/* KPI Cards Grid (5 cards, without 30d) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
+        <div className="bg-surface-pure border border-border-hairline p-5 shadow-sm">
           <h2 className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold mb-1">Produtos</h2>
           <p className="text-2xl md:text-3xl font-display font-bold">{stats.products}</p>
         </div>
 
-        <div className="bg-surface-pure border border-border-hairline p-4 md:p-5 shadow-sm">
+        <div className="bg-surface-pure border border-border-hairline p-5 shadow-sm">
           <h2 className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold mb-1">Categorias</h2>
           <p className="text-2xl md:text-3xl font-display font-bold">{stats.categories}</p>
         </div>
 
-        <div className="bg-surface-pure border border-border-hairline p-4 md:p-5 shadow-sm">
+        <div className="bg-surface-pure border border-border-hairline p-5 shadow-sm">
           <h2 className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold mb-1">Clientes Loja</h2>
-          <p className="text-2xl md:text-3xl font-display font-bold text-primary">{tabCounts.customers}</p>
+          <p className="text-2xl md:text-3xl font-display font-bold text-text-primary">{tabCounts.customers}</p>
         </div>
 
-        <div className="bg-surface-pure border border-border-hairline p-4 md:p-5 shadow-sm">
+        <div className="bg-surface-pure border border-border-hairline p-5 shadow-sm">
           <h2 className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold mb-1">Carrinhos Ativos</h2>
-          <p className="text-2xl md:text-3xl font-display font-bold text-amber-600">{tabCounts.withCart}</p>
+          <p className="text-2xl md:text-3xl font-display font-bold text-text-primary">{tabCounts.withCart}</p>
         </div>
 
-        <div className="bg-surface-pure border border-border-hairline p-4 md:p-5 shadow-sm">
-          <h2 className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold mb-1">Parados 30d+</h2>
-          <p className="text-2xl md:text-3xl font-display font-bold text-[#ba1a1a]">{tabCounts.cart30d}</p>
-        </div>
-
-        <div className="bg-surface-pure border border-border-hairline p-4 md:p-5 shadow-sm">
+        <div className="bg-surface-pure border border-border-hairline p-5 shadow-sm">
           <h2 className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold mb-1">Staff / Admins</h2>
-          <p className="text-2xl md:text-3xl font-display font-bold text-blue-600">{stats.users || 0}</p>
+          <p className="text-2xl md:text-3xl font-display font-bold text-text-primary">{stats.users || 0}</p>
         </div>
       </div>
 
-      {/* Acesso Rápido Section */}
+      {/* Acesso Rápido Section with Google Icons */}
       <div>
         <h2 className="font-display uppercase tracking-widest text-xs font-bold mb-3 text-text-secondary">
           Acesso Rápido às Configurações
@@ -296,52 +281,57 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
           <Link
             href="/admin/products/new"
-            className="bg-primary text-white text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors"
+            className="bg-primary text-white text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors flex items-center justify-center gap-2"
           >
-            + Cadastrar Produto
+            <span className="material-symbols-outlined text-base">add</span>
+            <span>Cadastrar Produto</span>
           </Link>
           <Link
             href="/admin/users"
-            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors"
+            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary"
           >
-            👥 Gerenciar Usuários
+            <span className="material-symbols-outlined text-base text-text-secondary">group</span>
+            <span>Gerenciar Usuários</span>
           </Link>
           <Link
             href="/admin/settings"
-            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors"
+            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary"
           >
-            🔒 Senhas & Acessos
+            <span className="material-symbols-outlined text-base text-text-secondary">lock</span>
+            <span>Senhas & Acessos</span>
           </Link>
           <Link
             href="/admin/banner"
-            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors"
+            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary"
           >
-            🖼️ Editar Banner
+            <span className="material-symbols-outlined text-base text-text-secondary">image</span>
+            <span>Editar Banner</span>
           </Link>
           <Link
             href="/admin/categories"
-            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors"
+            className="bg-surface-pure border border-border-hairline text-center py-3.5 px-4 text-xs uppercase tracking-wider font-bold hover:border-primary transition-colors flex items-center justify-center gap-2 text-text-primary"
           >
-            🏷️ Categorias
+            <span className="material-symbols-outlined text-base text-text-secondary">sell</span>
+            <span>Categorias</span>
           </Link>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* SEÇÃO SOLICITADA: ATIVIDADE DOS CLIENTES, CRIAÇÃO DE CONTA E COMPRAS */}
+      {/* SEÇÃO: ATIVIDADE DOS CLIENTES NO SITE (GOOGLE ICONS, SEM EMOJIS, SEM 30D) */}
       {/* ========================================================================= */}
       <div className="bg-surface-pure border border-border-hairline p-6 shadow-sm space-y-6">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border-hairline pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="material-symbols-outlined text-lg text-text-primary">schedule</span>
               <h2 className="font-display uppercase tracking-widest text-lg font-bold text-text-primary">
                 Atividade Recente dos Clientes no Site
               </h2>
             </div>
             <p className="text-xs text-text-secondary mt-1">
-              Monitore quando o usuário criou a conta, tempo de atividade, quantidade de compras e produtos salvos no carrinho.
+              Monitore a data de criação da conta, tempo de atividade, histórico de compras e itens no carrinho.
             </p>
           </div>
 
@@ -349,11 +339,12 @@ export default function AdminDashboard() {
             href="/admin/users"
             className="text-xs uppercase font-bold tracking-wider text-text-secondary hover:text-text-primary flex items-center gap-1"
           >
-            <span>Ver tabela completa em Usuários</span> &rarr;
+            <span>Ver tabela completa em Usuários</span>
+            <span className="material-symbols-outlined text-sm">arrow_forward</span>
           </Link>
         </div>
 
-        {/* Filter Tabs & Search Bar */}
+        {/* Filter Tabs & Search Bar (no 30d tab) */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Tabs */}
           <div className="flex flex-wrap items-center gap-2">
@@ -371,28 +362,18 @@ export default function AdminDashboard() {
               onClick={() => setActiveTab('WITH_CART')}
               className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors ${
                 activeTab === 'WITH_CART'
-                  ? 'bg-amber-600 text-white border-amber-600'
-                  : 'bg-surface-off border-border-hairline text-amber-700 hover:text-amber-800'
+                  ? 'bg-black text-white border-black'
+                  : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
               }`}
             >
               Com Carrinho ({tabCounts.withCart})
             </button>
             <button
-              onClick={() => setActiveTab('CART_30D')}
-              className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors ${
-                activeTab === 'CART_30D'
-                  ? 'bg-[#ba1a1a] text-white border-[#ba1a1a]'
-                  : 'bg-surface-off border-border-hairline text-[#ba1a1a] hover:bg-[#ba1a1a]/10'
-              }`}
-            >
-              Parados 30d+ ({tabCounts.cart30d})
-            </button>
-            <button
               onClick={() => setActiveTab('WITH_ORDERS')}
               className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors ${
                 activeTab === 'WITH_ORDERS'
-                  ? 'bg-emerald-700 text-white border-emerald-700'
-                  : 'bg-surface-off border-border-hairline text-emerald-700 hover:bg-emerald-500/10'
+                  ? 'bg-black text-white border-black'
+                  : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
               }`}
             >
               Com Compras ({tabCounts.withOrders})
@@ -401,7 +382,7 @@ export default function AdminDashboard() {
               onClick={() => setActiveTab('CUSTOMERS')}
               className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors ${
                 activeTab === 'CUSTOMERS'
-                  ? 'bg-primary text-white border-primary'
+                  ? 'bg-black text-white border-black'
                   : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
               }`}
             >
@@ -466,15 +447,16 @@ export default function AdminDashboard() {
                       {/* Cliente Info */}
                       <td className="p-3.5">
                         <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-full bg-surface-container border border-border-hairline flex items-center justify-center font-bold text-xs uppercase text-text-primary flex-shrink-0">
+                          <div className="w-8 h-8 bg-surface-container border border-border-hairline flex items-center justify-center font-bold text-xs uppercase text-text-primary flex-shrink-0">
                             {user.name ? user.name.charAt(0) : 'U'}
                           </div>
                           <div>
                             <span className="font-bold text-text-primary block">{user.name}</span>
                             <span className="text-[11px] text-text-secondary font-mono block">{user.email}</span>
                             {user.phone ? (
-                              <span className="text-[10px] text-text-secondary block mt-0.5">
-                                📞 {user.phone}
+                              <span className="text-[10px] text-text-secondary flex items-center gap-1 mt-0.5 font-mono">
+                                <span className="material-symbols-outlined text-[12px] text-text-secondary">call</span>
+                                {user.phone}
                               </span>
                             ) : (
                               <span className="text-[10px] text-neutral-400 block mt-0.5">Sem telefone</span>
@@ -486,17 +468,13 @@ export default function AdminDashboard() {
                       {/* Criação da Conta */}
                       <td className="p-3.5 whitespace-nowrap">
                         <span className="font-semibold text-text-primary block">{accountAge.date}</span>
-                        <span className="text-[11px] text-text-secondary block">{accountAge.label}</span>
+                        <span className="text-[11px] text-text-secondary block font-mono">{accountAge.label}</span>
                       </td>
 
                       {/* Tempo de Atividade */}
                       <td className="p-3.5 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase px-2 py-0.5 border ${
-                          activityStatus.isRecent
-                            ? 'text-emerald-800 bg-emerald-500/10 border-emerald-500/20'
-                            : 'text-text-secondary bg-surface-off border-border-hairline'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${activityStatus.isRecent ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-400'}`} />
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 border border-border-hairline bg-surface-off text-text-secondary">
+                          <span className="material-symbols-outlined text-[12px]">schedule</span>
                           {activityStatus.label}
                         </span>
                         <span className="text-[10px] text-text-secondary font-mono block mt-1">
@@ -508,10 +486,11 @@ export default function AdminDashboard() {
                       <td className="p-3.5 whitespace-nowrap">
                         {user.ordersCount > 0 ? (
                           <div>
-                            <span className="font-bold text-emerald-800 text-xs block">
-                              🛍️ {user.ordersCount} {user.ordersCount === 1 ? 'compra' : 'compras'}
+                            <span className="font-bold text-text-primary text-xs flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[14px]">shopping_bag</span>
+                              {user.ordersCount} {user.ordersCount === 1 ? 'compra' : 'compras'}
                             </span>
-                            <span className="text-[11px] text-text-secondary font-mono">
+                            <span className="text-[11px] text-text-secondary font-mono block mt-0.5">
                               Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalSpent)}
                             </span>
                           </div>
@@ -525,27 +504,22 @@ export default function AdminDashboard() {
                         {cart.length > 0 ? (
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-xs text-text-primary">
-                                🛒 {cart.length} {cart.length === 1 ? 'item' : 'itens'}
+                              <span className="font-bold text-xs text-text-primary flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[14px]">shopping_cart</span>
+                                {cart.length} {cart.length === 1 ? 'item' : 'itens'}
                               </span>
                               <span className="text-[11px] text-text-secondary font-mono font-bold">
                                 ({new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cartTotal)})
                               </span>
                             </div>
 
-                            {/* Time in cart counter */}
-                            <div>
-                              <span className={`inline-flex items-center gap-1 text-[10px] uppercase font-bold px-1.5 py-0.5 border ${
-                                timeInfo.daysAgo >= 30
-                                  ? 'text-[#ba1a1a] bg-[#ba1a1a]/10 border-[#ba1a1a]/30 animate-pulse'
-                                  : 'text-amber-800 bg-amber-500/10 border-amber-500/20'
-                              }`}>
-                                ⏳ No carrinho há {timeInfo.label}
-                              </span>
-                            </div>
+                            {/* Clean time in cart counter */}
+                            <span className="text-[10px] font-mono text-text-secondary uppercase block">
+                              No carrinho há {timeInfo.label}
+                            </span>
 
-                            {/* Products name teaser */}
-                            <p className="text-[11px] text-text-secondary line-clamp-1 max-w-xs">
+                            {/* Products teaser */}
+                            <p className="text-[11px] text-text-secondary line-clamp-1 max-w-xs font-mono">
                               {cart.map((i) => i.name).join(', ')}
                             </p>
                           </div>
@@ -560,10 +534,11 @@ export default function AdminDashboard() {
                           {cart.length > 0 && (
                             <button
                               onClick={() => setViewingCartUser(user)}
-                              className="text-[10px] uppercase font-bold px-2.5 py-1.5 bg-surface-pure border border-border-hairline hover:border-primary transition-colors text-text-primary"
+                              className="text-[10px] uppercase font-bold px-2.5 py-1.5 bg-surface-pure border border-border-hairline hover:border-primary transition-colors text-text-primary flex items-center gap-1"
                               title="Ver produtos salvos no carrinho"
                             >
-                              👁️ Ver Carrinho
+                              <span className="material-symbols-outlined text-[13px]">visibility</span>
+                              <span>Ver Carrinho</span>
                             </button>
                           )}
 
@@ -572,10 +547,11 @@ export default function AdminDashboard() {
                               href={`https://wa.me/${cleanPhone}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-[10px] uppercase font-bold px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white transition-colors flex items-center gap-1"
+                              className="text-[10px] uppercase font-bold px-2.5 py-1.5 bg-black hover:bg-neutral-800 text-white transition-colors flex items-center gap-1"
                               title="Chamar no WhatsApp"
                             >
-                              📲 WhatsApp
+                              <span className="material-symbols-outlined text-[13px]">chat</span>
+                              <span>WhatsApp</span>
                             </a>
                           ) : (
                             <span className="text-[10px] text-neutral-400 px-2 py-1.5">Sem WhatsApp</span>
@@ -602,7 +578,7 @@ export default function AdminDashboard() {
           <div className="text-center pt-2">
             <Link
               href="/admin/users"
-              className="text-xs uppercase font-bold tracking-wider text-primary hover:underline"
+              className="text-xs uppercase font-bold tracking-wider text-text-primary hover:underline"
             >
               Visualizando 30 de {filteredUsers.length} clientes. Ver todos em Gerenciar Usuários &rarr;
             </Link>
@@ -680,15 +656,11 @@ export default function AdminDashboard() {
                             </div>
                             <div>
                               <h4 className="font-semibold text-xs text-text-primary">{item.name}</h4>
-                              <p className="text-[11px] text-text-secondary">
+                              <p className="text-[11px] text-text-secondary font-mono">
                                 Tam: <strong>{item.size}</strong> | Qtd: {item.quantity}
                               </p>
-                              <span className={`inline-block text-[9px] uppercase font-bold px-1.5 py-0.5 mt-1 border ${
-                                timeInfo.daysAgo >= 30
-                                  ? 'text-[#ba1a1a] bg-[#ba1a1a]/10 border-[#ba1a1a]/30'
-                                  : 'text-amber-800 bg-amber-500/10 border-amber-500/20'
-                              }`}>
-                                ⏳ No carrinho há {timeInfo.label}
+                              <span className="text-[10px] font-mono text-text-secondary uppercase block mt-0.5">
+                                No carrinho há {timeInfo.label}
                               </span>
                             </div>
                           </div>

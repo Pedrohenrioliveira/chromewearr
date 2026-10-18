@@ -163,7 +163,7 @@ export default function UsersAdmin() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'ALL' | 'USER' | 'VENDOR' | 'ADMIN' | 'HAS_CART' | 'CART_30D'>('ALL');
+  const [roleFilter, setRoleFilter] = useState<'ALL' | 'USER' | 'VENDOR' | 'ADMIN' | 'HAS_CART'>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'VERIFIED' | 'PENDING'>('ALL');
 
   // Modals state
@@ -254,11 +254,6 @@ export default function UsersAdmin() {
       if (roleFilter === 'HAS_CART') {
         const cart = getParsedCart(u.cartData);
         if (cart.length === 0) return false;
-      } else if (roleFilter === 'CART_30D') {
-        const cart = getParsedCart(u.cartData);
-        if (cart.length === 0) return false;
-        const timeInfo = getTimeInCart(cart[0]?.addedAt, u.updatedAt);
-        if (timeInfo.daysAgo < 30) return false;
       } else if (roleFilter !== 'ALL' && u.role !== roleFilter) {
         return false;
       }
@@ -283,19 +278,6 @@ export default function UsersAdmin() {
   // Counts for tabs & KPIs
   const counts = useMemo(() => {
     const withCartUsers = users.filter((u) => getParsedCart(u.cartData).length > 0);
-    const cart30dUsers = withCartUsers.filter((u) => {
-      const cart = getParsedCart(u.cartData);
-      const timeInfo = getTimeInCart(cart[0]?.addedAt, u.updatedAt);
-      return timeInfo.daysAgo >= 30;
-    });
-
-    // Eligible for auto-reminder (30+ days and not reminded in last 30 days)
-    const eligibleForEmail = cart30dUsers.filter((u) => {
-      const reminderSentAt = getCartReminderSentAt(u.cartData);
-      if (!reminderSentAt) return true;
-      const sentDaysAgo = Math.floor((Date.now() - new Date(reminderSentAt).getTime()) / (1000 * 60 * 60 * 24));
-      return sentDaysAgo >= 30;
-    });
 
     return {
       all: users.length,
@@ -303,8 +285,6 @@ export default function UsersAdmin() {
       vendors: users.filter((u) => u.role === 'VENDOR').length,
       admins: users.filter((u) => u.role === 'ADMIN').length,
       withCart: withCartUsers.length,
-      cart30d: cart30dUsers.length,
-      eligibleForEmail: eligibleForEmail.length,
       verified: users.filter((u) => u.isVerified).length,
       pending: users.filter((u) => !u.isVerified).length,
     };
@@ -593,26 +573,25 @@ export default function UsersAdmin() {
               setIsTestModalOpen(true);
               setTestResult(null);
             }}
-            className="bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold py-3.5 px-4 hover:border-primary transition-colors flex items-center gap-1.5 shadow-sm"
+            className="bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold py-3.5 px-4 hover:border-primary transition-colors flex items-center gap-2 shadow-sm"
             title="Enviar e-mail de teste agora para verificar no Gmail"
           >
-            <span>🧪 Enviar Teste de E-mail</span>
+            <span className="material-symbols-outlined text-base text-text-secondary">mail</span>
+            <span>Enviar Teste de E-mail</span>
           </button>
 
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="bg-primary text-white text-xs uppercase tracking-wider font-bold py-3.5 px-6 hover:bg-black transition-colors flex items-center gap-2 shadow-sm"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Novo Usuário / Vendedor
+            <span className="material-symbols-outlined text-base">person_add</span>
+            <span>Novo Usuário / Vendedor</span>
           </button>
         </div>
       </div>
 
       {/* KPI Metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4 mb-8">
         <div className="bg-surface-pure border border-border-hairline p-4 shadow-sm">
           <span className="text-[9px] uppercase tracking-widest text-text-secondary font-bold block mb-1">
             Total Cadastrados
@@ -624,24 +603,15 @@ export default function UsersAdmin() {
           <span className="text-[9px] uppercase tracking-widest text-text-secondary font-bold block mb-1">
             Clientes (Loja)
           </span>
-          <p className="text-2xl md:text-3xl font-display font-bold text-primary">{counts.customers}</p>
+          <p className="text-2xl md:text-3xl font-display font-bold text-text-primary">{counts.customers}</p>
         </div>
 
         <div className="bg-surface-pure border border-border-hairline p-4 shadow-sm">
           <span className="text-[9px] uppercase tracking-widest text-text-secondary font-bold block mb-1">
             Carrinhos Ativos
           </span>
-          <p className="text-2xl md:text-3xl font-display font-bold text-amber-600 flex items-center gap-1.5">
+          <p className="text-2xl md:text-3xl font-display font-bold text-text-primary">
             {counts.withCart}
-          </p>
-        </div>
-
-        <div className="bg-surface-pure border border-border-hairline p-4 shadow-sm">
-          <span className="text-[9px] uppercase tracking-widest text-text-secondary font-bold block mb-1">
-            Parados 30d+
-          </span>
-          <p className="text-2xl md:text-3xl font-display font-bold text-[#ba1a1a] flex items-center gap-1.5">
-            {counts.cart30d}
           </p>
         </div>
 
@@ -649,16 +619,16 @@ export default function UsersAdmin() {
           <span className="text-[9px] uppercase tracking-widest text-text-secondary font-bold block mb-1">
             Vendedores / Admins
           </span>
-          <p className="text-2xl md:text-3xl font-display font-bold text-blue-600">{counts.vendors + counts.admins}</p>
+          <p className="text-2xl md:text-3xl font-display font-bold text-text-primary">{counts.vendors + counts.admins}</p>
         </div>
 
         <div className="bg-surface-pure border border-border-hairline p-4 shadow-sm col-span-2 sm:col-span-1">
           <span className="text-[9px] uppercase tracking-widest text-text-secondary font-bold block mb-1">
             Verificados
           </span>
-          <p className="text-2xl md:text-3xl font-display font-bold text-[#146c2e]">
+          <p className="text-2xl md:text-3xl font-display font-bold text-text-primary">
             {counts.verified}{' '}
-            <span className="text-xs font-normal text-text-secondary">
+            <span className="text-xs font-normal text-text-secondary font-mono">
               ({counts.all > 0 ? Math.round((counts.verified / counts.all) * 100) : 0}%)
             </span>
           </p>
@@ -668,7 +638,7 @@ export default function UsersAdmin() {
       {/* Toolbar: Filters and Search */}
       <div className="bg-surface-pure border border-border-hairline p-4 shadow-sm mb-6 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
         {/* Role Tabs */}
-        <div className="flex flex-wrap items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1.5">
           <button
             onClick={() => setRoleFilter('ALL')}
             className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors ${
@@ -683,21 +653,12 @@ export default function UsersAdmin() {
             onClick={() => setRoleFilter('HAS_CART')}
             className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors flex items-center gap-1.5 ${
               roleFilter === 'HAS_CART'
-                ? 'bg-amber-600 text-white'
-                : 'bg-amber-500/10 text-amber-800 hover:bg-amber-500/20 border border-amber-500/30'
+                ? 'bg-primary text-white'
+                : 'bg-surface-off text-text-secondary hover:text-text-primary border border-border-hairline'
             }`}
           >
-            <span>🛒 Com Carrinho ({counts.withCart})</span>
-          </button>
-          <button
-            onClick={() => setRoleFilter('CART_30D')}
-            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors flex items-center gap-1.5 ${
-              roleFilter === 'CART_30D'
-                ? 'bg-[#ba1a1a] text-white'
-                : 'bg-[#ba1a1a]/10 text-[#ba1a1a] hover:bg-[#ba1a1a]/20 border border-[#ba1a1a]/30'
-            }`}
-          >
-            <span>⏰ Parados 30d+ ({counts.cart30d})</span>
+            <span className="material-symbols-outlined text-[13px]">shopping_bag</span>
+            <span>Com Carrinho ({counts.withCart})</span>
           </button>
           <button
             onClick={() => setRoleFilter('USER')}
@@ -872,31 +833,26 @@ export default function UsersAdmin() {
                       {hasCart ? (
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 border flex items-center gap-1 ${
-                              is30DaysOld
-                                ? 'bg-[#ba1a1a]/15 text-[#ba1a1a] border-[#ba1a1a]/30'
-                                : 'bg-amber-500/15 text-amber-800 border border-amber-500/30'
-                            }`}>
-                              🛒 {cart.length} {cart.length === 1 ? 'item' : 'itens'}
+                            <span className="text-[10px] uppercase font-mono font-bold tracking-wider px-2 py-0.5 border border-border-hairline bg-surface-container text-text-primary flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[13px]">shopping_bag</span>
+                              <span>{cart.length} {cart.length === 1 ? 'item' : 'itens'}</span>
                             </span>
-                            <span className="font-semibold text-text-primary text-[11px]">
+                            <span className="font-semibold text-text-primary text-[11px] font-mono">
                               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cartTotal)}
                             </span>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-text-secondary">
-                            <span className={is30DaysOld ? 'text-[#ba1a1a] font-bold' : ''}>
-                              ⏳ Há {timeInfo?.label}
-                            </span>
+                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-text-secondary font-mono">
+                            <span>Há {timeInfo?.label}</span>
                             {reminderSentAt && (
-                              <span className="text-emerald-700 font-bold bg-emerald-500/10 px-1 border border-emerald-500/20" title={`Lembrete enviado em: ${new Date(reminderSentAt).toLocaleDateString('pt-BR')}`}>
-                                ✉️ E-mail enviado
+                              <span className="text-text-secondary font-bold bg-surface-off px-1 border border-border-hairline">
+                                Lembrete enviado
                               </span>
                             )}
                             <span>•</span>
                             <button
                               onClick={() => setCartModalUser(u)}
-                              className="text-primary font-bold uppercase hover:underline"
+                              className="text-text-primary font-bold uppercase hover:underline"
                             >
                               Ver Detalhes
                             </button>
@@ -914,7 +870,7 @@ export default function UsersAdmin() {
                           u.role === 'ADMIN'
                             ? 'bg-black text-white'
                             : u.role === 'VENDOR'
-                            ? 'bg-blue-600/10 text-blue-700 border border-blue-600/20'
+                            ? 'bg-surface-off text-text-primary border border-border-hairline'
                             : 'bg-surface-container text-text-primary border border-border-hairline'
                         }`}
                       >
@@ -925,15 +881,13 @@ export default function UsersAdmin() {
                     {/* Verification Status */}
                     <td className="p-4">
                       {u.isVerified ? (
-                        <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-bold text-[#146c2e] bg-[#146c2e]/10 px-2 py-1 border border-[#146c2e]/20">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
+                        <span className="inline-flex items-center gap-1 text-[10px] uppercase font-mono font-bold text-text-primary bg-surface-off px-2 py-1 border border-border-hairline">
+                          <span className="material-symbols-outlined text-[13px]">check_circle</span>
                           Verificado
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-bold text-amber-700 bg-amber-500/10 px-2 py-1 border border-amber-500/20">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        <span className="inline-flex items-center gap-1 text-[10px] uppercase font-mono font-bold text-text-secondary bg-surface-off px-2 py-1 border border-border-hairline">
+                          <span className="material-symbols-outlined text-[13px]">pending</span>
                           Pendente
                         </span>
                       )}
@@ -942,7 +896,8 @@ export default function UsersAdmin() {
                     {/* Orders */}
                     <td className="p-4">
                       {u.ordersCount > 0 ? (
-                        <span className="font-semibold text-text-primary">
+                        <span className="font-semibold text-text-primary flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[14px]">shopping_bag</span>
                           {u.ordersCount} {u.ordersCount === 1 ? 'pedido' : 'pedidos'}
                         </span>
                       ) : (
@@ -955,13 +910,11 @@ export default function UsersAdmin() {
                       {hasCart && (
                         <button
                           onClick={() => setCartModalUser(u)}
-                          title="Recuperar Carrinho via WhatsApp ou E-mail"
-                          className="bg-emerald-600 text-white text-xs uppercase tracking-wider font-bold py-1.5 px-3 hover:bg-emerald-700 transition-colors inline-flex items-center gap-1 shadow-sm"
+                          title="Recuperar Carrinho via WhatsApp"
+                          className="bg-black text-white text-xs uppercase tracking-wider font-bold py-1.5 px-3 hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 shadow-sm"
                         >
-                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
-                          </svg>
-                          Recuperar
+                          <span className="material-symbols-outlined text-[13px]">chat</span>
+                          <span>Recuperar</span>
                         </button>
                       )}
 
@@ -1081,12 +1034,8 @@ export default function UsersAdmin() {
                                   Tamanho: <span className="font-bold text-text-primary">{item.size}</span> | Qtd: {item.quantity} | Ref: {item.ref}
                                 </p>
                                 <div className="mt-1.5 flex items-center gap-2">
-                                  <span className={`inline-flex items-center gap-1 text-[10px] uppercase font-bold px-2 py-0.5 border ${
-                                    itemTime.daysAgo >= 30
-                                      ? 'text-[#ba1a1a] bg-[#ba1a1a]/10 border-[#ba1a1a]/20'
-                                      : 'text-amber-700 bg-amber-500/10 border-amber-500/20'
-                                  }`}>
-                                    ⏳ No carrinho há {itemTime.label}
+                                  <span className="text-[10px] font-mono text-text-secondary uppercase">
+                                    No carrinho há {itemTime.label}
                                   </span>
                                   <span className="text-[10px] text-text-secondary font-mono">
                                     ({itemTime.exactDate})
@@ -1096,7 +1045,7 @@ export default function UsersAdmin() {
                             </div>
 
                             <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
-                              <span className="text-sm font-bold text-text-primary">
+                              <span className="text-sm font-bold text-text-primary font-mono">
                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
                                   item.price * item.quantity
                                 )}
@@ -1109,9 +1058,10 @@ export default function UsersAdmin() {
                                     setCustomRecoveryMessage(msg);
                                     handleSendRecoveryWhatsApp(cartModalUser, item);
                                   }}
-                                  className="text-[10px] uppercase tracking-wider font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 transition-colors flex items-center gap-1"
+                                  className="text-[10px] uppercase tracking-wider font-bold bg-black hover:bg-neutral-800 text-white px-3 py-1.5 transition-colors flex items-center gap-1.5"
                                 >
-                                  📲 WhatsApp
+                                  <span className="material-symbols-outlined text-[13px]">chat</span>
+                                  <span>WhatsApp</span>
                                 </button>
                                 <button
                                   type="button"
@@ -1120,10 +1070,11 @@ export default function UsersAdmin() {
                                     setCustomRecoveryMessage(msg);
                                     handleCopyRecoveryMessage(cartModalUser, item);
                                   }}
-                                  className="text-[10px] uppercase tracking-wider font-semibold border border-border-hairline bg-surface-pure hover:bg-surface-off px-2 py-1.5 transition-colors"
+                                  className="text-[10px] uppercase tracking-wider font-semibold border border-border-hairline bg-surface-pure hover:bg-surface-off px-2 py-1.5 transition-colors flex items-center gap-1"
                                   title="Copiar texto para este item"
                                 >
-                                  📋 Copiar
+                                  <span className="material-symbols-outlined text-[13px]">content_copy</span>
+                                  <span>Copiar</span>
                                 </button>
                               </div>
                             </div>
@@ -1137,12 +1088,12 @@ export default function UsersAdmin() {
                   <div className="bg-surface-off border border-border-hairline p-5 space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                        <span className="material-symbols-outlined text-base">chat</span>
                         <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary">
                           Mensagem de Recuperação (WhatsApp)
                         </h3>
-                        <span className="text-[9px] text-emerald-800 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 font-bold uppercase">
-                          ✏️ Editável
+                        <span className="text-[9px] uppercase font-mono font-bold px-1.5 py-0.5 border border-border-hairline bg-surface-pure text-text-secondary">
+                          Editável
                         </span>
                       </div>
                       <button
@@ -1171,8 +1122,8 @@ export default function UsersAdmin() {
                     />
 
                     {!cleanPhone && (
-                      <p className="text-[11px] text-[#ba1a1a] font-semibold bg-[#ba1a1a]/10 p-2.5 border border-[#ba1a1a]/20">
-                        ⚠️ Atenção: Este cliente não possui um WhatsApp cadastrado. Você pode copiar o texto da mensagem e enviar por outro canal.
+                      <p className="text-[11px] text-text-secondary bg-surface-pure p-2.5 border border-border-hairline font-mono">
+                        Este cliente não possui um WhatsApp cadastrado. Você pode copiar o texto da mensagem e enviar por outro canal.
                       </p>
                     )}
 
@@ -1180,21 +1131,20 @@ export default function UsersAdmin() {
                       <button
                         type="button"
                         onClick={() => handleCopyRecoveryMessage(cartModalUser)}
-                        className="w-full sm:w-auto border border-border-hairline bg-surface-pure py-3 px-6 text-xs uppercase tracking-wider font-bold hover:bg-surface-container transition-colors flex items-center justify-center gap-2"
+                        className="w-full sm:w-auto border border-border-hairline bg-surface-pure py-3 px-6 text-xs uppercase tracking-wider font-bold hover:bg-surface-container transition-colors flex items-center justify-center gap-1.5"
                       >
-                        📋 Copiar Mensagem
+                        <span className="material-symbols-outlined text-sm">content_copy</span>
+                        <span>Copiar Mensagem</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => handleSendRecoveryWhatsApp(cartModalUser)}
                         disabled={!cleanPhone}
-                        className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-8 text-xs uppercase tracking-wider font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                        className="w-full sm:w-auto bg-black hover:bg-neutral-800 text-white py-3 px-8 text-xs uppercase tracking-wider font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-sm"
                       >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
-                        </svg>
-                        Abrir e Enviar no WhatsApp
+                        <span className="material-symbols-outlined text-sm">send</span>
+                        <span>Abrir e Enviar no WhatsApp</span>
                       </button>
                     </div>
                   </div>
@@ -1399,12 +1349,12 @@ export default function UsersAdmin() {
                 const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
                 return (
-                  <div className="border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+                  <div className="border border-border-hairline bg-surface-off p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm">🛒</span>
+                        <span className="material-symbols-outlined text-base text-text-primary">shopping_bag</span>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-text-primary">
-                          Sacola Ativa do Cliente ({cart.length} itens - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)})
+                          Sacola Ativa do Cliente ({cart.length} {cart.length === 1 ? 'item' : 'itens'} - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)})
                         </h4>
                       </div>
                       <button
@@ -1413,9 +1363,10 @@ export default function UsersAdmin() {
                           setCartModalUser(editingUser);
                           setEditingUser(null);
                         }}
-                        className="text-[10px] uppercase font-bold text-amber-800 hover:underline"
+                        className="text-[10px] uppercase font-bold tracking-wider text-text-primary hover:underline flex items-center gap-1"
                       >
-                        Abrir Recuperação Completa &rarr;
+                        <span>Abrir Recuperação Completa</span>
+                        <span className="material-symbols-outlined text-xs">arrow_forward</span>
                       </button>
                     </div>
 
@@ -1423,7 +1374,7 @@ export default function UsersAdmin() {
                       {cart.map((item) => {
                         const timeInfo = getTimeInCart(item.addedAt, editingUser.updatedAt);
                         return (
-                          <div key={item.id} className="flex items-center justify-between text-xs bg-white p-2.5 border border-border-hairline">
+                          <div key={item.id} className="flex items-center justify-between text-xs bg-surface-pure p-2.5 border border-border-hairline">
                             <div>
                               <p className="font-semibold text-text-primary">{item.name}</p>
                               <p className="text-[10px] text-text-secondary">
@@ -1434,9 +1385,10 @@ export default function UsersAdmin() {
                               <button
                                 type="button"
                                 onClick={() => handleSendRecoveryWhatsApp(editingUser, item)}
-                                className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase"
+                                className="text-[10px] font-bold text-text-primary hover:text-black uppercase tracking-wider flex items-center gap-1 border border-border-hairline bg-surface-off px-2 py-1"
                               >
-                                📲 WhatsApp
+                                <span className="material-symbols-outlined text-[13px]">chat</span>
+                                <span>WhatsApp</span>
                               </button>
                             </div>
                           </div>
