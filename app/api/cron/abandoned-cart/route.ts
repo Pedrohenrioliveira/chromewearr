@@ -50,9 +50,6 @@ async function handleCheckAndSendReminders(req: Request) {
   try {
     const now = new Date();
     const users = await prisma.user.findMany({
-      where: {
-        cartData: { not: null },
-      },
       select: {
         id: true,
         name: true,
