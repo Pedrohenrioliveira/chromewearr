@@ -1,21 +1,7 @@
 import type { Metadata, Viewport } from 'next';
-import { Hanken_Grotesk, Cinzel } from 'next/font/google';
 import Script from 'next/script';
+import { SecurityProvider } from '@/components/SecurityProvider';
 import './globals.css';
-
-const hanken = Hanken_Grotesk({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-hanken',
-  display: 'swap',
-});
-
-const cinzel = Cinzel({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500', '600', '700', '800', '900'],
-  variable: '--font-cinzel',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://chromewear.com.br'),
@@ -101,15 +87,21 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-import { SecurityProvider } from '@/components/SecurityProvider';
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${hanken.variable} ${cinzel.variable}`}>
+    <html lang="pt-BR">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="bg-surface-pure text-text-primary antialiased min-h-screen flex flex-col">
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-VY5JR3X0H3"
