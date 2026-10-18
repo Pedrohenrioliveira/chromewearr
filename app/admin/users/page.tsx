@@ -200,6 +200,13 @@ export default function UsersAdmin() {
   const [sendingEmailUserId, setSendingEmailUserId] = useState<string | null>(null);
   const [runningCronLoading, setRunningCronLoading] = useState(false);
 
+  // Test email state
+  const [isTestModalOpen, setIsTestModalOpen] = useState(false);
+  const [testEmailTarget, setTestEmailTarget] = useState<'ALL' | 'SPECIFIC'>('ALL');
+  const [testCustomEmail, setTestCustomEmail] = useState('');
+  const [testSendingLoading, setTestSendingLoading] = useState(false);
+  const [testResult, setTestResult] = useState<any>(null);
+
   // Toast / notification
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -568,6 +575,45 @@ export default function UsersAdmin() {
     }
   };
 
+  // Test send email handler
+  const handleExecuteTestSend = async () => {
+    setTestSendingLoading(true);
+    setTestResult(null);
+
+    try {
+      const payload =
+        testEmailTarget === 'ALL'
+          ? { all: true }
+          : { email: testCustomEmail.trim().toLowerCase() };
+
+      if (testEmailTarget === 'SPECIFIC' && !testCustomEmail.trim()) {
+        showToast('error', 'Digite um e-mail válido para testar.');
+        setTestSendingLoading(false);
+        return;
+      }
+
+      const res = await fetch('/api/admin/cart/test-send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        showToast('error', data.error || 'Erro ao realizar disparo de teste.');
+        setTestResult({ success: false, error: data.error });
+        return;
+      }
+
+      setTestResult(data);
+      showToast('success', data.message || 'Disparo de teste realizado!');
+    } catch (err: any) {
+      showToast('error', 'Erro de conexão ao realizar disparo de teste.');
+    } finally {
+      setTestSendingLoading(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       {/* Toast Alert */}
@@ -617,6 +663,17 @@ export default function UsersAdmin() {
               </svg>
             )}
             Disparar E-mails 30d ({counts.eligibleForEmail})
+          </button>
+
+          <button
+            onClick={() => {
+              setIsTestModalOpen(true);
+              setTestResult(null);
+            }}
+            className="bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold py-3.5 px-4 hover:border-primary transition-colors flex items-center gap-1.5 shadow-sm"
+            title="Enviar e-mail de teste agora para verificar no Gmail"
+          >
+            <span>🧪 Enviar Teste de E-mail</span>
           </button>
 
           <button
@@ -1714,6 +1771,160 @@ export default function UsersAdmin() {
           </div>
         </div>
       )}
+
+      {/* ================= TEST EMAIL MODAL ================= */}
+      {isTestModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            onClick={() => !testSendingLoading && setIsTestModalOpen(false)}
+          />
+
+          <div className="relative w-full max-w-lg bg-surface-pure border border-border-hairline shadow-2xl p-6 md:p-8 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-border-hairline pb-4 mb-5">
+              <div>
+                <span className="text-[10px] text-amber-600 uppercase tracking-[0.2em] font-bold block">
+                  Ambiente de Testes
+                </span>
+                <h2 className="font-display uppercase tracking-widest text-lg font-bold mt-1">
+                  Enviar E-mail de Teste (Gmail)
+                </h2>
+              </div>
+              <button
+                onClick={() => setIsTestModalOpen(false)}
+                disabled={testSendingLoading}
+                className="text-text-secondary hover:text-text-primary p-2 text-xl leading-none"
+              >
+                &times;
+              </button>
+            </div>
+
+            <p className="text-xs text-text-secondary leading-relaxed mb-6">
+              Este teste utiliza a conexão de e-mail do sistema (Gmail / Hostinger) para disparar o template oficial de recuperação de sacola, simulando como o cliente receberá a mensagem na caixa de entrada.
+            </p>
+
+            {/* Target Selection */}
+            <div className="space-y-4 mb-6">
+              <label
+                className={`flex items-start gap-3 p-3.5 border cursor-pointer transition-colors ${
+                  testEmailTarget === 'ALL'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border-hairline bg-surface-off hover:bg-surface-container'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="testTarget"
+                  checked={testEmailTarget === 'ALL'}
+                  onChange={() => setTestEmailTarget('ALL')}
+                  className="mt-0.5 accent-primary"
+                />
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider block text-text-primary">
+                    Enviar para TODAS as contas cadastradas ({users.length} usuários)
+                  </span>
+                  <span className="text-[11px] text-text-secondary">
+                    Dispara o e-mail de teste para todos os e-mails registrados no banco de dados.
+                  </span>
+                </div>
+              </label>
+
+              <label
+                className={`flex items-start gap-3 p-3.5 border cursor-pointer transition-colors ${
+                  testEmailTarget === 'SPECIFIC'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border-hairline bg-surface-off hover:bg-surface-container'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="testTarget"
+                  checked={testEmailTarget === 'SPECIFIC'}
+                  onChange={() => setTestEmailTarget('SPECIFIC')}
+                  className="mt-0.5 accent-primary"
+                />
+                <div className="flex-1">
+                  <span className="text-xs font-bold uppercase tracking-wider block text-text-primary">
+                    Enviar para um e-mail específico
+                  </span>
+                  <span className="text-[11px] text-text-secondary block mb-2">
+                    Digite um endereço de e-mail (por exemplo, o seu Gmail pessoal) para testar o recebimento.
+                  </span>
+                  {testEmailTarget === 'SPECIFIC' && (
+                    <input
+                      type="email"
+                      placeholder="seu.email@gmail.com"
+                      value={testCustomEmail}
+                      onChange={(e) => setTestCustomEmail(e.target.value)}
+                      className="w-full border border-border-hairline bg-surface-pure p-2.5 text-xs text-text-primary focus:outline-none focus:border-primary"
+                    />
+                  )}
+                </div>
+              </label>
+            </div>
+
+            {/* Results feedback if available */}
+            {testResult && (
+              <div
+                className={`p-4 border mb-6 text-xs ${
+                  testResult.success
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800'
+                    : 'bg-[#ba1a1a]/10 border-[#ba1a1a]/30 text-[#ba1a1a]'
+                }`}
+              >
+                <p className="font-bold uppercase tracking-wider mb-2">
+                  {testResult.message || (testResult.success ? 'Envio concluído com sucesso!' : 'Falha no envio')}
+                </p>
+                {testResult.details && testResult.details.length > 0 && (
+                  <div className="max-h-36 overflow-y-auto divide-y divide-border-hairline/40 text-[11px] space-y-1">
+                    {testResult.details.map((d: any, idx: number) => (
+                      <div key={idx} className="pt-1 flex items-center justify-between">
+                        <span className="font-mono">{d.email}</span>
+                        <span
+                          className={`font-bold uppercase text-[9px] px-1.5 py-0.5 ${
+                            d.status === 'sent'
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-[#ba1a1a] text-white'
+                          }`}
+                        >
+                          {d.status === 'sent' ? 'Enviado' : 'Erro'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-border-hairline">
+              <button
+                type="button"
+                onClick={() => setIsTestModalOpen(false)}
+                disabled={testSendingLoading}
+                className="border border-border-hairline bg-surface-off py-3 px-5 text-xs uppercase tracking-wider font-semibold hover:bg-surface-container transition-colors"
+              >
+                Fechar
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteTestSend}
+                disabled={testSendingLoading}
+                className="bg-black text-white py-3 px-6 text-xs uppercase tracking-wider font-bold hover:bg-neutral-800 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {testSendingLoading && (
+                  <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )}
+                {testSendingLoading ? 'Enviando E-mail...' : 'Disparar E-mail de Teste'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
