@@ -196,10 +196,6 @@ export default function UsersAdmin() {
   const [showCreatePass, setShowCreatePass] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
 
-  // Email sending states
-  const [sendingEmailUserId, setSendingEmailUserId] = useState<string | null>(null);
-  const [runningCronLoading, setRunningCronLoading] = useState(false);
-
   // Test email state
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
   const [testEmailTarget, setTestEmailTarget] = useState<'ALL' | 'SPECIFIC'>('ALL');
@@ -502,79 +498,6 @@ export default function UsersAdmin() {
     showToast('success', 'Mensagem de recuperação copiada para a área de transferência!');
   };
 
-  // Trigger manual Email reminder for a specific customer
-  const handleSendEmailReminder = async (user: UserItem) => {
-    setSendingEmailUserId(user.id);
-    try {
-      const res = await fetch('/api/admin/cart/send-reminder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        showToast('error', data.error || 'Erro ao enviar e-mail de recuperação.');
-        return;
-      }
-
-      showToast('success', `E-mail de recuperação enviado com sucesso para ${user.email}!`);
-      fetchUsers();
-      if (cartModalUser && cartModalUser.id === user.id) {
-        setCartModalUser((prev) =>
-          prev
-            ? {
-                ...prev,
-                cartData: {
-                  ...prev.cartData,
-                  reminderSentAt: data.reminderSentAt,
-                },
-              }
-            : null
-        );
-      }
-    } catch (err) {
-      showToast('error', 'Erro de conexão ao enviar e-mail.');
-    } finally {
-      setSendingEmailUserId(null);
-    }
-  };
-
-  // Trigger bulk Cron check for all 30-day abandoned carts
-  const handleRunBulk30DaysReminders = async () => {
-    if (!window.confirm(`Deseja disparar a rotina de e-mails para todos os clientes com carrinhos parados há mais de 30 dias (${counts.eligibleForEmail} elegíveis)?`)) {
-      return;
-    }
-
-    setRunningCronLoading(true);
-    try {
-      const res = await fetch('/api/cron/abandoned-cart', { method: 'POST' });
-      const data = await res.json();
-
-      if (!res.ok) {
-        showToast('error', data.error || 'Erro ao executar rotina de e-mails.');
-        return;
-      }
-
-      const sent = data.summary?.sent || 0;
-      const errors = data.summary?.errors || 0;
-
-      if (sent > 0) {
-        showToast('success', `Sucesso! ${sent} ${sent === 1 ? 'e-mail enviado' : 'e-mails enviados'} para clientes com carrinho parado há 30+ dias.`);
-      } else if (errors > 0) {
-        showToast('error', `Ocorreram erros ao enviar ${errors} e-mails. Verifique as credenciais no .env.`);
-      } else {
-        showToast('success', 'Rotina executada: nenhum cliente elegível com 30+ dias sem lembrete no momento.');
-      }
-
-      fetchUsers();
-    } catch (err) {
-      showToast('error', 'Erro de conexão ao executar rotina automática.');
-    } finally {
-      setRunningCronLoading(false);
-    }
-  };
-
   // Test send email handler
   const handleExecuteTestSend = async () => {
     setTestSendingLoading(true);
@@ -646,25 +569,6 @@ export default function UsersAdmin() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {/* Button to run 30-day abandoned cart reminders */}
-          <button
-            onClick={handleRunBulk30DaysReminders}
-            disabled={runningCronLoading}
-            className="bg-amber-600 text-white text-xs uppercase tracking-wider font-bold py-3.5 px-5 hover:bg-amber-700 transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50"
-            title="Disparar e-mails automáticos para carrinhos parados há mais de 30 dias"
-          >
-            {runningCronLoading ? (
-              <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            )}
-            Disparar E-mails 30d ({counts.eligibleForEmail})
-          </button>
-
           <button
             onClick={() => {
               setIsTestModalOpen(true);
@@ -1138,43 +1042,30 @@ export default function UsersAdmin() {
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-text-secondary">
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
                         {reminderSentAt ? (
                           <span className="text-emerald-700 font-semibold">
-                            ✓ Lembrete enviado em {new Date(reminderSentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}.
+                            ✓ E-mail automático enviado em {new Date(reminderSentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })} com o WhatsApp oficial da ChromeWear (+55 27 99249-0201).
                           </span>
                         ) : is30DaysOld ? (
                           <span className="text-[#ba1a1a] font-semibold">
-                            ⚠️ Este item está há mais de 30 dias parado e ainda não recebeu o e-mail de recuperação.
+                            ⏳ Item há mais de 30 dias parado na sacola. O disparo automático do sistema é executado periodicamente.
                           </span>
                         ) : (
-                          <span>O disparo automático ocorre aos 30 dias de inatividade, mas você pode enviar manualmente agora.</span>
+                          <span>O envio por e-mail é 100% automático e ocorrerá após 30 dias de inatividade da sacola, incluindo o WhatsApp oficial (+55 27 99249-0201).</span>
                         )}
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleSendEmailReminder(cartModalUser)}
-                      disabled={sendingEmailUserId === cartModalUser.id}
-                      className="bg-black text-white hover:bg-neutral-800 text-[11px] uppercase tracking-wider font-bold py-2 px-4 transition-colors flex items-center gap-2 disabled:opacity-50 whitespace-nowrap self-stretch sm:self-auto justify-center"
-                    >
-                      {sendingEmailUserId === cartModalUser.id ? (
-                        <>
-                          <svg className="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                          Enviando...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                          {reminderSentAt ? 'Reenviar E-mail' : 'Enviar E-mail Agora'}
-                        </>
-                      )}
-                    </button>
+                    <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+                      <span className={`text-[10px] uppercase font-bold tracking-wider px-3 py-1.5 border whitespace-nowrap ${
+                        reminderSentAt
+                          ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30'
+                          : 'bg-surface-pure text-text-secondary border-border-hairline'
+                      }`}>
+                        {reminderSentAt ? '✓ E-mail Enviado' : '🤖 Disparo Automático (30d)'}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Items list */}

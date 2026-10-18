@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { WHATSAPP_NUMBER } from './data';
 
 export interface CartEmailItem {
   name: string;
@@ -47,7 +48,8 @@ export async function sendAbandonedCartEmail({
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const formattedTotal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total);
   const storeUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://chromewear.com.br';
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999';
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || WHATSAPP_NUMBER;
+  const formattedPhoneDisplay = '+55 (27) 99249-0201';
 
   // Build items rows for HTML email
   const itemsHtml = items
@@ -73,7 +75,7 @@ export async function sendAbandonedCartEmail({
 
   const textFallback = `Olá, ${firstName}!\n\nNotamos que você selecionou peças exclusivas na ChromeWear há cerca de ${daysAgo} dias e sua sacola continua salva para você.\n\nItens salvos:\n${items
     .map((i) => `- ${i.name} (${i.size}) x${i.quantity}: R$ ${(i.price * i.quantity).toFixed(2)}`)
-    .join('\n')}\nTotal: ${formattedTotal}\n\nFinalize seu pedido agora em: ${storeUrl}\n\nOu fale diretamente conosco no WhatsApp: https://wa.me/${whatsappNumber}`;
+    .join('\n')}\nTotal: ${formattedTotal}\n\nFinalize seu pedido agora em: ${storeUrl}\n\nOu fale diretamente com a ChromeWear no WhatsApp: ${formattedPhoneDisplay} (https://wa.me/${whatsappNumber})`;
 
   const html = `
 <!DOCTYPE html>
@@ -140,14 +142,24 @@ export async function sendAbandonedCartEmail({
                 </tr>
               </table>
 
-              <!-- WhatsApp Alternative -->
-              <div style="background-color: #f7f7f7; border: 1px solid #e5e5e5; padding: 18px; text-align: center; margin-top: 24px;">
-                <p style="margin: 0 0 10px 0; font-size: 12px; color: #555555; font-weight: 600;">
-                  Deseja atendimento exclusivo ou pagar direto via PIX?
+              <!-- WhatsApp Alternative with Official Store Phone Number -->
+              <div style="background-color: #f7f7f7; border: 1px solid #e5e5e5; padding: 22px 18px; text-align: center; margin-top: 24px;">
+                <p style="margin: 0 0 6px 0; font-size: 13px; color: #111111; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">
+                  Prefere tirar dúvidas ou comprar via WhatsApp?
                 </p>
-                <a href="https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Olá, ChromeWear! Recebi o e-mail sobre minha sacola de ${formattedTotal} e gostaria de finalizar meu pedido.`)}" target="_blank" style="color: #059669; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; text-decoration: none;">
-                  Chamar no WhatsApp &rarr;
-                </a>
+                <p style="margin: 0 0 14px 0; font-size: 12px; color: #555555; line-height: 1.5;">
+                  Atendimento direto pelo WhatsApp oficial da ChromeWear:<br>
+                  <strong style="color: #111111; font-size: 14px; letter-spacing: 0.05em;">${formattedPhoneDisplay}</strong>
+                </p>
+                <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                  <tr>
+                    <td align="center">
+                      <a href="https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Olá, ChromeWear! Recebi o e-mail sobre minha sacola de ${formattedTotal} e gostaria de finalizar meu pedido.`)}" target="_blank" style="display: inline-block; background-color: #059669; color: #ffffff; padding: 12px 24px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; text-decoration: none;">
+                        Falar no WhatsApp (${formattedPhoneDisplay}) &rarr;
+                      </a>
+                    </td>
+                  </tr>
+                </table>
               </div>
             </td>
           </tr>

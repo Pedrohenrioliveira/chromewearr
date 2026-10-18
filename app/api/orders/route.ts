@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { buildWhatsAppLink } from '@/lib/utils';
+import { WHATSAPP_NUMBER } from '@/lib/data';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     const whatsappNumber =
-      process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999';
+      process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || WHATSAPP_NUMBER;
 
     const whatsappUrl = buildWhatsAppLink(whatsappNumber, items, total);
 
