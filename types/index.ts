@@ -46,6 +46,7 @@ export interface CartItem {
   size: string;
   quantity: number;
   addedAt?: string;
+  reminderSentAt?: string;
 }
 
 export interface User {

@@ -20,6 +20,7 @@ interface CartProductItem {
   size: string;
   quantity: number;
   addedAt?: string;
+  reminderSentAt?: string;
 }
 
 interface UserItem {
@@ -56,11 +57,37 @@ function getParsedCart(cartData: any): CartProductItem[] {
   return [];
 }
 
+// Helper to get reminder sent timestamp
+function getCartReminderSentAt(cartData: any): string | null {
+  if (!cartData) return null;
+  if (typeof cartData === 'string') {
+    try {
+      const parsed = JSON.parse(cartData);
+      if (parsed?.reminderSentAt) return parsed.reminderSentAt;
+      if (Array.isArray(parsed)) {
+        return parsed.find((i: any) => i.reminderSentAt)?.reminderSentAt || null;
+      }
+    } catch {
+      return null;
+    }
+  }
+  if (typeof cartData === 'object') {
+    if (cartData.reminderSentAt) return cartData.reminderSentAt;
+    if (Array.isArray(cartData.items)) {
+      return cartData.items.find((i: any) => i.reminderSentAt)?.reminderSentAt || null;
+    }
+    if (Array.isArray(cartData)) {
+      return (cartData as any).find((i: any) => i.reminderSentAt)?.reminderSentAt || null;
+    }
+  }
+  return null;
+}
+
 // Helper to calculate elapsed time in cart
-function getTimeInCart(addedAt?: string | null, updatedAt?: string | null): { label: string; exactDate: string; hoursAgo: number } {
+function getTimeInCart(addedAt?: string | null, updatedAt?: string | null): { label: string; exactDate: string; daysAgo: number; hoursAgo: number } {
   const dateStr = addedAt || updatedAt;
   if (!dateStr) {
-    return { label: 'Tempo não identificado', exactDate: 'Data indisponível', hoursAgo: 0 };
+    return { label: 'Tempo não identificado', exactDate: 'Data indisponível', daysAgo: 0, hoursAgo: 0 };
   }
 
   const date = new Date(dateStr);
@@ -87,7 +114,7 @@ function getTimeInCart(addedAt?: string | null, updatedAt?: string | null): { la
     minute: '2-digit',
   });
 
-  return { label, exactDate, hoursAgo: diffHours };
+  return { label, exactDate, daysAgo: diffDays, hoursAgo: diffHours };
 }
 
 // Generate full cart recovery WhatsApp text
@@ -136,7 +163,7 @@ export default function UsersAdmin() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'ALL' | 'USER' | 'VENDOR' | 'ADMIN' | 'HAS_CART'>('ALL');
+  const [roleFilter, setRoleFilter] = useState<'ALL' | 'USER' | 'VENDOR' | 'ADMIN' | 'HAS_CART' | 'CART_30D'>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'VERIFIED' | 'PENDING'>('ALL');
 
   // Modals state
@@ -169,6 +196,10 @@ export default function UsersAdmin() {
   const [showCreatePass, setShowCreatePass] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
 
+  // Email sending states
+  const [sendingEmailUserId, setSendingEmailUserId] = useState<string | null>(null);
+  const [runningCronLoading, setRunningCronLoading] = useState(false);
+
   // Toast / notification
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -176,7 +207,7 @@ export default function UsersAdmin() {
     setToast({ type, text });
     setTimeout(() => {
       setToast((prev) => (prev?.text === text ? null : prev));
-    }, 4500);
+    }, 5000);
   };
 
   const fetchUsers = async () => {
@@ -207,6 +238,11 @@ export default function UsersAdmin() {
       if (roleFilter === 'HAS_CART') {
         const cart = getParsedCart(u.cartData);
         if (cart.length === 0) return false;
+      } else if (roleFilter === 'CART_30D') {
+        const cart = getParsedCart(u.cartData);
+        if (cart.length === 0) return false;
+        const timeInfo = getTimeInCart(cart[0]?.addedAt, u.updatedAt);
+        if (timeInfo.daysAgo < 30) return false;
       } else if (roleFilter !== 'ALL' && u.role !== roleFilter) {
         return false;
       }
@@ -230,12 +266,29 @@ export default function UsersAdmin() {
 
   // Counts for tabs & KPIs
   const counts = useMemo(() => {
+    const withCartUsers = users.filter((u) => getParsedCart(u.cartData).length > 0);
+    const cart30dUsers = withCartUsers.filter((u) => {
+      const cart = getParsedCart(u.cartData);
+      const timeInfo = getTimeInCart(cart[0]?.addedAt, u.updatedAt);
+      return timeInfo.daysAgo >= 30;
+    });
+
+    // Eligible for auto-reminder (30+ days and not reminded in last 30 days)
+    const eligibleForEmail = cart30dUsers.filter((u) => {
+      const reminderSentAt = getCartReminderSentAt(u.cartData);
+      if (!reminderSentAt) return true;
+      const sentDaysAgo = Math.floor((Date.now() - new Date(reminderSentAt).getTime()) / (1000 * 60 * 60 * 24));
+      return sentDaysAgo >= 30;
+    });
+
     return {
       all: users.length,
       customers: users.filter((u) => u.role === 'USER').length,
       vendors: users.filter((u) => u.role === 'VENDOR').length,
       admins: users.filter((u) => u.role === 'ADMIN').length,
-      withCart: users.filter((u) => getParsedCart(u.cartData).length > 0).length,
+      withCart: withCartUsers.length,
+      cart30d: cart30dUsers.length,
+      eligibleForEmail: eligibleForEmail.length,
       verified: users.filter((u) => u.isVerified).length,
       pending: users.filter((u) => !u.isVerified).length,
     };
@@ -420,7 +473,7 @@ export default function UsersAdmin() {
   const handleSendRecoveryWhatsApp = (user: UserItem, item?: CartProductItem) => {
     const cleanPhone = getCleanPhone(user.phone);
     if (!cleanPhone) {
-      alert(`O usuário ${user.name} não possui um telefone ou WhatsApp cadastrado. Você pode copiar o texto da mensagem e enviar por e-mail!`);
+      alert(`O usuário ${user.name} não possui um telefone ou WhatsApp cadastrado. Você pode copiar o texto da mensagem ou enviar o lembrete por e-mail!`);
       return;
     }
 
@@ -440,6 +493,79 @@ export default function UsersAdmin() {
     const message = item ? buildSingleItemRecoveryText(user, item) : buildFullCartRecoveryText(user, cart);
     navigator.clipboard.writeText(message);
     showToast('success', 'Mensagem de recuperação copiada para a área de transferência!');
+  };
+
+  // Trigger manual Email reminder for a specific customer
+  const handleSendEmailReminder = async (user: UserItem) => {
+    setSendingEmailUserId(user.id);
+    try {
+      const res = await fetch('/api/admin/cart/send-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        showToast('error', data.error || 'Erro ao enviar e-mail de recuperação.');
+        return;
+      }
+
+      showToast('success', `E-mail de recuperação enviado com sucesso para ${user.email}!`);
+      fetchUsers();
+      if (cartModalUser && cartModalUser.id === user.id) {
+        setCartModalUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                cartData: {
+                  ...prev.cartData,
+                  reminderSentAt: data.reminderSentAt,
+                },
+              }
+            : null
+        );
+      }
+    } catch (err) {
+      showToast('error', 'Erro de conexão ao enviar e-mail.');
+    } finally {
+      setSendingEmailUserId(null);
+    }
+  };
+
+  // Trigger bulk Cron check for all 30-day abandoned carts
+  const handleRunBulk30DaysReminders = async () => {
+    if (!window.confirm(`Deseja disparar a rotina de e-mails para todos os clientes com carrinhos parados há mais de 30 dias (${counts.eligibleForEmail} elegíveis)?`)) {
+      return;
+    }
+
+    setRunningCronLoading(true);
+    try {
+      const res = await fetch('/api/cron/abandoned-cart', { method: 'POST' });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast('error', data.error || 'Erro ao executar rotina de e-mails.');
+        return;
+      }
+
+      const sent = data.summary?.sent || 0;
+      const errors = data.summary?.errors || 0;
+
+      if (sent > 0) {
+        showToast('success', `Sucesso! ${sent} ${sent === 1 ? 'e-mail enviado' : 'e-mails enviados'} para clientes com carrinho parado há 30+ dias.`);
+      } else if (errors > 0) {
+        showToast('error', `Ocorreram erros ao enviar ${errors} e-mails. Verifique as credenciais no .env.`);
+      } else {
+        showToast('success', 'Rotina executada: nenhum cliente elegível com 30+ dias sem lembrete no momento.');
+      }
+
+      fetchUsers();
+    } catch (err) {
+      showToast('error', 'Erro de conexão ao executar rotina automática.');
+    } finally {
+      setRunningCronLoading(false);
+    }
   };
 
   return (
@@ -470,22 +596,43 @@ export default function UsersAdmin() {
             Gerenciar Usuários & Clientes
           </h1>
           <p className="text-xs text-text-secondary mt-1">
-            Veja dados cadastrados, histórico de compras, itens salvos na sacola com tempo decorrido e envie mensagens no WhatsApp para recuperar carrinhos abandonados.
+            Veja dados cadastrados, histórico de compras, itens salvos na sacola com tempo decorrido, recuperação via WhatsApp e envio automático por e-mail (Gmail/Hostinger) para itens parados há 30 dias.
           </p>
         </div>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="bg-primary text-white text-xs uppercase tracking-wider font-bold py-3.5 px-6 hover:bg-black transition-colors self-start md:self-auto flex items-center gap-2 shadow-sm"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Novo Usuário / Vendedor
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Button to run 30-day abandoned cart reminders */}
+          <button
+            onClick={handleRunBulk30DaysReminders}
+            disabled={runningCronLoading}
+            className="bg-amber-600 text-white text-xs uppercase tracking-wider font-bold py-3.5 px-5 hover:bg-amber-700 transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50"
+            title="Disparar e-mails automáticos para carrinhos parados há mais de 30 dias"
+          >
+            {runningCronLoading ? (
+              <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            )}
+            Disparar E-mails 30d ({counts.eligibleForEmail})
+          </button>
+
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="bg-primary text-white text-xs uppercase tracking-wider font-bold py-3.5 px-6 hover:bg-black transition-colors flex items-center gap-2 shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Novo Usuário / Vendedor
+          </button>
+        </div>
       </div>
 
       {/* KPI Metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-8">
         <div className="bg-surface-pure border border-border-hairline p-4 shadow-sm">
           <span className="text-[9px] uppercase tracking-widest text-text-secondary font-bold block mb-1">
             Total Cadastrados
@@ -504,11 +651,17 @@ export default function UsersAdmin() {
           <span className="text-[9px] uppercase tracking-widest text-text-secondary font-bold block mb-1">
             Carrinhos Ativos
           </span>
-          <p className="text-2xl md:text-3xl font-display font-bold text-amber-600 flex items-center gap-2">
+          <p className="text-2xl md:text-3xl font-display font-bold text-amber-600 flex items-center gap-1.5">
             {counts.withCart}
-            <span className="text-[10px] bg-amber-500/10 text-amber-700 px-1.5 py-0.5 uppercase tracking-wider font-bold border border-amber-500/20">
-              Oportunidade
-            </span>
+          </p>
+        </div>
+
+        <div className="bg-surface-pure border border-border-hairline p-4 shadow-sm">
+          <span className="text-[9px] uppercase tracking-widest text-text-secondary font-bold block mb-1">
+            Parados 30d+
+          </span>
+          <p className="text-2xl md:text-3xl font-display font-bold text-[#ba1a1a] flex items-center gap-1.5">
+            {counts.cart30d}
           </p>
         </div>
 
@@ -521,7 +674,7 @@ export default function UsersAdmin() {
 
         <div className="bg-surface-pure border border-border-hairline p-4 shadow-sm col-span-2 sm:col-span-1">
           <span className="text-[9px] uppercase tracking-widest text-text-secondary font-bold block mb-1">
-            Contas Verificadas
+            Verificados
           </span>
           <p className="text-2xl md:text-3xl font-display font-bold text-[#146c2e]">
             {counts.verified}{' '}
@@ -555,6 +708,16 @@ export default function UsersAdmin() {
             }`}
           >
             <span>🛒 Com Carrinho ({counts.withCart})</span>
+          </button>
+          <button
+            onClick={() => setRoleFilter('CART_30D')}
+            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors flex items-center gap-1.5 ${
+              roleFilter === 'CART_30D'
+                ? 'bg-[#ba1a1a] text-white'
+                : 'bg-[#ba1a1a]/10 text-[#ba1a1a] hover:bg-[#ba1a1a]/20 border border-[#ba1a1a]/30'
+            }`}
+          >
+            <span>⏰ Parados 30d+ ({counts.cart30d})</span>
           </button>
           <button
             onClick={() => setRoleFilter('USER')}
@@ -675,6 +838,8 @@ export default function UsersAdmin() {
                 const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
                 const timeInfo = hasCart ? getTimeInCart(cart[0]?.addedAt, u.updatedAt) : null;
                 const cleanPhone = getCleanPhone(u.phone);
+                const reminderSentAt = getCartReminderSentAt(u.cartData);
+                const is30DaysOld = timeInfo && timeInfo.daysAgo >= 30;
 
                 return (
                   <tr key={u.id} className="hover:bg-surface-off/60 transition-colors">
@@ -727,7 +892,11 @@ export default function UsersAdmin() {
                       {hasCart ? (
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-amber-500/15 text-amber-800 border border-amber-500/30 flex items-center gap-1">
+                            <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 border flex items-center gap-1 ${
+                              is30DaysOld
+                                ? 'bg-[#ba1a1a]/15 text-[#ba1a1a] border-[#ba1a1a]/30'
+                                : 'bg-amber-500/15 text-amber-800 border border-amber-500/30'
+                            }`}>
                               🛒 {cart.length} {cart.length === 1 ? 'item' : 'itens'}
                             </span>
                             <span className="font-semibold text-text-primary text-[11px]">
@@ -735,8 +904,15 @@ export default function UsersAdmin() {
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-2 text-[10px] text-text-secondary">
-                            <span>⏳ Há {timeInfo?.label}</span>
+                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-text-secondary">
+                            <span className={is30DaysOld ? 'text-[#ba1a1a] font-bold' : ''}>
+                              ⏳ Há {timeInfo?.label}
+                            </span>
+                            {reminderSentAt && (
+                              <span className="text-emerald-700 font-bold bg-emerald-500/10 px-1 border border-emerald-500/20" title={`Lembrete enviado em: ${new Date(reminderSentAt).toLocaleDateString('pt-BR')}`}>
+                                ✉️ E-mail enviado
+                              </span>
+                            )}
                             <span>•</span>
                             <button
                               onClick={() => setCartModalUser(u)}
@@ -799,7 +975,7 @@ export default function UsersAdmin() {
                       {hasCart && (
                         <button
                           onClick={() => setCartModalUser(u)}
-                          title="Recuperar Carrinho via WhatsApp"
+                          title="Recuperar Carrinho via WhatsApp ou E-mail"
                           className="bg-emerald-600 text-white text-xs uppercase tracking-wider font-bold py-1.5 px-3 hover:bg-emerald-700 transition-colors inline-flex items-center gap-1 shadow-sm"
                         >
                           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
@@ -872,6 +1048,10 @@ export default function UsersAdmin() {
               const cart = getParsedCart(cartModalUser.cartData);
               const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
               const cleanPhone = getCleanPhone(cartModalUser.phone);
+              const reminderSentAt = getCartReminderSentAt(cartModalUser.cartData);
+              const oldestItem = cart[0];
+              const timeInfo = getTimeInCart(oldestItem?.addedAt, cartModalUser.updatedAt);
+              const is30DaysOld = timeInfo.daysAgo >= 30;
 
               if (cart.length === 0) {
                 return (
@@ -883,6 +1063,63 @@ export default function UsersAdmin() {
 
               return (
                 <div className="space-y-6">
+                  {/* Automated 30-day email alert banner */}
+                  <div className="border border-border-hairline bg-surface-off p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">✉️</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-text-primary">
+                          Lembrete por E-mail (Gmail / Hostinger)
+                        </span>
+                        {is30DaysOld ? (
+                          <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 bg-[#ba1a1a]/15 text-[#ba1a1a] border border-[#ba1a1a]/30">
+                            Parado há 30+ dias
+                          </span>
+                        ) : (
+                          <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 bg-blue-500/15 text-blue-700 border border-blue-500/30">
+                            {timeInfo.daysAgo} dias de inatividade
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-text-secondary">
+                        {reminderSentAt ? (
+                          <span className="text-emerald-700 font-semibold">
+                            ✓ Lembrete enviado em {new Date(reminderSentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}.
+                          </span>
+                        ) : is30DaysOld ? (
+                          <span className="text-[#ba1a1a] font-semibold">
+                            ⚠️ Este item está há mais de 30 dias parado e ainda não recebeu o e-mail de recuperação.
+                          </span>
+                        ) : (
+                          <span>O disparo automático ocorre aos 30 dias de inatividade, mas você pode enviar manualmente agora.</span>
+                        )}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSendEmailReminder(cartModalUser)}
+                      disabled={sendingEmailUserId === cartModalUser.id}
+                      className="bg-black text-white hover:bg-neutral-800 text-[11px] uppercase tracking-wider font-bold py-2 px-4 transition-colors flex items-center gap-2 disabled:opacity-50 whitespace-nowrap self-stretch sm:self-auto justify-center"
+                    >
+                      {sendingEmailUserId === cartModalUser.id ? (
+                        <>
+                          <svg className="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                          {reminderSentAt ? 'Reenviar E-mail' : 'Enviar E-mail Agora'}
+                        </>
+                      )}
+                    </button>
+                  </div>
+
                   {/* Items list */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -897,7 +1134,7 @@ export default function UsersAdmin() {
 
                     <div className="divide-y divide-border-hairline border border-border-hairline bg-surface-off">
                       {cart.map((item) => {
-                        const timeInfo = getTimeInCart(item.addedAt, cartModalUser.updatedAt);
+                        const itemTime = getTimeInCart(item.addedAt, cartModalUser.updatedAt);
 
                         return (
                           <div key={item.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -921,11 +1158,15 @@ export default function UsersAdmin() {
                                   Tamanho: <span className="font-bold text-text-primary">{item.size}</span> | Qtd: {item.quantity} | Ref: {item.ref}
                                 </p>
                                 <div className="mt-1.5 flex items-center gap-2">
-                                  <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold text-amber-700 bg-amber-500/10 px-2 py-0.5 border border-amber-500/20">
-                                    ⏳ No carrinho há {timeInfo.label}
+                                  <span className={`inline-flex items-center gap-1 text-[10px] uppercase font-bold px-2 py-0.5 border ${
+                                    itemTime.daysAgo >= 30
+                                      ? 'text-[#ba1a1a] bg-[#ba1a1a]/10 border-[#ba1a1a]/20'
+                                      : 'text-amber-700 bg-amber-500/10 border-amber-500/20'
+                                  }`}>
+                                    ⏳ No carrinho há {itemTime.label}
                                   </span>
                                   <span className="text-[10px] text-text-secondary font-mono">
-                                    ({timeInfo.exactDate})
+                                    ({itemTime.exactDate})
                                   </span>
                                 </div>
                               </div>
@@ -943,7 +1184,7 @@ export default function UsersAdmin() {
                                   onClick={() => handleSendRecoveryWhatsApp(cartModalUser, item)}
                                   className="text-[10px] uppercase tracking-wider font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 transition-colors flex items-center gap-1"
                                 >
-                                  📲 Recuperar Item
+                                  📲 WhatsApp
                                 </button>
                                 <button
                                   type="button"
@@ -981,7 +1222,7 @@ export default function UsersAdmin() {
 
                     {!cleanPhone && (
                       <p className="text-[11px] text-[#ba1a1a] font-semibold bg-[#ba1a1a]/10 p-2.5 border border-[#ba1a1a]/20">
-                        ⚠️ Atenção: Este cliente não possui um telefone/WhatsApp cadastrado. Copie a mensagem acima para enviá-la via E-mail ou Direct no Instagram.
+                        ⚠️ Atenção: Este cliente não possui um WhatsApp cadastrado. Utilize o botão acima para enviar o lembrete por E-mail ou copie o texto.
                       </p>
                     )}
 
@@ -1239,13 +1480,15 @@ export default function UsersAdmin() {
                                 Tam: {item.size} • Qtd: {item.quantity} • No carrinho há {timeInfo.label}
                               </p>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => handleSendRecoveryWhatsApp(editingUser, item)}
-                              className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase"
-                            >
-                              📲 WhatsApp
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleSendRecoveryWhatsApp(editingUser, item)}
+                                className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase"
+                              >
+                                📲 WhatsApp
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
