@@ -227,7 +227,7 @@ export default function AdminDashboard() {
             Painel de Controle Central
           </span>
           <h1 className="font-display uppercase tracking-widest text-2xl md:text-3xl font-bold">
-            Dashboard ChromeWear
+            Dashboard
           </h1>
           <p className="text-xs text-text-secondary mt-1">
             Visão geral de produtos, categorias e atividade em tempo real de clientes no site.
