@@ -203,6 +203,19 @@ export default function UsersAdmin() {
   const [testSendingLoading, setTestSendingLoading] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
 
+  // Editable recovery message state
+  const [customRecoveryMessage, setCustomRecoveryMessage] = useState('');
+
+  // Synchronize recovery message when cartModalUser opens
+  useEffect(() => {
+    if (cartModalUser) {
+      const cart = getParsedCart(cartModalUser.cartData);
+      setCustomRecoveryMessage(buildFullCartRecoveryText(cartModalUser, cart));
+    } else {
+      setCustomRecoveryMessage('');
+    }
+  }, [cartModalUser]);
+
   // Toast / notification
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -476,14 +489,17 @@ export default function UsersAdmin() {
   const handleSendRecoveryWhatsApp = (user: UserItem, item?: CartProductItem) => {
     const cleanPhone = getCleanPhone(user.phone);
     if (!cleanPhone) {
-      alert(`O usuário ${user.name} não possui um telefone ou WhatsApp cadastrado. Você pode copiar o texto da mensagem ou enviar o lembrete por e-mail!`);
+      alert(`O usuário ${user.name} não possui um telefone ou WhatsApp cadastrado. Você pode copiar o texto da mensagem e enviar por outro canal!`);
       return;
     }
 
     const cart = getParsedCart(user.cartData);
     if (cart.length === 0) return;
 
-    const message = item ? buildSingleItemRecoveryText(user, item) : buildFullCartRecoveryText(user, cart);
+    const message = item
+      ? buildSingleItemRecoveryText(user, item)
+      : (customRecoveryMessage.trim() || buildFullCartRecoveryText(user, cart));
+
     const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
@@ -493,7 +509,10 @@ export default function UsersAdmin() {
     const cart = getParsedCart(user.cartData);
     if (cart.length === 0) return;
 
-    const message = item ? buildSingleItemRecoveryText(user, item) : buildFullCartRecoveryText(user, cart);
+    const message = item
+      ? buildSingleItemRecoveryText(user, item)
+      : (customRecoveryMessage.trim() || buildFullCartRecoveryText(user, cart));
+
     navigator.clipboard.writeText(message);
     showToast('success', 'Mensagem de recuperação copiada para a área de transferência!');
   };
@@ -1024,50 +1043,6 @@ export default function UsersAdmin() {
 
               return (
                 <div className="space-y-6">
-                  {/* Automated 30-day email alert banner */}
-                  <div className="border border-border-hairline bg-surface-off p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">✉️</span>
-                        <span className="text-xs font-bold uppercase tracking-wider text-text-primary">
-                          Lembrete por E-mail (Gmail / Hostinger)
-                        </span>
-                        {is30DaysOld ? (
-                          <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 bg-[#ba1a1a]/15 text-[#ba1a1a] border border-[#ba1a1a]/30">
-                            Parado há 30+ dias
-                          </span>
-                        ) : (
-                          <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 bg-blue-500/15 text-blue-700 border border-blue-500/30">
-                            {timeInfo.daysAgo} dias de inatividade
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-text-secondary leading-relaxed">
-                        {reminderSentAt ? (
-                          <span className="text-emerald-700 font-semibold">
-                            ✓ E-mail automático enviado em {new Date(reminderSentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })} com o WhatsApp oficial da ChromeWear (+55 27 99249-0201).
-                          </span>
-                        ) : is30DaysOld ? (
-                          <span className="text-[#ba1a1a] font-semibold">
-                            ⏳ Item há mais de 30 dias parado na sacola. O disparo automático do sistema é executado periodicamente.
-                          </span>
-                        ) : (
-                          <span>O envio por e-mail é 100% automático e ocorrerá após 30 dias de inatividade da sacola, incluindo o WhatsApp oficial (+55 27 99249-0201).</span>
-                        )}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
-                      <span className={`text-[10px] uppercase font-bold tracking-wider px-3 py-1.5 border whitespace-nowrap ${
-                        reminderSentAt
-                          ? 'bg-emerald-500/10 text-emerald-800 border-emerald-500/30'
-                          : 'bg-surface-pure text-text-secondary border-border-hairline'
-                      }`}>
-                        {reminderSentAt ? '✓ E-mail Enviado' : '🤖 Disparo Automático (30d)'}
-                      </span>
-                    </div>
-                  </div>
-
                   {/* Items list */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -1129,14 +1104,22 @@ export default function UsersAdmin() {
                               <div className="flex items-center gap-2">
                                 <button
                                   type="button"
-                                  onClick={() => handleSendRecoveryWhatsApp(cartModalUser, item)}
+                                  onClick={() => {
+                                    const msg = buildSingleItemRecoveryText(cartModalUser, item);
+                                    setCustomRecoveryMessage(msg);
+                                    handleSendRecoveryWhatsApp(cartModalUser, item);
+                                  }}
                                   className="text-[10px] uppercase tracking-wider font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 transition-colors flex items-center gap-1"
                                 >
                                   📲 WhatsApp
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleCopyRecoveryMessage(cartModalUser, item)}
+                                  onClick={() => {
+                                    const msg = buildSingleItemRecoveryText(cartModalUser, item);
+                                    setCustomRecoveryMessage(msg);
+                                    handleCopyRecoveryMessage(cartModalUser, item);
+                                  }}
                                   className="text-[10px] uppercase tracking-wider font-semibold border border-border-hairline bg-surface-pure hover:bg-surface-off px-2 py-1.5 transition-colors"
                                   title="Copiar texto para este item"
                                 >
@@ -1150,27 +1133,46 @@ export default function UsersAdmin() {
                     </div>
                   </div>
 
-                  {/* WhatsApp Message Preview Box */}
+                  {/* WhatsApp Message Box - Fully Editable */}
                   <div className="bg-surface-off border border-border-hairline p-5 space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                         <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary">
-                          Prévia da Mensagem de Recuperação (WhatsApp)
+                          Mensagem de Recuperação (WhatsApp)
                         </h3>
+                        <span className="text-[9px] text-emerald-800 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 font-bold uppercase">
+                          ✏️ Editável
+                        </span>
                       </div>
-                      <span className="text-[10px] text-text-secondary uppercase tracking-widest font-semibold">
-                        Personalizada com tempo decorrido
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const original = buildFullCartRecoveryText(cartModalUser, cart);
+                          setCustomRecoveryMessage(original);
+                          showToast('success', 'Mensagem restaurada para o padrão!');
+                        }}
+                        className="text-[10px] uppercase font-bold text-text-secondary hover:text-text-primary underline self-start sm:self-auto"
+                      >
+                        Restaurar Mensagem Padrão
+                      </button>
                     </div>
 
-                    <div className="bg-white border border-border-hairline p-4 rounded-none font-sans text-xs text-text-primary whitespace-pre-wrap leading-relaxed shadow-inner">
-                      {buildFullCartRecoveryText(cartModalUser, cart)}
-                    </div>
+                    <p className="text-[11px] text-text-secondary">
+                      Você pode editar ou personalizar o texto livremente abaixo antes de enviar ou copiar:
+                    </p>
+
+                    <textarea
+                      rows={6}
+                      value={customRecoveryMessage}
+                      onChange={(e) => setCustomRecoveryMessage(e.target.value)}
+                      className="w-full bg-white border border-border-hairline p-3 text-xs text-text-primary font-sans leading-relaxed focus:outline-none focus:border-primary shadow-inner resize-y"
+                      placeholder="Edite a mensagem de recuperação..."
+                    />
 
                     {!cleanPhone && (
                       <p className="text-[11px] text-[#ba1a1a] font-semibold bg-[#ba1a1a]/10 p-2.5 border border-[#ba1a1a]/20">
-                        ⚠️ Atenção: Este cliente não possui um WhatsApp cadastrado. Utilize o botão acima para enviar o lembrete por E-mail ou copie o texto.
+                        ⚠️ Atenção: Este cliente não possui um WhatsApp cadastrado. Você pode copiar o texto da mensagem e enviar por outro canal.
                       </p>
                     )}
 
@@ -1180,7 +1182,7 @@ export default function UsersAdmin() {
                         onClick={() => handleCopyRecoveryMessage(cartModalUser)}
                         className="w-full sm:w-auto border border-border-hairline bg-surface-pure py-3 px-6 text-xs uppercase tracking-wider font-bold hover:bg-surface-container transition-colors flex items-center justify-center gap-2"
                       >
-                        📋 Copiar Mensagem Completa
+                        📋 Copiar Mensagem
                       </button>
 
                       <button
