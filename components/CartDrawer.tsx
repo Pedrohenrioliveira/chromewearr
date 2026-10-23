@@ -351,7 +351,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               )}
 
               {couponSuccess && (
-                <p className="text-[11px] text-emerald-700 mt-1.5 font-medium leading-tight animate-in fade-in">
+                <p className="text-[11px] text-[#146c2e] mt-1.5 font-medium leading-tight animate-in fade-in">
                   {couponSuccess}
                 </p>
               )}
@@ -362,11 +362,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   {appliedCoupons.map((c) => (
                     <div
                       key={c.code}
-                      className="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs text-emerald-900 animate-in fade-in"
+                      className="flex items-center justify-between bg-surface-off border border-border-hairline px-3 py-1.5 text-xs text-text-primary animate-in fade-in"
                     >
                       <div className="flex items-center gap-1.5">
                         <span className="font-mono font-bold tracking-wider">{c.code}</span>
-                        <span className="text-[10px] text-emerald-700">
+                        <span className="text-[10px] text-text-secondary">
                           ({c.discountType === 'PERCENTAGE'
                             ? `${c.discountValue}% OFF`
                             : c.discountType === 'FIXED'
@@ -375,13 +375,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-emerald-800">
+                        <span className="font-bold text-text-primary">
                           - R$ {formatCurrency(c.discountAmount)}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleRemoveCoupon(c.code)}
-                          className="text-emerald-700 hover:text-emerald-950 font-bold text-sm leading-none ml-1"
+                          className="text-text-secondary hover:text-text-primary font-bold text-sm leading-none ml-1"
                           title="Remover cupom"
                         >
                           &times;
@@ -401,9 +401,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
 
               {totalDiscount > 0 && (
-                <div className="flex items-center justify-between text-emerald-700 font-medium">
+                <div className="flex items-center justify-between text-text-primary font-medium">
                   <span>Desconto de Cupons</span>
-                  <span>- R$ {formatCurrency(totalDiscount)}</span>
+                  <span className="font-bold">- R$ {formatCurrency(totalDiscount)}</span>
                 </div>
               )}
 

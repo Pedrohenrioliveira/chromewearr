@@ -259,7 +259,7 @@ function CouponsAdminContent() {
         showFeedback('error', data.error || 'Erro ao alterar status.');
         return;
       }
-      showFeedback('success', `Status do cupom alterado para ${data.status}.`);
+      showFeedback('success', `Status alterado para ${data.status}.`);
       fetchData();
     } catch (e) {
       showFeedback('error', 'Erro ao alterar status.');
@@ -343,7 +343,7 @@ function CouponsAdminContent() {
     } else if (formData.discountType === 'FIXED') {
       disc = Math.min(rawVal, Number(formData.discountValue));
     } else if (formData.discountType === 'FREE_SHIPPING') {
-      disc = 25.00; // Standard simulated shipping
+      disc = 25.00;
     }
 
     disc = Math.round(disc * 100) / 100;
@@ -359,65 +359,79 @@ function CouponsAdminContent() {
     };
   }, [formData, simulationCartValue]);
 
-  // Status Badge Helper
+  // Status Badge Helper - Colors used ONLY where strictly necessary for status identification
   const renderStatusBadge = (status: CouponStatus) => {
-    const styles: Record<CouponStatus, string> = {
-      ACTIVE: 'bg-emerald-50 text-emerald-700 border-emerald-300 font-bold',
-      SCHEDULED: 'bg-indigo-50 text-indigo-700 border-indigo-200 font-semibold',
-      PAUSED: 'bg-amber-50 text-amber-700 border-amber-300 font-semibold',
-      EXPIRED: 'bg-gray-100 text-gray-600 border-gray-300',
-      EXHAUSTED: 'bg-orange-50 text-orange-700 border-orange-300 font-semibold',
-      ARCHIVED: 'bg-red-50 text-red-700 border-red-200 line-through',
-      DRAFT: 'bg-slate-100 text-slate-700 border-slate-300 border-dashed',
-    };
-
-    const labels: Record<CouponStatus, string> = {
-      ACTIVE: 'Ativo',
-      SCHEDULED: 'Agendado',
-      PAUSED: 'Pausado',
-      EXPIRED: 'Expirado',
-      EXHAUSTED: 'Esgotado',
-      ARCHIVED: 'Arquivado',
-      DRAFT: 'Rascunho',
-    };
-
-    return (
-      <span
-        className={`px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded-sm inline-flex items-center gap-1 ${
-          styles[status] || 'bg-gray-100 text-gray-700'
-        }`}
-      >
-        <span
-          className={`w-1.5 h-1.5 rounded-full ${
-            status === 'ACTIVE'
-              ? 'bg-emerald-500 animate-pulse'
-              : status === 'PAUSED'
-              ? 'bg-amber-500'
-              : status === 'EXHAUSTED'
-              ? 'bg-orange-500'
-              : 'bg-gray-400'
-          }`}
-        />
-        {labels[status] || status}
-      </span>
-    );
+    switch (status) {
+      case 'ACTIVE':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#146c2e]/10 text-[#146c2e] border border-[#146c2e]/20 rounded-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#146c2e]" />
+            Ativo
+          </span>
+        );
+      case 'PAUSED':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#b45309]/10 text-[#b45309] border border-[#b45309]/20 rounded-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#b45309]" />
+            Pausado
+          </span>
+        );
+      case 'EXHAUSTED':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#ba1a1a]/10 text-[#ba1a1a] border border-[#ba1a1a]/20 rounded-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]" />
+            Esgotado
+          </span>
+        );
+      case 'EXPIRED':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#ba1a1a]/10 text-[#ba1a1a] border border-[#ba1a1a]/20 rounded-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]" />
+            Expirado
+          </span>
+        );
+      case 'SCHEDULED':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-surface-off text-text-secondary border border-border-hairline rounded-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-text-secondary" />
+            Agendado
+          </span>
+        );
+      case 'DRAFT':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-surface-off text-text-secondary border border-border-hairline rounded-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-text-secondary" />
+            Rascunho
+          </span>
+        );
+      case 'ARCHIVED':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-surface-off text-text-disabled border border-border-hairline rounded-sm line-through">
+            Arquivado
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-surface-off text-text-secondary border border-border-hairline rounded-sm">
+            {status}
+          </span>
+        );
+    }
   };
 
   return (
-    <div className="p-3 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-5">
-      {/* Header Banner - Mobile Friendly */}
+    <div className="p-3 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 sm:pb-6 border-b border-border-hairline">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-display uppercase tracking-widest text-xl sm:text-2xl font-bold text-text-primary">
-              Cupons & Promoções
-            </h1>
-            <span className="text-[10px] bg-primary text-white px-2 py-0.5 uppercase tracking-widest font-semibold">
-              Marketplace
-            </span>
-          </div>
+          <span className="text-[10px] text-text-secondary uppercase tracking-[0.25em] font-semibold block mb-1">
+            Painel Administrativo
+          </span>
+          <h1 className="font-display uppercase tracking-widest text-xl sm:text-2xl md:text-3xl font-bold text-text-primary">
+            Cupons & Promoções
+          </h1>
           <p className="text-xs text-text-secondary mt-1">
-            Gestão centralizada de campanhas, limites e rateio de custos.
+            Gestão centralizada de campanhas, limites de utilização e rateio de custos.
           </p>
         </div>
 
@@ -429,7 +443,7 @@ function CouponsAdminContent() {
               setFormData(initialFormState);
               changeTab('create');
             }}
-            className="flex-1 sm:flex-initial min-h-[42px] px-4 sm:px-5 py-2.5 bg-primary hover:bg-secondary text-white text-xs uppercase tracking-wider font-bold transition-all shadow-sm flex items-center justify-center gap-2"
+            className="flex-1 sm:flex-initial min-h-[42px] px-4 sm:px-5 py-2.5 bg-primary hover:bg-neutral-800 text-white text-xs uppercase tracking-wider font-bold transition-all shadow-sm flex items-center justify-center gap-2"
           >
             <span>+ Criar Cupom</span>
           </button>
@@ -452,7 +466,7 @@ function CouponsAdminContent() {
         <div
           className={`p-3.5 text-xs uppercase tracking-wider font-semibold flex items-center justify-between border transition-all animate-in fade-in duration-200 ${
             feedbackMessage.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+              ? 'bg-surface-off text-text-primary border-border-hairline'
               : 'bg-[#ba1a1a]/10 text-[#ba1a1a] border-[#ba1a1a]/30'
           }`}
         >
@@ -463,14 +477,14 @@ function CouponsAdminContent() {
         </div>
       )}
 
-      {/* Navigation Tabs - Touch scrollable on mobile */}
-      <div className="flex border-b border-border-hairline gap-1 sm:gap-2 overflow-x-auto text-[11px] sm:text-xs uppercase tracking-wider font-semibold -mx-3 px-3 sm:mx-0 sm:px-0 scroll-smooth">
+      {/* Navigation Tabs - Exactly matching other Admin tabs (Dashboard / Users) */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap no-scrollbar">
         <button
           onClick={() => changeTab('overview')}
-          className={`pb-3 px-3 transition-colors relative whitespace-nowrap ${
+          className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 ${
             activeTab === 'overview'
-              ? 'text-primary border-b-2 border-primary font-bold'
-              : 'text-text-secondary hover:text-text-primary'
+              ? 'bg-black text-white border-black'
+              : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
           }`}
         >
           Visão Geral
@@ -478,24 +492,24 @@ function CouponsAdminContent() {
 
         <button
           onClick={() => changeTab('manage')}
-          className={`pb-3 px-3 transition-colors relative whitespace-nowrap flex items-center gap-1.5 ${
+          className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 flex items-center gap-1.5 ${
             activeTab === 'manage'
-              ? 'text-primary border-b-2 border-primary font-bold'
-              : 'text-text-secondary hover:text-text-primary'
+              ? 'bg-black text-white border-black'
+              : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
           }`}
         >
           <span>Gerenciar Cupons</span>
-          <span className="text-[10px] bg-surface-container px-1.5 py-0.2 rounded font-normal text-text-secondary">
+          <span className={`text-[10px] px-1.5 py-0.2 rounded font-normal font-mono ${activeTab === 'manage' ? 'bg-neutral-800 text-white' : 'bg-surface-container text-text-secondary'}`}>
             {coupons.length}
           </span>
         </button>
 
         <button
           onClick={() => changeTab('create')}
-          className={`pb-3 px-3 transition-colors relative whitespace-nowrap ${
+          className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 ${
             activeTab === 'create'
-              ? 'text-primary border-b-2 border-primary font-bold'
-              : 'text-text-secondary hover:text-text-primary'
+              ? 'bg-black text-white border-black'
+              : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
           }`}
         >
           {isEditing ? `Editar: ${formData.code || 'Cupom'}` : '+ Criar Cupom'}
@@ -503,10 +517,10 @@ function CouponsAdminContent() {
 
         <button
           onClick={() => changeTab('reports')}
-          className={`pb-3 px-3 transition-colors relative whitespace-nowrap ${
+          className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 ${
             activeTab === 'reports'
-              ? 'text-primary border-b-2 border-primary font-bold'
-              : 'text-text-secondary hover:text-text-primary'
+              ? 'bg-black text-white border-black'
+              : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
           }`}
         >
           Relatórios & Resgates
@@ -514,10 +528,10 @@ function CouponsAdminContent() {
 
         <button
           onClick={() => changeTab('history')}
-          className={`pb-3 px-3 transition-colors relative whitespace-nowrap ${
+          className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 ${
             activeTab === 'history'
-              ? 'text-primary border-b-2 border-primary font-bold'
-              : 'text-text-secondary hover:text-text-primary'
+              ? 'bg-black text-white border-black'
+              : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
           }`}
         >
           Histórico
@@ -525,70 +539,69 @@ function CouponsAdminContent() {
       </div>
 
       {/* ========================================================
-          TAB 1: VISÃO GERAL (DASHBOARD OPERACIONAL & ALERTAS)
+          TAB 1: VISÃO GERAL (DASHBOARD OPERACIONAL & METRICAS)
           ======================================================== */}
       {activeTab === 'overview' && stats && (
-        <div className="space-y-5 animate-in fade-in duration-200">
-          {/* Status Volume Metrics Grid */}
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Status Volume Metrics Grid - Clean Monochrome matching Dashboard KPI cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
-            <div className="bg-surface-pure border border-border-hairline p-3 sm:p-4">
-              <span className="text-[10px] text-text-secondary uppercase tracking-widest font-semibold block mb-1">
+            <div className="bg-surface-pure border border-border-hairline p-3 sm:p-4 shadow-sm">
+              <span className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold block mb-1">
                 Cadastrados
               </span>
-              <span className="text-xl sm:text-2xl font-bold font-display">{stats.totalCoupons}</span>
+              <span className="text-xl sm:text-2xl font-bold font-display text-text-primary">{stats.totalCoupons}</span>
               <span className="text-[10px] text-text-secondary block mt-0.5">todas as campanhas</span>
             </div>
 
-            <div className="bg-emerald-50/50 border border-emerald-200 p-3 sm:p-4">
-              <span className="text-[10px] text-emerald-800 uppercase tracking-widest font-semibold block mb-1">
+            <div className="bg-surface-pure border border-border-hairline p-3 sm:p-4 shadow-sm">
+              <span className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold block mb-1">
                 Ativos
               </span>
-              <span className="text-xl sm:text-2xl font-bold font-display text-emerald-700">{stats.activeCoupons}</span>
-              <span className="text-[10px] text-emerald-600 block mt-0.5">no checkout</span>
+              <span className="text-xl sm:text-2xl font-bold font-display text-text-primary">{stats.activeCoupons}</span>
+              <span className="text-[10px] text-text-secondary block mt-0.5">no checkout</span>
             </div>
 
-            <div className="bg-indigo-50/50 border border-indigo-200 p-3 sm:p-4">
-              <span className="text-[10px] text-indigo-800 uppercase tracking-widest font-semibold block mb-1">
+            <div className="bg-surface-pure border border-border-hairline p-3 sm:p-4 shadow-sm">
+              <span className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold block mb-1">
                 Agendados
               </span>
-              <span className="text-xl sm:text-2xl font-bold font-display text-indigo-700">{stats.scheduledCoupons}</span>
-              <span className="text-[10px] text-indigo-600 block mt-0.5">início futuro</span>
+              <span className="text-xl sm:text-2xl font-bold font-display text-text-primary">{stats.scheduledCoupons}</span>
+              <span className="text-[10px] text-text-secondary block mt-0.5">início futuro</span>
             </div>
 
-            <div className="bg-amber-50/50 border border-amber-200 p-3 sm:p-4">
-              <span className="text-[10px] text-amber-800 uppercase tracking-widest font-semibold block mb-1">
+            <div className="bg-surface-pure border border-border-hairline p-3 sm:p-4 shadow-sm">
+              <span className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold block mb-1">
                 Pausados
               </span>
-              <span className="text-xl sm:text-2xl font-bold font-display text-amber-700">{stats.pausedCoupons}</span>
-              <span className="text-[10px] text-amber-600 block mt-0.5">manualmente</span>
+              <span className="text-xl sm:text-2xl font-bold font-display text-text-primary">{stats.pausedCoupons}</span>
+              <span className="text-[10px] text-text-secondary block mt-0.5">manualmente</span>
             </div>
 
-            <div className="bg-orange-50/50 border border-orange-200 p-3 sm:p-4">
-              <span className="text-[10px] text-orange-800 uppercase tracking-widest font-semibold block mb-1">
+            <div className="bg-surface-pure border border-border-hairline p-3 sm:p-4 shadow-sm">
+              <span className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold block mb-1">
                 Esgotados
               </span>
-              <span className="text-xl sm:text-2xl font-bold font-display text-orange-700">{stats.exhaustedCoupons}</span>
-              <span className="text-[10px] text-orange-600 block mt-0.5">limite / teto</span>
+              <span className="text-xl sm:text-2xl font-bold font-display text-text-primary">{stats.exhaustedCoupons}</span>
+              <span className="text-[10px] text-text-secondary block mt-0.5">limite / teto</span>
             </div>
 
-            <div className="bg-gray-50 border border-gray-200 p-3 sm:p-4">
-              <span className="text-[10px] text-gray-700 uppercase tracking-widest font-semibold block mb-1">
+            <div className="bg-surface-pure border border-border-hairline p-3 sm:p-4 shadow-sm">
+              <span className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold block mb-1">
                 Expirados
               </span>
-              <span className="text-xl sm:text-2xl font-bold font-display text-gray-600">{stats.expiredCoupons}</span>
-              <span className="text-[10px] text-gray-500 block mt-0.5">data vencida</span>
+              <span className="text-xl sm:text-2xl font-bold font-display text-text-primary">{stats.expiredCoupons}</span>
+              <span className="text-[10px] text-text-secondary block mt-0.5">data vencida</span>
             </div>
           </div>
 
-          {/* Financial Breakdown Cards */}
+          {/* Financial Breakdown Cards - Clean Minimalist Style */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-            <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
+            <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-text-secondary uppercase tracking-widest font-bold">
+                <span className="text-[10px] text-text-secondary uppercase tracking-widest font-semibold">
                   Total de Descontos Concedidos
                 </span>
-                <span className="text-xs bg-surface-off px-2 py-0.5 border border-border-hairline font-mono font-bold">
+                <span className="text-xs bg-surface-off px-2 py-0.5 border border-border-hairline font-mono">
                   {stats.totalRedemptions} {stats.totalRedemptions === 1 ? 'resgate' : 'resgates'}
                 </span>
               </div>
@@ -602,13 +615,12 @@ function CouponsAdminContent() {
               </div>
             </div>
 
-            <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-600" />
-              <span className="text-[11px] text-text-secondary uppercase tracking-widest font-bold block">
+            <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm">
+              <span className="text-[10px] text-text-secondary uppercase tracking-widest font-semibold block">
                 Financiado pelo Marketplace
               </span>
               <div className="mt-3">
-                <span className="text-2xl sm:text-3xl font-bold font-display text-blue-700">
+                <span className="text-2xl sm:text-3xl font-bold font-display text-text-primary">
                   R$ {formatCurrency(stats.marketplaceCost)}
                 </span>
                 <p className="text-[11px] text-text-secondary mt-1">
@@ -617,13 +629,12 @@ function CouponsAdminContent() {
               </div>
             </div>
 
-            <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-purple-600" />
-              <span className="text-[11px] text-text-secondary uppercase tracking-widest font-bold block">
+            <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm">
+              <span className="text-[10px] text-text-secondary uppercase tracking-widest font-semibold block">
                 Financiado pelos Vendedores
               </span>
               <div className="mt-3">
-                <span className="text-2xl sm:text-3xl font-bold font-display text-purple-700">
+                <span className="text-2xl sm:text-3xl font-bold font-display text-text-primary">
                   R$ {formatCurrency(stats.sellerCost)}
                 </span>
                 <p className="text-[11px] text-text-secondary mt-1">
@@ -633,7 +644,7 @@ function CouponsAdminContent() {
             </div>
           </div>
 
-          {/* Highlights & Operational Alerts */}
+          {/* Highlights & Monitoring */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Top Campaigns */}
             <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm">
@@ -672,7 +683,7 @@ function CouponsAdminContent() {
                             <span className="text-text-secondary text-[11px]">R$ {formatCurrency(camp.totalDiscount)}</span>
                           </div>
                         </div>
-                        <div className="w-full bg-surface-off h-2 rounded-full overflow-hidden border border-border-hairline">
+                        <div className="w-full bg-surface-off h-1.5 rounded-full overflow-hidden border border-border-hairline">
                           <div className="bg-primary h-full transition-all duration-500" style={{ width: `${percent}%` }} />
                         </div>
                       </div>
@@ -682,35 +693,29 @@ function CouponsAdminContent() {
               )}
             </div>
 
-            {/* Critical Alerts */}
+            {/* Monitoring & Alerts */}
             <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between pb-3 border-b border-border-hairline mb-4">
                   <h3 className="font-display uppercase tracking-widest text-xs sm:text-sm font-bold text-text-primary">
-                    Alertas & Indicadores
+                    Monitoramento & Alertas
                   </h3>
-                  <span className="text-[10px] text-text-secondary uppercase tracking-wider">Monitoramento</span>
+                  <span className="text-[10px] text-text-secondary uppercase tracking-wider">Status Operacional</span>
                 </div>
 
                 <div className="space-y-3">
                   {/* Expiring Soon Alert */}
-                  <div
-                    className={`p-3 border flex items-start gap-3 ${
-                      stats.expiringSoonCount > 0
-                        ? 'bg-amber-50/70 border-amber-300 text-amber-900'
-                        : 'bg-surface-off border-border-hairline text-text-secondary'
-                    }`}
-                  >
-                    <div className="p-1 rounded bg-amber-200/50 mt-0.5 flex-shrink-0">
-                      <svg className="w-4 h-4 text-amber-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-3 bg-surface-off border border-border-hairline flex items-start gap-3">
+                    <div className="p-1 rounded bg-surface-container mt-0.5 flex-shrink-0 text-text-secondary">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-wider">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-text-primary">
                         {stats.expiringSoonCount} {stats.expiringSoonCount === 1 ? 'Campanha Próxima' : 'Campanhas Próximas'} do Vencimento
                       </p>
-                      <p className="text-[11px] mt-0.5">
+                      <p className="text-[11px] text-text-secondary mt-0.5">
                         {stats.expiringSoonCount > 0
                           ? 'Cupons com expiração programada nos próximos 7 dias.'
                           : 'Nenhum cupom ativo expirando nos próximos 7 dias.'}
@@ -719,23 +724,17 @@ function CouponsAdminContent() {
                   </div>
 
                   {/* Near Limit Alert */}
-                  <div
-                    className={`p-3 border flex items-start gap-3 ${
-                      stats.nearLimitCount > 0
-                        ? 'bg-orange-50/70 border-orange-300 text-orange-900'
-                        : 'bg-surface-off border-border-hairline text-text-secondary'
-                    }`}
-                  >
-                    <div className="p-1 rounded bg-orange-200/50 mt-0.5 flex-shrink-0">
-                      <svg className="w-4 h-4 text-orange-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-3 bg-surface-off border border-border-hairline flex items-start gap-3">
+                    <div className="p-1 rounded bg-surface-container mt-0.5 flex-shrink-0 text-text-secondary">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-wider">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-text-primary">
                         {stats.nearLimitCount} {stats.nearLimitCount === 1 ? 'Cupom Próximo' : 'Cupons Próximos'} do Limite
                       </p>
-                      <p className="text-[11px] mt-0.5">
+                      <p className="text-[11px] text-text-secondary mt-0.5">
                         {stats.nearLimitCount > 0
                           ? 'Campanhas que atingiram 80% ou mais do teto de utilizações ou orçamento.'
                           : 'Todas as campanhas ativas possuem saldo saudável.'}
@@ -746,7 +745,7 @@ function CouponsAdminContent() {
                   {/* Customer Engagement */}
                   <div className="p-3 bg-surface-off border border-border-hairline flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-text-primary uppercase tracking-wider">
+                      <p className="text-xs font-semibold text-text-primary uppercase tracking-wider">
                         Clientes Únicos
                       </p>
                       <p className="text-[11px] text-text-secondary">
@@ -870,14 +869,14 @@ function CouponsAdminContent() {
                   setFormData(initialFormState);
                   changeTab('create');
                 }}
-                className="mt-2 min-h-[42px] px-5 py-2.5 bg-primary hover:bg-secondary text-white text-xs uppercase tracking-wider font-bold transition-all shadow-sm inline-flex items-center gap-2"
+                className="mt-2 min-h-[42px] px-5 py-2.5 bg-primary hover:bg-neutral-800 text-white text-xs uppercase tracking-wider font-bold transition-all shadow-sm inline-flex items-center gap-2"
               >
                 <span>+ Criar Primeiro Cupom</span>
               </button>
             </div>
           ) : (
             <>
-              {/* MOBILE VIEW: Touch-Friendly Card List (Visible only on mobile/tablet screens < 768px) */}
+              {/* MOBILE VIEW: Cards for Small Screens (< 768px) */}
               <div className="md:hidden space-y-3">
                 {filteredCoupons.map((c) => {
                   const usagePercent = c.totalUsageLimit
@@ -889,7 +888,7 @@ function CouponsAdminContent() {
                       {/* Card Header: Code & Status Badge */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-sm bg-surface-off px-2.5 py-1 border border-border-hairline tracking-wider">
+                          <span className="font-mono font-bold text-sm bg-surface-off px-2.5 py-1 border border-border-hairline tracking-wider text-text-primary">
                             {c.code}
                           </span>
                           <button
@@ -899,7 +898,7 @@ function CouponsAdminContent() {
                             aria-label="Copiar código"
                           >
                             {copiedCode === c.code ? (
-                              <span className="text-[10px] text-emerald-600 font-bold">Copiado!</span>
+                              <span className="text-[10px] text-text-primary font-bold">Copiado!</span>
                             ) : (
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
@@ -916,7 +915,7 @@ function CouponsAdminContent() {
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[10px] font-mono text-text-secondary">v{c.version}</span>
                           {c.canStack && (
-                            <span className="text-[9px] bg-blue-50 text-blue-700 font-semibold px-1.5 py-0.2 rounded">
+                            <span className="text-[9px] bg-surface-off border border-border-hairline text-text-secondary font-mono px-1.5 py-0.2 rounded">
                               Cumulativo
                             </span>
                           )}
@@ -948,7 +947,7 @@ function CouponsAdminContent() {
                           {usagePercent !== null && (
                             <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden mt-1">
                               <div
-                                className={`h-full ${usagePercent >= 90 ? 'bg-orange-500' : 'bg-primary'}`}
+                                className="h-full bg-primary"
                                 style={{ width: `${usagePercent}%` }}
                               />
                             </div>
@@ -979,7 +978,7 @@ function CouponsAdminContent() {
                         </div>
                       </div>
 
-                      {/* Mobile Touch Action Buttons Bar */}
+                      {/* Action Buttons */}
                       <div className="flex items-center gap-1.5 pt-2 border-t border-border-hairline text-xs font-semibold">
                         <button
                           type="button"
@@ -992,11 +991,7 @@ function CouponsAdminContent() {
                         <button
                           type="button"
                           onClick={() => handleToggleStatus(c.id)}
-                          className={`flex-1 min-h-[38px] px-2 border rounded text-center transition-colors flex items-center justify-center ${
-                            c.status === 'PAUSED'
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                              : 'bg-amber-50 text-amber-800 border-amber-300'
-                          }`}
+                          className="flex-1 min-h-[38px] px-2 bg-surface-off hover:bg-surface-container border border-border-hairline rounded text-center text-text-secondary hover:text-text-primary transition-colors flex items-center justify-center"
                         >
                           {c.status === 'PAUSED' ? 'Ativar' : 'Pausar'}
                         </button>
@@ -1024,7 +1019,7 @@ function CouponsAdminContent() {
                           <button
                             type="button"
                             onClick={() => handleArchive(c.id, c.code)}
-                            className="min-h-[38px] px-3 text-[#ba1a1a] bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-colors flex items-center justify-center"
+                            className="min-h-[38px] px-3 text-[#ba1a1a] bg-surface-off hover:bg-[#ba1a1a]/10 border border-border-hairline rounded transition-colors flex items-center justify-center"
                             title="Arquivar"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1038,7 +1033,7 @@ function CouponsAdminContent() {
                 })}
               </div>
 
-              {/* DESKTOP VIEW: Full Data Table (Visible on screens >= 768px) */}
+              {/* DESKTOP VIEW: Clean Monochrome Table (Screens >= 768px) */}
               <div className="hidden md:block bg-surface-pure border border-border-hairline shadow-sm overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
@@ -1063,7 +1058,7 @@ function CouponsAdminContent() {
                         <tr key={c.id} className="hover:bg-surface-off/60 transition-colors">
                           <td className="p-3">
                             <div className="flex items-center gap-2">
-                              <span className="font-mono font-bold text-sm bg-surface-off px-2 py-0.5 border border-border-hairline tracking-wider">
+                              <span className="font-mono font-bold text-sm bg-surface-off px-2 py-0.5 border border-border-hairline tracking-wider text-text-primary">
                                 {c.code}
                               </span>
                               <button
@@ -1073,7 +1068,7 @@ function CouponsAdminContent() {
                                 title="Copiar código"
                               >
                                 {copiedCode === c.code ? (
-                                  <span className="text-[10px] text-emerald-600 font-bold">Copiado!</span>
+                                  <span className="text-[10px] text-text-primary font-bold">Copiado!</span>
                                 ) : (
                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
@@ -1085,7 +1080,7 @@ function CouponsAdminContent() {
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-[10px] text-text-secondary font-mono">v{c.version}</span>
                               {c.canStack && (
-                                <span className="text-[9px] bg-blue-50 text-blue-700 px-1 font-semibold rounded">
+                                <span className="text-[9px] bg-surface-off border border-border-hairline text-text-secondary font-mono px-1.5 py-0.2 rounded">
                                   Cumulativo
                                 </span>
                               )}
@@ -1129,7 +1124,7 @@ function CouponsAdminContent() {
                             {usagePercent !== null && (
                               <div className="w-24 bg-surface-container h-1.5 rounded-full overflow-hidden">
                                 <div
-                                  className={`h-full ${usagePercent >= 90 ? 'bg-orange-500' : 'bg-primary'}`}
+                                  className="h-full bg-primary"
                                   style={{ width: `${usagePercent}%` }}
                                 />
                               </div>
@@ -1145,18 +1140,10 @@ function CouponsAdminContent() {
                             )}
                           </td>
 
-                          <td className="p-3 text-[11px]">
-                            {c.financingType === 'MARKETPLACE_100' && (
-                              <span className="text-blue-700 font-medium">100% Plataforma</span>
-                            )}
-                            {c.financingType === 'SELLER_100' && (
-                              <span className="text-purple-700 font-medium">100% Vendedor</span>
-                            )}
-                            {c.financingType === 'SHARED' && (
-                              <span className="text-indigo-700 font-medium">
-                                {c.marketplaceSharePercent}% / {c.sellerSharePercent}%
-                              </span>
-                            )}
+                          <td className="p-3 text-[11px] text-text-primary font-medium">
+                            {c.financingType === 'MARKETPLACE_100' && '100% Marketplace'}
+                            {c.financingType === 'SELLER_100' && '100% Vendedor'}
+                            {c.financingType === 'SHARED' && `${c.marketplaceSharePercent}% Mkt / ${c.sellerSharePercent}% Vend`}
                           </td>
 
                           <td className="p-3">{renderStatusBadge(c.status)}</td>
@@ -1176,11 +1163,7 @@ function CouponsAdminContent() {
 
                               <button
                                 onClick={() => handleToggleStatus(c.id)}
-                                className={`p-1.5 rounded transition-colors ${
-                                  c.status === 'PAUSED'
-                                    ? 'text-emerald-700 hover:bg-emerald-50'
-                                    : 'text-amber-700 hover:bg-amber-50'
-                                }`}
+                                className="p-1.5 text-text-secondary hover:text-primary hover:bg-surface-container rounded transition-colors"
                                 title={c.status === 'PAUSED' ? 'Ativar cupom' : 'Pausar cupom'}
                               >
                                 {c.status === 'PAUSED' ? (
@@ -1217,7 +1200,7 @@ function CouponsAdminContent() {
                               {c.status !== 'ARCHIVED' && (
                                 <button
                                   onClick={() => handleArchive(c.id, c.code)}
-                                  className="p-1.5 text-[#ba1a1a] hover:bg-[#ba1a1a]/10 rounded"
+                                  className="p-1.5 text-text-secondary hover:text-[#ba1a1a] hover:bg-[#ba1a1a]/10 rounded"
                                   title="Arquivar"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1269,13 +1252,13 @@ function CouponsAdminContent() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Form Inputs (Left 2 columns on desktop) */}
+            {/* Form Inputs */}
             <div className="lg:col-span-2 space-y-5">
               {/* Section 1: Informações Básicas */}
               <div className="bg-surface-pure border border-border-hairline p-4 sm:p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-border-hairline">
                   <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] flex items-center justify-center font-bold">1</span>
-                  <h3 className="font-display uppercase tracking-widest text-xs font-bold">Informações Básicas</h3>
+                  <h3 className="font-display uppercase tracking-widest text-xs font-bold text-text-primary">Informações Básicas</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1301,7 +1284,7 @@ function CouponsAdminContent() {
                       <button
                         type="button"
                         onClick={handleGenerateCode}
-                        className="text-[10px] text-primary hover:underline uppercase font-bold"
+                        className="text-[10px] text-text-secondary hover:text-primary uppercase font-bold"
                       >
                         Gerar Código
                       </button>
@@ -1365,7 +1348,7 @@ function CouponsAdminContent() {
               <div className="bg-surface-pure border border-border-hairline p-4 sm:p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-border-hairline">
                   <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] flex items-center justify-center font-bold">2</span>
-                  <h3 className="font-display uppercase tracking-widest text-xs font-bold">Tipo de Desconto & Regras</h3>
+                  <h3 className="font-display uppercase tracking-widest text-xs font-bold text-text-primary">Tipo de Desconto & Regras</h3>
                 </div>
 
                 {/* Modality Selector */}
@@ -1373,8 +1356,8 @@ function CouponsAdminContent() {
                   <label
                     className={`p-3 border cursor-pointer transition-all flex flex-col justify-between ${
                       formData.discountType === 'PERCENTAGE'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-border-hairline bg-surface-off text-text-secondary'
+                        ? 'border-primary bg-surface-off text-primary'
+                        : 'border-border-hairline bg-surface-pure text-text-secondary'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -1394,8 +1377,8 @@ function CouponsAdminContent() {
                   <label
                     className={`p-3 border cursor-pointer transition-all flex flex-col justify-between ${
                       formData.discountType === 'FIXED'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-border-hairline bg-surface-off text-text-secondary'
+                        ? 'border-primary bg-surface-off text-primary'
+                        : 'border-border-hairline bg-surface-pure text-text-secondary'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -1415,8 +1398,8 @@ function CouponsAdminContent() {
                   <label
                     className={`p-3 border cursor-pointer transition-all flex flex-col justify-between ${
                       formData.discountType === 'FREE_SHIPPING'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-border-hairline bg-surface-off text-text-secondary'
+                        ? 'border-primary bg-surface-off text-primary'
+                        : 'border-border-hairline bg-surface-pure text-text-secondary'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -1512,7 +1495,7 @@ function CouponsAdminContent() {
               <div className="bg-surface-pure border border-border-hairline p-4 sm:p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-border-hairline">
                   <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] flex items-center justify-center font-bold">3</span>
-                  <h3 className="font-display uppercase tracking-widest text-xs font-bold">Vigência & Agendamento</h3>
+                  <h3 className="font-display uppercase tracking-widest text-xs font-bold text-text-primary">Vigência & Agendamento</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1555,11 +1538,11 @@ function CouponsAdminContent() {
                 </div>
               </div>
 
-              {/* Section 4: Vendedores Participantes (Multi-vendor) */}
+              {/* Section 4: Vendedores Participantes */}
               <div className="bg-surface-pure border border-border-hairline p-4 sm:p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-border-hairline">
                   <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] flex items-center justify-center font-bold">4</span>
-                  <h3 className="font-display uppercase tracking-widest text-xs font-bold">Vendedores Participantes</h3>
+                  <h3 className="font-display uppercase tracking-widest text-xs font-bold text-text-primary">Vendedores Participantes</h3>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 text-xs">
@@ -1571,7 +1554,7 @@ function CouponsAdminContent() {
                       onChange={() => setFormData({ ...formData, sellerScope: 'ALL', selectedSellerIds: [] })}
                       className="accent-primary"
                     />
-                    <span className="font-semibold">Todos os Vendedores Aprovados</span>
+                    <span className="font-semibold text-text-primary">Todos os Vendedores Aprovados</span>
                   </label>
 
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -1582,7 +1565,7 @@ function CouponsAdminContent() {
                       onChange={() => setFormData({ ...formData, sellerScope: 'SELECTED' })}
                       className="accent-primary"
                     />
-                    <span className="font-semibold">Apenas Vendedores Selecionados</span>
+                    <span className="font-semibold text-text-primary">Apenas Vendedores Selecionados</span>
                   </label>
                 </div>
 
@@ -1630,7 +1613,7 @@ function CouponsAdminContent() {
               <div className="bg-surface-pure border border-border-hairline p-4 sm:p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-border-hairline">
                   <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] flex items-center justify-center font-bold">5</span>
-                  <h3 className="font-display uppercase tracking-widest text-xs font-bold">Limites & Orçamento</h3>
+                  <h3 className="font-display uppercase tracking-widest text-xs font-bold text-text-primary">Limites & Orçamento</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1697,15 +1680,15 @@ function CouponsAdminContent() {
               <div className="bg-surface-pure border border-border-hairline p-4 sm:p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-border-hairline">
                   <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] flex items-center justify-center font-bold">6</span>
-                  <h3 className="font-display uppercase tracking-widest text-xs font-bold">Rateio de Custos</h3>
+                  <h3 className="font-display uppercase tracking-widest text-xs font-bold text-text-primary">Rateio de Custos</h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <label
                     className={`p-3 border cursor-pointer transition-all flex flex-col justify-between ${
                       formData.financingType === 'MARKETPLACE_100'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-border-hairline bg-surface-off text-text-secondary'
+                        ? 'border-primary bg-surface-off text-primary'
+                        : 'border-border-hairline bg-surface-pure text-text-secondary'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -1725,8 +1708,8 @@ function CouponsAdminContent() {
                   <label
                     className={`p-3 border cursor-pointer transition-all flex flex-col justify-between ${
                       formData.financingType === 'SELLER_100'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-border-hairline bg-surface-off text-text-secondary'
+                        ? 'border-primary bg-surface-off text-primary'
+                        : 'border-border-hairline bg-surface-pure text-text-secondary'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -1746,8 +1729,8 @@ function CouponsAdminContent() {
                   <label
                     className={`p-3 border cursor-pointer transition-all flex flex-col justify-between ${
                       formData.financingType === 'SHARED'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-border-hairline bg-surface-off text-text-secondary'
+                        ? 'border-primary bg-surface-off text-primary'
+                        : 'border-border-hairline bg-surface-pure text-text-secondary'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -1768,7 +1751,7 @@ function CouponsAdminContent() {
                 {/* Shared split slider */}
                 {formData.financingType === 'SHARED' && (
                   <div className="p-3.5 bg-surface-off border border-border-hairline space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold">
+                    <div className="flex items-center justify-between text-xs font-bold text-text-primary">
                       <span>Marketplace: {formData.marketplaceSharePercent}%</span>
                       <span>Vendedor: {formData.sellerSharePercent}%</span>
                     </div>
@@ -1797,12 +1780,9 @@ function CouponsAdminContent() {
             <div className="space-y-5">
               <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm lg:sticky lg:top-6 space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-border-hairline">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <h3 className="font-display uppercase tracking-widest text-xs font-bold text-text-primary">
-                      Simulador em Tempo Real
-                    </h3>
-                  </div>
+                  <h3 className="font-display uppercase tracking-widest text-xs font-bold text-text-primary">
+                    Simulador em Tempo Real
+                  </h3>
                   <span className="text-[10px] text-text-secondary uppercase">Prévia</span>
                 </div>
 
@@ -1823,23 +1803,23 @@ function CouponsAdminContent() {
                 <div className="p-3 bg-surface-off border border-border-hairline space-y-2 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-text-secondary">Subtotal Simulado:</span>
-                    <span className="font-semibold">R$ {formatCurrency(simulationCartValue)}</span>
+                    <span className="font-semibold text-text-primary">R$ {formatCurrency(simulationCartValue)}</span>
                   </div>
 
-                  <div className="flex items-center justify-between text-emerald-700 font-bold">
+                  <div className="flex items-center justify-between font-bold text-text-primary">
                     <span>Desconto Aplicado:</span>
                     <span>- R$ {formatCurrency(simulationResults.discount)}</span>
                   </div>
 
                   <div className="pt-2 border-t border-border-hairline/80 space-y-1.5 text-[11px]">
-                    <div className="flex items-center justify-between text-blue-800">
+                    <div className="flex items-center justify-between text-text-secondary">
                       <span>Marketplace ({formData.marketplaceSharePercent}%):</span>
-                      <span className="font-bold">R$ {formatCurrency(simulationResults.mktCost)}</span>
+                      <span className="font-semibold text-text-primary">R$ {formatCurrency(simulationResults.mktCost)}</span>
                     </div>
 
-                    <div className="flex items-center justify-between text-purple-800">
+                    <div className="flex items-center justify-between text-text-secondary">
                       <span>Vendedor ({formData.sellerSharePercent}%):</span>
-                      <span className="font-bold">R$ {formatCurrency(simulationResults.sellerCost)}</span>
+                      <span className="font-semibold text-text-primary">R$ {formatCurrency(simulationResults.sellerCost)}</span>
                     </div>
                   </div>
 
@@ -1854,7 +1834,7 @@ function CouponsAdminContent() {
                   <button
                     type="submit"
                     disabled={savingCoupon}
-                    className="w-full min-h-[44px] py-3 bg-primary hover:bg-secondary text-white text-xs uppercase tracking-wider font-bold transition-all shadow-sm disabled:opacity-50 flex items-center justify-center"
+                    className="w-full min-h-[44px] py-3 bg-primary hover:bg-neutral-800 text-white text-xs uppercase tracking-wider font-bold transition-all shadow-sm disabled:opacity-50 flex items-center justify-center"
                   >
                     {savingCoupon ? 'Salvando...' : isEditing ? 'Salvar Alterações (Nova Versão)' : 'Publicar Campanha de Cupom'}
                   </button>
@@ -1895,7 +1875,7 @@ function CouponsAdminContent() {
 
             <a
               href="/api/coupons/reports?format=csv"
-              className="w-full sm:w-auto min-h-[40px] px-4 py-2 bg-primary hover:bg-secondary text-white text-xs uppercase tracking-wider font-semibold transition-colors flex items-center justify-center gap-1.5"
+              className="w-full sm:w-auto min-h-[40px] px-4 py-2 bg-primary hover:bg-neutral-800 text-white text-xs uppercase tracking-wider font-semibold transition-colors flex items-center justify-center gap-1.5"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1914,7 +1894,7 @@ function CouponsAdminContent() {
                 Nenhum resgate registrado ainda
               </h3>
               <p className="text-xs text-text-secondary max-w-sm mx-auto">
-                Assim que seus clientes aplicarem os cupons criados e finalizarem a compra, os resgates e métricas financeiras aparecerão aqui.
+                Assim que seus clientes aplicarem os cupons criados e finalizarem a compra, os resgates e métricas aparecerão aqui.
               </p>
             </div>
           ) : (
@@ -1924,7 +1904,7 @@ function CouponsAdminContent() {
                 {redemptions.map((r) => (
                   <div key={r.id} className="bg-surface-pure border border-border-hairline p-4 shadow-sm space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono font-bold text-xs bg-emerald-50 text-emerald-900 border border-emerald-200 px-2 py-0.5 rounded-sm">
+                      <span className="font-mono font-bold text-xs bg-surface-off text-text-primary border border-border-hairline px-2 py-0.5 rounded-sm">
                         {r.couponCode}
                       </span>
                       <span className="text-[10px] text-text-secondary font-mono">{r.orderId || '-'}</span>
@@ -1938,25 +1918,25 @@ function CouponsAdminContent() {
                     <div className="grid grid-cols-2 gap-2 text-xs bg-surface-off p-2.5 border border-border-hairline">
                       <div>
                         <span className="text-[10px] text-text-secondary uppercase block">Subtotal</span>
-                        <span>R$ {formatCurrency(r.subtotal)}</span>
+                        <span className="text-text-primary">R$ {formatCurrency(r.subtotal)}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-emerald-700 uppercase block font-semibold">Desconto</span>
-                        <span className="font-bold text-emerald-700">- R$ {formatCurrency(r.discountAmount)}</span>
+                        <span className="text-[10px] text-text-secondary uppercase block font-semibold">Desconto</span>
+                        <span className="font-bold text-text-primary">- R$ {formatCurrency(r.discountAmount)}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-blue-700 uppercase block">Custo Mkt</span>
-                        <span>R$ {formatCurrency(r.marketplaceCost)}</span>
+                        <span className="text-[10px] text-text-secondary uppercase block">Custo Mkt</span>
+                        <span className="text-text-primary">R$ {formatCurrency(r.marketplaceCost)}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-purple-700 uppercase block">Custo Vend</span>
-                        <span>R$ {formatCurrency(r.sellerCost)}</span>
+                        <span className="text-[10px] text-text-secondary uppercase block">Custo Vend</span>
+                        <span className="text-text-primary">R$ {formatCurrency(r.sellerCost)}</span>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between pt-1 border-t border-border-hairline text-xs font-bold">
-                      <span>Total Pago:</span>
-                      <span className="text-sm">R$ {formatCurrency(r.finalTotal)}</span>
+                      <span className="text-text-secondary">Total Pago:</span>
+                      <span className="text-sm text-text-primary">R$ {formatCurrency(r.finalTotal)}</span>
                     </div>
                   </div>
                 ))}
@@ -1984,24 +1964,24 @@ function CouponsAdminContent() {
                         <td className="p-3 text-[11px] text-text-secondary">
                           {new Date(r.createdAt).toLocaleString('pt-BR')}
                         </td>
-                        <td className="p-3 font-mono font-bold text-xs">{r.orderId || '-'}</td>
+                        <td className="p-3 font-mono font-bold text-xs text-text-primary">{r.orderId || '-'}</td>
                         <td className="p-3">
-                          <span className="font-mono font-bold text-xs bg-emerald-50 text-emerald-900 border border-emerald-200 px-2 py-0.5 rounded-sm">
+                          <span className="font-mono font-bold text-xs bg-surface-off text-text-primary border border-border-hairline px-2 py-0.5 rounded-sm">
                             {r.couponCode}
                           </span>
                         </td>
                         <td className="p-3">
-                          <p className="font-medium">{r.customerName}</p>
+                          <p className="font-medium text-text-primary">{r.customerName}</p>
                           <p className="text-[10px] text-text-secondary">{r.customerEmail || r.customerPhone || '-'}</p>
                         </td>
-                        <td className="p-3">R$ {formatCurrency(r.subtotal)}</td>
-                        <td className="p-3 font-bold text-emerald-700">
+                        <td className="p-3 text-text-primary">R$ {formatCurrency(r.subtotal)}</td>
+                        <td className="p-3 font-bold text-text-primary">
                           - R$ {formatCurrency(r.discountAmount)}
                         </td>
-                        <td className="p-3 text-blue-700 font-medium">
+                        <td className="p-3 text-text-primary font-medium">
                           R$ {formatCurrency(r.marketplaceCost)}
                         </td>
-                        <td className="p-3 text-purple-700 font-medium">
+                        <td className="p-3 text-text-primary font-medium">
                           R$ {formatCurrency(r.sellerCost)}
                         </td>
                         <td className="p-3 font-bold text-text-primary">
@@ -2041,11 +2021,11 @@ function CouponsAdminContent() {
                 <div key={c.id} className="p-4 space-y-1">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold bg-surface-off px-2 py-0.5 border border-border-hairline">
+                      <span className="font-mono font-bold bg-surface-off px-2 py-0.5 border border-border-hairline text-text-primary">
                         {c.code}
                       </span>
                       <span className="font-semibold text-text-primary">{c.name}</span>
-                      <span className="text-[10px] bg-surface-container px-1.5 rounded font-mono">v{c.version}</span>
+                      <span className="text-[10px] bg-surface-container px-1.5 rounded font-mono text-text-secondary">v{c.version}</span>
                     </div>
                     <span className="text-[11px] text-text-secondary">
                       Criado em: {new Date(c.createdAt).toLocaleDateString('pt-BR')} por {c.createdByAdmin || 'Administrador'}
@@ -2062,14 +2042,14 @@ function CouponsAdminContent() {
       )}
 
       {/* ========================================================
-          MODAL DE DETALHES DO CUPOM (MOBILE BOTTOM SHEET & DESKTOP MODAL)
+          MODAL DE DETALHES DO CUPOM (MOBILE BOTTOM SHEET & DESKTOP)
           ======================================================== */}
       {isDetailModalOpen && selectedCouponDetails && (
         <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 animate-in fade-in">
           <div className="bg-surface-pure border-t sm:border border-border-hairline w-full max-w-2xl max-h-[92dvh] overflow-y-auto shadow-2xl p-4 sm:p-6 space-y-4 sm:space-y-5 rounded-t-xl sm:rounded-none">
             <div className="flex items-center justify-between pb-3 border-b border-border-hairline">
               <div className="flex items-center gap-2">
-                <span className="font-mono font-bold text-base sm:text-lg">{selectedCouponDetails.code}</span>
+                <span className="font-mono font-bold text-base sm:text-lg text-text-primary">{selectedCouponDetails.code}</span>
                 {renderStatusBadge(selectedCouponDetails.status)}
               </div>
               <button
@@ -2084,11 +2064,11 @@ function CouponsAdminContent() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
               <div className="bg-surface-off p-2.5 sm:p-3 border border-border-hairline">
                 <span className="text-[10px] text-text-secondary uppercase tracking-widest block font-semibold">Campanha</span>
-                <span className="font-bold truncate block">{selectedCouponDetails.name}</span>
+                <span className="font-bold text-text-primary truncate block">{selectedCouponDetails.name}</span>
               </div>
               <div className="bg-surface-off p-2.5 sm:p-3 border border-border-hairline">
                 <span className="text-[10px] text-text-secondary uppercase tracking-widest block font-semibold">Tipo & Valor</span>
-                <span className="font-bold">
+                <span className="font-bold text-text-primary">
                   {selectedCouponDetails.discountType === 'PERCENTAGE'
                     ? `${selectedCouponDetails.discountValue}% OFF`
                     : selectedCouponDetails.discountType === 'FIXED'
@@ -2098,21 +2078,21 @@ function CouponsAdminContent() {
               </div>
               <div className="bg-surface-off p-2.5 sm:p-3 border border-border-hairline">
                 <span className="text-[10px] text-text-secondary uppercase tracking-widest block font-semibold">Cumulativo</span>
-                <span className="font-bold">{selectedCouponDetails.canStack ? 'Sim' : 'Não'}</span>
+                <span className="font-bold text-text-primary">{selectedCouponDetails.canStack ? 'Sim' : 'Não'}</span>
               </div>
               <div className="bg-surface-off p-2.5 sm:p-3 border border-border-hairline">
                 <span className="text-[10px] text-text-secondary uppercase tracking-widest block font-semibold">Utilizações</span>
-                <span className="font-bold">
+                <span className="font-bold text-text-primary">
                   {selectedCouponDetails.usedCount} / {selectedCouponDetails.totalUsageLimit ?? 'Ilimitado'}
                 </span>
               </div>
               <div className="bg-surface-off p-2.5 sm:p-3 border border-border-hairline">
                 <span className="text-[10px] text-text-secondary uppercase tracking-widest block font-semibold">Desconto Total</span>
-                <span className="font-bold">R$ {formatCurrency(selectedCouponDetails.totalDiscountGiven)}</span>
+                <span className="font-bold text-text-primary">R$ {formatCurrency(selectedCouponDetails.totalDiscountGiven)}</span>
               </div>
               <div className="bg-surface-off p-2.5 sm:p-3 border border-border-hairline">
                 <span className="text-[10px] text-text-secondary uppercase tracking-widest block font-semibold">Versão</span>
-                <span className="font-bold font-mono">v{selectedCouponDetails.version}</span>
+                <span className="font-bold text-text-primary font-mono">v{selectedCouponDetails.version}</span>
               </div>
             </div>
 
@@ -2133,10 +2113,10 @@ function CouponsAdminContent() {
               <span className="text-[10px] text-text-secondary uppercase tracking-widest block font-semibold">
                 Divisão de Financiamento
               </span>
-              <p>
+              <p className="text-text-primary">
                 Marketplace: <strong>{selectedCouponDetails.marketplaceSharePercent}%</strong> (Custo acumulado: R$ {formatCurrency(selectedCouponDetails.totalMarketplaceCost)})
               </p>
-              <p>
+              <p className="text-text-primary">
                 Vendedores: <strong>{selectedCouponDetails.sellerSharePercent}%</strong> (Custo acumulado: R$ {formatCurrency(selectedCouponDetails.totalSellerCost)})
               </p>
             </div>
@@ -2145,7 +2125,7 @@ function CouponsAdminContent() {
               <button
                 type="button"
                 onClick={() => setIsDetailModalOpen(false)}
-                className="w-full sm:w-auto min-h-[40px] px-4 py-2 bg-surface-off border border-border-hairline text-xs uppercase tracking-wider font-semibold"
+                className="w-full sm:w-auto min-h-[40px] px-4 py-2 bg-surface-off border border-border-hairline text-xs uppercase tracking-wider font-semibold hover:bg-surface-container transition-colors"
               >
                 Fechar
               </button>
@@ -2155,7 +2135,7 @@ function CouponsAdminContent() {
                   setIsDetailModalOpen(false);
                   handleEditClick(selectedCouponDetails);
                 }}
-                className="w-full sm:w-auto min-h-[40px] px-4 py-2 bg-primary text-white text-xs uppercase tracking-wider font-semibold hover:bg-secondary transition-colors"
+                className="w-full sm:w-auto min-h-[40px] px-4 py-2 bg-primary text-white text-xs uppercase tracking-wider font-semibold hover:bg-neutral-800 transition-colors"
               >
                 Editar Regras
               </button>
