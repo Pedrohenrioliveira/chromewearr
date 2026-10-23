@@ -124,3 +124,111 @@ model SiteSetting {
   updatedAt  DateTime @updatedAt
 }
 
+model Coupon {
+  id                      String             @id @default(cuid())
+  code                    String             @unique
+  name                    String
+  description             String?            @db.Text
+  internalId              String?
+  discountType            String             @default("PERCENTAGE") // PERCENTAGE, FIXED, FREE_SHIPPING
+  discountValue           Float
+  maxDiscountAmount       Float?
+  minOrderValue           Float?
+  subtotalEligible        Boolean            @default(true)
+  canStack                Boolean            @default(false)
+  startDate               DateTime           @default(now())
+  endDate                 DateTime?
+  timezone                String             @default("America/Sao_Paulo")
+  status                  String             @default("ACTIVE") // DRAFT, SCHEDULED, ACTIVE, PAUSED, EXPIRED, EXHAUSTED, ARCHIVED
+  sellerScope             String             @default("ALL") // ALL, SELECTED
+  productScope            String             @default("ALL") // ALL, SELECTED_PRODUCTS, SELECTED_CATEGORIES
+  totalUsageLimit         Int?
+  usagePerCustomerLimit   Int                @default(1)
+  usagePerOrderLimit      Int                @default(1)
+  financialBudget         Float?
+  financingType           String             @default("MARKETPLACE_100") // MARKETPLACE_100, SELLER_100, SHARED
+  marketplaceSharePercent Float              @default(100)
+  sellerSharePercent      Float              @default(0)
+  usedCount               Int                @default(0)
+  totalDiscountGiven      Float              @default(0)
+  totalMarketplaceCost    Float              @default(0)
+  totalSellerCost         Float              @default(0)
+  version                 Int                @default(1)
+  createdByAdmin          String?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+
+  sellers                 CouponSeller[]
+  products                CouponProduct[]
+  categories              CouponCategory[]
+  redemptions             CouponRedemption[]
+  auditLogs               CouponAuditLog[]
+}
+
+model CouponSeller {
+  id         String   @id @default(cuid())
+  couponId   String
+  coupon     Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  sellerId   String
+  sellerName String?
+  createdAt  DateTime @default(now())
+
+  @@index([couponId])
+}
+
+model CouponProduct {
+  id         String   @id @default(cuid())
+  couponId   String
+  coupon     Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  productId  String
+  isExcluded Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([couponId])
+}
+
+model CouponCategory {
+  id         String   @id @default(cuid())
+  couponId   String
+  coupon     Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  categoryId String
+  isExcluded Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([couponId])
+}
+
+model CouponRedemption {
+  id              String   @id @default(cuid())
+  couponId        String
+  coupon          Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  couponCode      String
+  orderId         String?
+  customerName    String
+  customerEmail   String?
+  customerPhone   String?
+  subtotal        Float
+  discountAmount  Float
+  finalTotal      Float
+  marketplaceCost Float
+  sellerCost      Float
+  itemsCount      Int      @default(1)
+  status          String   @default("CONFIRMED")
+  createdAt       DateTime @default(now())
+
+  @@index([couponId])
+}
+
+model CouponAuditLog {
+  id        String   @id @default(cuid())
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  action    String
+  details   String   @db.Text
+  changedBy String
+  createdAt DateTime @default(now())
+
+  @@index([couponId])
+}
+
+

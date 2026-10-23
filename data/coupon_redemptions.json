@@ -1,0 +1,53 @@
+[
+  {
+    "id": "red-01",
+    "couponId": "coup-welcome-10",
+    "couponCode": "BEMVINDO10",
+    "orderId": "ORD-1001",
+    "customerName": "Lucas Ferreira",
+    "customerEmail": "lucas.ferreira@example.com",
+    "customerPhone": "11988887777",
+    "subtotal": 130,
+    "discountAmount": 13,
+    "finalTotal": 117,
+    "marketplaceCost": 13,
+    "sellerCost": 0,
+    "itemsCount": 1,
+    "status": "CONFIRMED",
+    "createdAt": "2026-10-20T14:32:00.000Z"
+  },
+  {
+    "id": "red-02",
+    "couponId": "coup-cw50-fixed",
+    "couponCode": "CHROME50",
+    "orderId": "ORD-1002",
+    "customerName": "Mariana Costa",
+    "customerEmail": "mariana.costa@example.com",
+    "customerPhone": "11977776666",
+    "subtotal": 260,
+    "discountAmount": 50,
+    "finalTotal": 210,
+    "marketplaceCost": 30,
+    "sellerCost": 20,
+    "itemsCount": 2,
+    "status": "CONFIRMED",
+    "createdAt": "2026-10-21T16:15:00.000Z"
+  },
+  {
+    "id": "red-03",
+    "couponId": "coup-welcome-10",
+    "couponCode": "BEMVINDO10",
+    "orderId": "ORD-1003",
+    "customerName": "Gabriel Souza",
+    "customerEmail": "gabriel.souza@example.com",
+    "customerPhone": "21999998888",
+    "subtotal": 130,
+    "discountAmount": 13,
+    "finalTotal": 117,
+    "marketplaceCost": 13,
+    "sellerCost": 0,
+    "itemsCount": 1,
+    "status": "CONFIRMED",
+    "createdAt": "2026-10-22T11:45:00.000Z"
+  }
+]

@@ -71,3 +71,5 @@ export interface User {
 export type ModalType = 'sobre' | 'contato' | null;
 export type ViewMode = 'home' | 'product' | 'collection';
 
+export * from './coupon';
+

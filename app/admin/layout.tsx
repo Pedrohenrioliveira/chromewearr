@@ -110,6 +110,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link href="/admin/users" onClick={() => setIsSidebarOpen(false)} className={`block px-4 py-3 text-xs uppercase tracking-wider font-semibold transition-colors ${pathname.startsWith('/admin/users') ? 'bg-primary text-white' : 'hover:bg-surface-container text-text-secondary hover:text-text-primary'}`}>
                 Usuários & Clientes
               </Link>
+              <div className="pt-2">
+                <Link href="/admin/coupons" onClick={() => setIsSidebarOpen(false)} className={`flex items-center justify-between px-4 py-3 text-xs uppercase tracking-wider font-semibold transition-colors ${pathname.startsWith('/admin/coupons') ? 'bg-primary text-white' : 'hover:bg-surface-container text-text-secondary hover:text-text-primary'}`}>
+                  <span>Cupons e Promoções</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-700/20 text-emerald-600 font-bold tracking-normal">NOVO</span>
+                </Link>
+                {pathname.startsWith('/admin/coupons') && (
+                  <div className="ml-3 pl-2 border-l border-border-hairline space-y-1 mt-1 text-[11px]">
+                    <Link href="/admin/coupons?tab=overview" onClick={() => setIsSidebarOpen(false)} className="block py-1 px-2 text-text-secondary hover:text-text-primary transition-colors">
+                      • Visão Geral
+                    </Link>
+                    <Link href="/admin/coupons?tab=manage" onClick={() => setIsSidebarOpen(false)} className="block py-1 px-2 text-text-secondary hover:text-text-primary transition-colors">
+                      • Gerenciar Cupons
+                    </Link>
+                    <Link href="/admin/coupons?tab=create" onClick={() => setIsSidebarOpen(false)} className="block py-1 px-2 text-text-secondary hover:text-text-primary transition-colors">
+                      • Criar Cupom
+                    </Link>
+                    <Link href="/admin/coupons?tab=reports" onClick={() => setIsSidebarOpen(false)} className="block py-1 px-2 text-text-secondary hover:text-text-primary transition-colors">
+                      • Relatórios
+                    </Link>
+                    <Link href="/admin/coupons?tab=history" onClick={() => setIsSidebarOpen(false)} className="block py-1 px-2 text-text-secondary hover:text-text-primary transition-colors">
+                      • Histórico
+                    </Link>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </nav>

@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { buildWhatsAppLink } from '@/lib/utils';
 import { WHATSAPP_NUMBER } from '@/lib/data';
+import { CouponService } from '@/lib/coupon-service';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { items, total, customerName, customerEmail, customerPhone, userId } = body;
+    const {
+      items,
+      total,
+      subtotal,
+      couponDetails,
+      customerName,
+      customerEmail,
+      customerPhone,
+      userId,
+    } = body;
 
     if (!items || items.length === 0) {
       return NextResponse.json(
@@ -18,7 +28,15 @@ export async function POST(request: NextRequest) {
     const whatsappNumber =
       process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || WHATSAPP_NUMBER;
 
-    const whatsappUrl = buildWhatsAppLink(whatsappNumber, items, total);
+    const whatsappUrl = buildWhatsAppLink(
+      whatsappNumber,
+      items,
+      total,
+      couponDetails || null,
+      subtotal
+    );
+
+    let orderId = `order-${Date.now()}`;
 
     try {
       const order = await prisma.order.create({
@@ -32,18 +50,36 @@ export async function POST(request: NextRequest) {
           userId: userId || null,
         },
       });
-
-      return NextResponse.json({
-        orderId: order.id,
-        whatsappUrl,
-      });
+      orderId = order.id;
     } catch (dbError) {
       // Fallback if DB is disconnected
-      return NextResponse.json({
-        orderId: `order-${Date.now()}`,
-        whatsappUrl,
-      });
     }
+
+    // Process coupon redemption if coupon details were supplied
+    if (couponDetails) {
+      const list = Array.isArray(couponDetails) ? couponDetails : [couponDetails];
+      for (const coup of list) {
+        if (coup.code) {
+          try {
+            CouponService.redeemCoupon({
+              couponCode: coup.code,
+              orderId,
+              customerName: customerName || 'Cliente Anônimo',
+              customerEmail,
+              customerPhone,
+              items,
+            });
+          } catch (e) {
+            console.error('Redemption error in orders route:', e);
+          }
+        }
+      }
+    }
+
+    return NextResponse.json({
+      orderId,
+      whatsappUrl,
+    });
   } catch (error) {
     return NextResponse.json(
       { error: 'Erro interno ao processar pedido.' },

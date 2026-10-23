@@ -1,0 +1,26 @@
+[
+  {
+    "id": "log-01",
+    "couponId": "coup-welcome-10",
+    "action": "CREATE",
+    "details": "Cupom BEMVINDO10 criado com 10% de desconto.",
+    "changedBy": "Administrador (admin@chromewear.com)",
+    "createdAt": "2026-10-01T10:00:00.000Z"
+  },
+  {
+    "id": "log-02",
+    "couponId": "coup-cw50-fixed",
+    "action": "CREATE",
+    "details": "Cupom CHROME50 criado com R$ 50 de desconto fixo.",
+    "changedBy": "Administrador (admin@chromewear.com)",
+    "createdAt": "2026-10-10T08:00:00.000Z"
+  },
+  {
+    "id": "log-03",
+    "couponId": "coup-vip-black",
+    "action": "STATUS_CHANGE",
+    "details": "Status alterado de ATIVO para PAUSADO para reavaliação de estoque.",
+    "changedBy": "Administrador (admin@chromewear.com)",
+    "createdAt": "2026-10-21T11:00:00.000Z"
+  }
+]
