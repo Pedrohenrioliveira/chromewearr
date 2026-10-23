@@ -333,12 +333,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     if (couponError) setCouponError('');
                   }}
                   placeholder="DIGITE SEU CUPOM"
-                  className="flex-1 bg-white border border-border-hairline px-3 py-2 text-xs uppercase tracking-wider font-semibold focus:outline-none focus:border-primary transition-colors"
+                  className="flex-1 bg-white border border-border-hairline px-3 py-2 text-sm sm:text-xs uppercase tracking-wider font-semibold focus:outline-none focus:border-primary transition-colors"
                 />
                 <button
                   type="submit"
                   disabled={couponLoading || !couponCodeInput.trim()}
-                  className="px-4 py-2 bg-primary hover:bg-secondary text-white text-[11px] uppercase tracking-wider font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-4 py-2 min-h-[38px] bg-primary hover:bg-secondary text-white text-[11px] uppercase tracking-wider font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {couponLoading ? '...' : 'Aplicar'}
                 </button>
