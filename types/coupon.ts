@@ -132,6 +132,7 @@ export interface CouponVerification {
 export interface CouponAuditLog {
   id: string;
   couponId: string;
+  couponCode?: string;
   action:
     | 'CREATE'
     | 'UPDATE'

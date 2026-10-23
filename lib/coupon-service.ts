@@ -731,6 +731,7 @@ export class CouponService {
     logs.unshift({
       id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       couponId: data.couponId,
+      couponCode: data.couponCode,
       action: data.action,
       details: data.details,
       changedBy: data.changedBy,

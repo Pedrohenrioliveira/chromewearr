@@ -580,6 +580,7 @@ function CouponsAdminContent() {
         searchLower === '' ||
         log.details.toLowerCase().includes(searchLower) ||
         (log.couponCode && log.couponCode.toLowerCase().includes(searchLower)) ||
+        (log.couponId && log.couponId.toLowerCase().includes(searchLower)) ||
         (log.changedBy && log.changedBy.toLowerCase().includes(searchLower)) ||
         log.action.toLowerCase().includes(searchLower);
 
