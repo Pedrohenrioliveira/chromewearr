@@ -1329,59 +1329,59 @@ function CouponsAdminContent() {
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="bg-surface-off border-b border-border-hairline text-[10px] text-text-secondary uppercase tracking-widest font-semibold">
-                        <th className="p-3">Data / Hora</th>
-                        <th className="p-3">Código Verificação</th>
-                        <th className="p-3">Cupom</th>
-                        <th className="p-3">Cliente</th>
-                        <th className="p-3">Desconto</th>
-                        <th className="p-3">Total a Pagar</th>
-                        <th className="p-3">Status</th>
-                        <th className="p-3 text-right">Ação</th>
+                        <th className="p-3 whitespace-nowrap">Data / Hora</th>
+                        <th className="p-3 whitespace-nowrap">Código Verificação</th>
+                        <th className="p-3 whitespace-nowrap">Cupom</th>
+                        <th className="p-3 whitespace-nowrap">Cliente</th>
+                        <th className="p-3 whitespace-nowrap">Desconto</th>
+                        <th className="p-3 whitespace-nowrap">Total a Pagar</th>
+                        <th className="p-3 whitespace-nowrap">Status</th>
+                        <th className="p-3 text-right whitespace-nowrap">Ação</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-hairline">
                       {filteredVerifications.map((v) => (
                         <tr key={v.id} className="hover:bg-surface-off/50 transition-colors">
-                          <td className="p-3 text-[11px] text-text-secondary">
+                          <td className="p-3 align-middle text-[11px] text-text-secondary whitespace-nowrap">
                             {new Date(v.createdAt).toLocaleString('pt-BR')}
                           </td>
-                          <td className="p-3 font-mono font-bold text-xs text-text-primary">
+                          <td className="p-3 align-middle font-mono font-bold text-xs text-text-primary whitespace-nowrap">
                             <span className="bg-surface-off px-2 py-0.5 border border-border-hairline">
                               {v.code}
                             </span>
                           </td>
-                          <td className="p-3 font-mono font-bold text-text-primary">{v.couponCode}</td>
-                          <td className="p-3">
+                          <td className="p-3 align-middle font-mono font-bold text-text-primary whitespace-nowrap">{v.couponCode}</td>
+                          <td className="p-3 align-middle">
                             <p className="font-medium text-text-primary">{v.customerName}</p>
-                            <p className="text-[10px] text-text-secondary">{v.customerPhone || v.customerEmail || '-'}</p>
+                            <p className="text-[10px] text-text-secondary whitespace-nowrap">{v.customerPhone || v.customerEmail || '-'}</p>
                           </td>
-                          <td className="p-3 font-bold text-text-primary">
+                          <td className="p-3 align-middle font-bold text-text-primary whitespace-nowrap">
                             - R$ {formatCurrency(v.discountAmount)}
                           </td>
-                          <td className="p-3 font-bold text-text-primary">
+                          <td className="p-3 align-middle font-bold text-text-primary whitespace-nowrap">
                             R$ {formatCurrency(v.finalTotal)}
                           </td>
-                          <td className="p-3">
+                          <td className="p-3 align-middle whitespace-nowrap">
                             {v.status === 'PENDING' && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#b45309]/10 text-[#b45309] border border-[#b45309]/20 rounded-sm">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#b45309]/10 text-[#b45309] border border-[#b45309]/20">
                                 <span className="w-1 h-1 rounded-full bg-[#b45309]" />
                                 Pendente
                               </span>
                             )}
                             {v.status === 'CONFIRMED' && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#146c2e]/10 text-[#146c2e] border border-[#146c2e]/20 rounded-sm">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#146c2e]/10 text-[#146c2e] border border-[#146c2e]/20">
                                 <span className="w-1 h-1 rounded-full bg-[#146c2e]" />
                                 Confirmado
                               </span>
                             )}
                             {v.status === 'CANCELLED' && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-surface-off text-text-secondary border border-border-hairline rounded-sm">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-surface-off text-text-secondary border border-border-hairline">
                                 Cancelado
                               </span>
                             )}
                           </td>
-                          <td className="p-3 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                          <td className="p-3 align-middle text-right whitespace-nowrap">
+                            <div className="inline-flex items-center justify-end gap-1.5">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1389,7 +1389,7 @@ function CouponsAdminContent() {
                                   setVerifySearchCode(v.code);
                                   window.scrollTo({ top: 0, behavior: 'smooth' });
                                 }}
-                                className="px-2.5 py-1 bg-surface-off hover:bg-surface-container border border-border-hairline text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors rounded"
+                                className="h-8 inline-flex items-center justify-center px-3 bg-surface-off hover:bg-surface-container border border-border-hairline text-[11px] font-bold uppercase tracking-wider text-text-secondary hover:text-text-primary transition-colors flex-shrink-0"
                               >
                                 Ver Detalhes
                               </button>
@@ -1398,7 +1398,7 @@ function CouponsAdminContent() {
                                   type="button"
                                   disabled={confirmingCode === v.code}
                                   onClick={() => handleConfirmVerification(v.code)}
-                                  className="px-3 py-1 bg-primary hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider transition-colors rounded"
+                                  className="h-8 inline-flex items-center justify-center px-3 bg-black hover:bg-neutral-800 text-white text-[11px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50 flex-shrink-0"
                                 >
                                   {confirmingCode === v.code ? '...' : 'Confirmar'}
                                 </button>
@@ -1682,14 +1682,14 @@ function CouponsAdminContent() {
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="bg-surface-off border-b border-border-hairline text-[10px] text-text-secondary uppercase tracking-widest font-semibold">
-                      <th className="p-3">Código & Campanha</th>
-                      <th className="p-3">Desconto</th>
-                      <th className="p-3">Vigência</th>
-                      <th className="p-3">Utilizações</th>
-                      <th className="p-3">Custo Total</th>
-                      <th className="p-3">Financiador</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3 text-right">Ações</th>
+                      <th className="p-3 whitespace-nowrap">Código & Campanha</th>
+                      <th className="p-3 whitespace-nowrap">Desconto</th>
+                      <th className="p-3 whitespace-nowrap">Vigência</th>
+                      <th className="p-3 whitespace-nowrap">Utilizações</th>
+                      <th className="p-3 whitespace-nowrap">Custo Total</th>
+                      <th className="p-3 whitespace-nowrap">Financiador</th>
+                      <th className="p-3 whitespace-nowrap">Status</th>
+                      <th className="p-3 text-right whitespace-nowrap">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-hairline">
@@ -1700,7 +1700,7 @@ function CouponsAdminContent() {
 
                       return (
                         <tr key={c.id} className="hover:bg-surface-off/60 transition-colors">
-                          <td className="p-3">
+                          <td className="p-3 align-middle">
                             <div className="flex items-center gap-2">
                               <span className="font-mono font-bold text-sm bg-surface-off px-2 py-0.5 border border-border-hairline tracking-wider text-text-primary">
                                 {c.code}
@@ -1724,14 +1724,14 @@ function CouponsAdminContent() {
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-[10px] text-text-secondary font-mono">v{c.version}</span>
                               {c.canStack && (
-                                <span className="text-[9px] bg-surface-off border border-border-hairline text-text-secondary font-mono px-1.5 py-0.2 rounded">
+                                <span className="text-[9px] bg-surface-off border border-border-hairline text-text-secondary font-mono px-1.5 py-0.2">
                                   Cumulativo
                                 </span>
                               )}
                             </div>
                           </td>
 
-                          <td className="p-3">
+                          <td className="p-3 align-middle">
                             <span className="font-bold text-text-primary text-xs">
                               {c.discountType === 'PERCENTAGE'
                                 ? `${c.discountValue}% OFF`
@@ -1751,14 +1751,14 @@ function CouponsAdminContent() {
                             )}
                           </td>
 
-                          <td className="p-3 text-[11px]">
+                          <td className="p-3 align-middle text-[11px] whitespace-nowrap">
                             <div>De: {new Date(c.startDate).toLocaleDateString('pt-BR')}</div>
                             <div className="text-text-secondary">
                               {c.endDate ? `Até: ${new Date(c.endDate).toLocaleDateString('pt-BR')}` : 'Indeterminado'}
                             </div>
                           </td>
 
-                          <td className="p-3">
+                          <td className="p-3 align-middle">
                             <div className="flex items-center justify-between text-xs font-semibold mb-1">
                               <span>{c.usedCount}</span>
                               <span className="text-text-secondary text-[10px]">
@@ -1766,7 +1766,7 @@ function CouponsAdminContent() {
                               </span>
                             </div>
                             {usagePercent !== null && (
-                              <div className="w-24 bg-surface-container h-1.5 rounded-full overflow-hidden">
+                              <div className="w-24 bg-surface-container h-1.5 overflow-hidden">
                                 <div
                                   className="h-full bg-primary"
                                   style={{ width: `${usagePercent}%` }}
@@ -1775,7 +1775,7 @@ function CouponsAdminContent() {
                             )}
                           </td>
 
-                          <td className="p-3 font-semibold text-text-primary">
+                          <td className="p-3 align-middle font-semibold text-text-primary whitespace-nowrap">
                             R$ {formatCurrency(c.totalDiscountGiven)}
                             {c.financialBudget && (
                               <p className="text-[10px] text-text-secondary font-normal">
@@ -1784,19 +1784,19 @@ function CouponsAdminContent() {
                             )}
                           </td>
 
-                          <td className="p-3 text-[11px] text-text-primary font-medium">
+                          <td className="p-3 align-middle text-[11px] text-text-primary font-medium whitespace-nowrap">
                             {c.financingType === 'MARKETPLACE_100' && '100% Marketplace'}
                             {c.financingType === 'SELLER_100' && '100% Vendedor'}
                             {c.financingType === 'SHARED' && `${c.marketplaceSharePercent}% Mkt / ${c.sellerSharePercent}% Vend`}
                           </td>
 
-                          <td className="p-3">{renderStatusBadge(c.status)}</td>
+                          <td className="p-3 align-middle whitespace-nowrap">{renderStatusBadge(c.status)}</td>
 
-                          <td className="p-3 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                          <td className="p-3 align-middle text-right whitespace-nowrap">
+                            <div className="inline-flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => handleOpenDetails(c)}
-                                className="p-1.5 text-text-secondary hover:text-primary hover:bg-surface-container rounded"
+                                className="w-8 h-8 inline-flex items-center justify-center text-text-secondary hover:text-primary hover:bg-surface-container border border-border-hairline transition-colors"
                                 title="Ver detalhes"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1807,7 +1807,7 @@ function CouponsAdminContent() {
 
                               <button
                                 onClick={() => handleToggleStatus(c.id)}
-                                className="p-1.5 text-text-secondary hover:text-primary hover:bg-surface-container rounded transition-colors"
+                                className="w-8 h-8 inline-flex items-center justify-center text-text-secondary hover:text-primary hover:bg-surface-container border border-border-hairline transition-colors"
                                 title={c.status === 'PAUSED' ? 'Ativar cupom' : 'Pausar cupom'}
                               >
                                 {c.status === 'PAUSED' ? (
@@ -1823,7 +1823,7 @@ function CouponsAdminContent() {
 
                               <button
                                 onClick={() => handleDuplicate(c.id)}
-                                className="p-1.5 text-text-secondary hover:text-primary hover:bg-surface-container rounded"
+                                className="w-8 h-8 inline-flex items-center justify-center text-text-secondary hover:text-primary hover:bg-surface-container border border-border-hairline transition-colors"
                                 title="Duplicar regras"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1833,7 +1833,7 @@ function CouponsAdminContent() {
 
                               <button
                                 onClick={() => handleEditClick(c)}
-                                className="p-1.5 text-text-secondary hover:text-primary hover:bg-surface-container rounded"
+                                className="w-8 h-8 inline-flex items-center justify-center text-text-secondary hover:text-primary hover:bg-surface-container border border-border-hairline transition-colors"
                                 title="Editar"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1843,7 +1843,7 @@ function CouponsAdminContent() {
 
                               <button
                                 onClick={() => handleDeletePermanently(c.id, c.code)}
-                                className="p-1.5 text-text-secondary hover:text-[#ba1a1a] hover:bg-[#ba1a1a]/10 rounded"
+                                className="w-8 h-8 inline-flex items-center justify-center text-[#ba1a1a] hover:bg-[#ba1a1a] hover:text-white border border-[#ba1a1a]/30 transition-colors"
                                 title="Excluir Definitivamente (100%)"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

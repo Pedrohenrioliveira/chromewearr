@@ -641,7 +641,7 @@ export default function UsersAdmin() {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap no-scrollbar">
           <button
             onClick={() => setRoleFilter('ALL')}
-            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
+            className={`h-9 px-3.5 text-[11px] uppercase tracking-wider font-bold transition-colors whitespace-nowrap flex-shrink-0 inline-flex items-center justify-center ${
               roleFilter === 'ALL'
                 ? 'bg-primary text-white'
                 : 'bg-surface-off text-text-secondary hover:text-text-primary border border-border-hairline'
@@ -651,18 +651,18 @@ export default function UsersAdmin() {
           </button>
           <button
             onClick={() => setRoleFilter('HAS_CART')}
-            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 ${
+            className={`h-9 px-3.5 text-[11px] uppercase tracking-wider font-bold transition-colors inline-flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 ${
               roleFilter === 'HAS_CART'
                 ? 'bg-primary text-white'
                 : 'bg-surface-off text-text-secondary hover:text-text-primary border border-border-hairline'
             }`}
           >
-            <span className="material-symbols-outlined text-[13px]">shopping_bag</span>
+            <span className="material-symbols-outlined text-[14px]">shopping_bag</span>
             <span>Com Carrinho ({counts.withCart})</span>
           </button>
           <button
             onClick={() => setRoleFilter('USER')}
-            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
+            className={`h-9 px-3.5 text-[11px] uppercase tracking-wider font-bold transition-colors whitespace-nowrap flex-shrink-0 inline-flex items-center justify-center ${
               roleFilter === 'USER'
                 ? 'bg-primary text-white'
                 : 'bg-surface-off text-text-secondary hover:text-text-primary border border-border-hairline'
@@ -672,7 +672,7 @@ export default function UsersAdmin() {
           </button>
           <button
             onClick={() => setRoleFilter('VENDOR')}
-            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
+            className={`h-9 px-3.5 text-[11px] uppercase tracking-wider font-bold transition-colors whitespace-nowrap flex-shrink-0 inline-flex items-center justify-center ${
               roleFilter === 'VENDOR'
                 ? 'bg-primary text-white'
                 : 'bg-surface-off text-text-secondary hover:text-text-primary border border-border-hairline'
@@ -682,7 +682,7 @@ export default function UsersAdmin() {
           </button>
           <button
             onClick={() => setRoleFilter('ADMIN')}
-            className={`px-3 py-2 text-[11px] uppercase tracking-wider font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
+            className={`h-9 px-3.5 text-[11px] uppercase tracking-wider font-bold transition-colors whitespace-nowrap flex-shrink-0 inline-flex items-center justify-center ${
               roleFilter === 'ADMIN'
                 ? 'bg-primary text-white'
                 : 'bg-surface-off text-text-secondary hover:text-text-primary border border-border-hairline'
@@ -698,7 +698,7 @@ export default function UsersAdmin() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="border border-border-hairline bg-surface-off p-2.5 text-xs text-text-primary focus:outline-none focus:border-primary uppercase tracking-wider font-semibold w-full sm:w-auto"
+            className="h-9 border border-border-hairline bg-surface-off px-3 text-xs text-text-primary focus:outline-none focus:border-primary uppercase tracking-wider font-semibold w-full sm:w-auto"
           >
             <option value="ALL">Status: Todos</option>
             <option value="VERIFIED">Apenas Verificados</option>
@@ -712,10 +712,10 @@ export default function UsersAdmin() {
               placeholder="Buscar por nome, e-mail, telefone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full border border-border-hairline bg-surface-off p-2.5 pl-9 text-sm sm:text-xs text-text-primary focus:outline-none focus:border-primary placeholder:text-text-secondary/60"
+              className="w-full h-9 border border-border-hairline bg-surface-off pl-9 pr-7 text-xs text-text-primary focus:outline-none focus:border-primary placeholder:text-text-secondary/60"
             />
             <svg
-              className="w-4 h-4 text-text-secondary absolute left-3 top-1/2 -translate-y-1/2"
+              className="w-4 h-4 text-text-secondary absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -735,7 +735,7 @@ export default function UsersAdmin() {
           <button
             onClick={fetchUsers}
             title="Recarregar lista"
-            className="p-2.5 border border-border-hairline bg-surface-off hover:bg-surface-container text-text-secondary hover:text-text-primary transition-colors flex items-center justify-center self-end sm:self-auto"
+            className="h-9 w-9 border border-border-hairline bg-surface-off hover:bg-surface-container text-text-secondary hover:text-text-primary transition-colors flex items-center justify-center self-end sm:self-auto flex-shrink-0"
           >
             <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -872,7 +872,7 @@ export default function UsersAdmin() {
                 <div className="flex items-center gap-2 pt-2 border-t border-border-hairline">
                   <button
                     onClick={() => handleOpenEdit(u)}
-                    className="flex-1 bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold py-2.5 px-3 hover:bg-primary hover:text-white transition-colors flex items-center justify-center gap-1.5"
+                    className="flex-1 h-9 bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold px-3 hover:bg-primary hover:text-white transition-colors flex items-center justify-center gap-1.5"
                   >
                     <span className="material-symbols-outlined text-sm">edit</span>
                     <span>Editar</span>
@@ -881,7 +881,7 @@ export default function UsersAdmin() {
                   {!isMainAdmin && (
                     <button
                       onClick={() => handleDelete(u.id, u.email)}
-                      className="text-[#ba1a1a] hover:bg-[#ba1a1a]/10 border border-border-hairline text-xs uppercase tracking-wider font-bold py-2.5 px-3 transition-colors flex items-center justify-center"
+                      className="h-9 w-9 text-[#ba1a1a] hover:bg-[#ba1a1a] hover:text-white border border-[#ba1a1a]/30 text-xs uppercase tracking-wider font-bold transition-colors flex items-center justify-center flex-shrink-0"
                       title="Excluir Usuário"
                     >
                       <span className="material-symbols-outlined text-sm">delete</span>
@@ -894,18 +894,18 @@ export default function UsersAdmin() {
         )}
       </div>
 
-      {/* Desktop Users Table (Unchanged for PC!) */}
+      {/* Desktop Users Table */}
       <div className="hidden md:block bg-surface-pure border border-border-hairline shadow-sm overflow-x-auto">
-        <table className="w-full text-left text-xs">
+        <table className="w-full text-left text-xs border-collapse">
           <thead className="bg-surface-off border-b border-border-hairline">
             <tr>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Usuário</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Contato</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Sacola / Carrinho</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Nível / Cargo</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Status</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Pedidos</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold text-right">Ações</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold whitespace-nowrap">Usuário</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold whitespace-nowrap">Contato</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold whitespace-nowrap">Sacola / Carrinho</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold whitespace-nowrap">Nível / Cargo</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold whitespace-nowrap">Status</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold whitespace-nowrap">Pedidos</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold text-right whitespace-nowrap">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-hairline">
@@ -935,21 +935,21 @@ export default function UsersAdmin() {
                 return (
                   <tr key={u.id} className="hover:bg-surface-off/60 transition-colors">
                     {/* User Name & Initials */}
-                    <td className="p-4">
+                    <td className="p-4 align-middle">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-none bg-surface-container border border-border-hairline flex items-center justify-center font-display font-bold text-xs uppercase text-primary">
+                        <div className="w-8 h-8 rounded-none bg-surface-container border border-border-hairline flex items-center justify-center font-display font-bold text-xs uppercase text-primary flex-shrink-0">
                           {u.name ? u.name.charAt(0) : 'U'}
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <p className="font-semibold text-text-primary text-sm flex items-center gap-1.5">
-                            {u.name}
+                            <span className="truncate max-w-[150px]">{u.name}</span>
                             {isMainAdmin && (
-                              <span className="text-[9px] bg-black text-white px-1.5 py-0.5 uppercase tracking-widest font-bold">
+                              <span className="text-[9px] bg-black text-white px-1.5 py-0.5 uppercase tracking-widest font-bold flex-shrink-0">
                                 Root
                               </span>
                             )}
                           </p>
-                          <span className="text-[10px] font-mono text-text-secondary/70">
+                          <span className="text-[10px] font-mono text-text-secondary/70 block truncate">
                             ID: {u.id.slice(0, 10)}...
                           </span>
                         </div>
@@ -957,21 +957,23 @@ export default function UsersAdmin() {
                     </td>
 
                     {/* Email & Phone */}
-                    <td className="p-4">
-                      <div className="space-y-0.5">
-                        <p className="font-medium text-text-primary">{u.email}</p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] text-text-secondary">{formatPhone(u.phone)}</span>
+                    <td className="p-4 align-middle whitespace-nowrap">
+                      <div className="space-y-1">
+                        <p className="font-medium text-text-primary text-xs">{u.email}</p>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-[11px] text-text-secondary font-mono whitespace-nowrap">
+                            {formatPhone(u.phone)}
+                          </span>
                           {cleanPhone && (
                             <a
                               href={`https://wa.me/${cleanPhone}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold uppercase tracking-wider flex items-center gap-0.5"
+                              className="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold uppercase tracking-wider inline-flex items-center gap-0.5 whitespace-nowrap"
                               title="Abrir WhatsApp"
                             >
                               <span>WhatsApp</span>
-                              &rarr;
+                              <span className="text-xs">&rarr;</span>
                             </a>
                           )}
                         </div>
@@ -979,20 +981,20 @@ export default function UsersAdmin() {
                     </td>
 
                     {/* Cart Info / Status */}
-                    <td className="p-4">
+                    <td className="p-4 align-middle">
                       {hasCart ? (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] uppercase font-mono font-bold tracking-wider px-2 py-0.5 border border-border-hairline bg-surface-container text-text-primary flex items-center gap-1">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <span className="text-[10px] uppercase font-mono font-bold tracking-wider px-2 py-0.5 border border-border-hairline bg-surface-container text-text-primary inline-flex items-center gap-1 whitespace-nowrap">
                               <span className="material-symbols-outlined text-[13px]">shopping_bag</span>
                               <span>{cart.length} {cart.length === 1 ? 'item' : 'itens'}</span>
                             </span>
-                            <span className="font-semibold text-text-primary text-[11px] font-mono">
+                            <span className="font-semibold text-text-primary text-[11px] font-mono whitespace-nowrap">
                               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cartTotal)}
                             </span>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-text-secondary font-mono">
+                          <div className="flex items-center gap-1.5 text-[10px] text-text-secondary font-mono whitespace-nowrap">
                             <span>Há {timeInfo?.label}</span>
                             {reminderSentAt && (
                               <span className="text-text-secondary font-bold bg-surface-off px-1 border border-border-hairline">
@@ -1014,7 +1016,7 @@ export default function UsersAdmin() {
                     </td>
 
                     {/* Role */}
-                    <td className="p-4">
+                    <td className="p-4 align-middle whitespace-nowrap">
                       <span
                         className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 inline-block ${
                           u.role === 'ADMIN'
@@ -1029,7 +1031,7 @@ export default function UsersAdmin() {
                     </td>
 
                     {/* Verification Status */}
-                    <td className="p-4">
+                    <td className="p-4 align-middle whitespace-nowrap">
                       {u.isVerified ? (
                         <span className="inline-flex items-center gap-1 text-[10px] uppercase font-mono font-bold text-text-primary bg-surface-off px-2 py-1 border border-border-hairline">
                           <span className="material-symbols-outlined text-[13px]">check_circle</span>
@@ -1044,7 +1046,7 @@ export default function UsersAdmin() {
                     </td>
 
                     {/* Orders */}
-                    <td className="p-4">
+                    <td className="p-4 align-middle whitespace-nowrap">
                       {u.ordersCount > 0 ? (
                         <span className="font-semibold text-text-primary flex items-center gap-1">
                           <span className="material-symbols-outlined text-[14px]">shopping_bag</span>
@@ -1056,33 +1058,35 @@ export default function UsersAdmin() {
                     </td>
 
                     {/* Actions */}
-                    <td className="p-4 text-right space-x-2 whitespace-nowrap">
-                      {hasCart && (
-                        <button
-                          onClick={() => setCartModalUser(u)}
-                          title="Recuperar Carrinho via WhatsApp"
-                          className="bg-black text-white text-xs uppercase tracking-wider font-bold py-1.5 px-3 hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 shadow-sm"
-                        >
-                          <span className="material-symbols-outlined text-[13px]">chat</span>
-                          <span>Recuperar</span>
-                        </button>
-                      )}
+                    <td className="p-4 align-middle text-right whitespace-nowrap">
+                      <div className="inline-flex items-center justify-end gap-2">
+                        {hasCart && (
+                          <button
+                            onClick={() => setCartModalUser(u)}
+                            title="Recuperar Carrinho via WhatsApp"
+                            className="h-8 inline-flex items-center gap-1.5 px-3 bg-black hover:bg-neutral-800 text-white text-[11px] uppercase tracking-wider font-bold transition-colors shadow-sm flex-shrink-0"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">chat</span>
+                            <span>Recuperar</span>
+                          </button>
+                        )}
 
-                      <button
-                        onClick={() => handleOpenEdit(u)}
-                        className="bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold py-1.5 px-3 hover:bg-primary hover:text-white transition-colors"
-                      >
-                        Editar
-                      </button>
-
-                      {!isMainAdmin && (
                         <button
-                          onClick={() => handleDelete(u.id, u.email)}
-                          className="text-[#ba1a1a] hover:text-white hover:bg-[#ba1a1a] border border-transparent hover:border-[#ba1a1a] text-xs uppercase tracking-wider font-bold py-1.5 px-2.5 transition-colors"
+                          onClick={() => handleOpenEdit(u)}
+                          className="h-8 inline-flex items-center justify-center px-3 bg-surface-off border border-border-hairline text-text-primary text-[11px] uppercase tracking-wider font-bold hover:border-primary hover:bg-surface-pure transition-colors flex-shrink-0"
                         >
-                          Excluir
+                          Editar
                         </button>
-                      )}
+
+                        {!isMainAdmin && (
+                          <button
+                            onClick={() => handleDelete(u.id, u.email)}
+                            className="h-8 inline-flex items-center justify-center px-3 bg-surface-off border border-[#ba1a1a]/30 text-[#ba1a1a] hover:bg-[#ba1a1a] hover:text-white hover:border-[#ba1a1a] text-[11px] uppercase tracking-wider font-bold transition-colors flex-shrink-0"
+                          >
+                            Excluir
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

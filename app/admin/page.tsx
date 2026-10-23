@@ -551,12 +551,12 @@ export default function AdminDashboard() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-border-hairline bg-surface-off text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                    <th className="p-3.5">Cliente</th>
-                    <th className="p-3.5">Criação da Conta</th>
-                    <th className="p-3.5">Tempo de Atividade</th>
-                    <th className="p-3.5">Compras</th>
-                    <th className="p-3.5">Produtos no Carrinho</th>
-                    <th className="p-3.5 text-right">Ações</th>
+                    <th className="p-3.5 whitespace-nowrap">Cliente</th>
+                    <th className="p-3.5 whitespace-nowrap">Criação da Conta</th>
+                    <th className="p-3.5 whitespace-nowrap">Tempo de Atividade</th>
+                    <th className="p-3.5 whitespace-nowrap">Compras</th>
+                    <th className="p-3.5 whitespace-nowrap">Produtos no Carrinho</th>
+                    <th className="p-3.5 text-right whitespace-nowrap">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-hairline text-xs">
@@ -574,7 +574,7 @@ export default function AdminDashboard() {
                     return (
                       <tr key={user.id} className="hover:bg-surface-off/40 transition-colors">
                         {/* Cliente Info */}
-                        <td className="p-3.5">
+                        <td className="p-3.5 align-middle">
                           <div className="flex items-start gap-3">
                             <div className="w-8 h-8 bg-surface-container border border-border-hairline flex items-center justify-center font-bold text-xs uppercase text-text-primary flex-shrink-0">
                               {user.name ? user.name.charAt(0) : 'U'}
@@ -595,13 +595,13 @@ export default function AdminDashboard() {
                         </td>
 
                         {/* Criação da Conta */}
-                        <td className="p-3.5 whitespace-nowrap">
+                        <td className="p-3.5 align-middle whitespace-nowrap">
                           <span className="font-semibold text-text-primary block">{accountAge.date}</span>
                           <span className="text-[11px] text-text-secondary block font-mono">{accountAge.label}</span>
                         </td>
 
                         {/* Tempo de Atividade */}
-                        <td className="p-3.5 whitespace-nowrap">
+                        <td className="p-3.5 align-middle whitespace-nowrap">
                           <span className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 border border-border-hairline bg-surface-off text-text-secondary">
                             <span className="material-symbols-outlined text-[12px]">schedule</span>
                             {activityStatus.label}
@@ -612,7 +612,7 @@ export default function AdminDashboard() {
                         </td>
 
                         {/* Quantidade de Compras */}
-                        <td className="p-3.5 whitespace-nowrap">
+                        <td className="p-3.5 align-middle whitespace-nowrap">
                           {user.ordersCount > 0 ? (
                             <div>
                               <span className="font-bold text-text-primary text-xs flex items-center gap-1">
@@ -629,7 +629,7 @@ export default function AdminDashboard() {
                         </td>
 
                         {/* Produtos no Carrinho */}
-                        <td className="p-3.5">
+                        <td className="p-3.5 align-middle">
                           {cart.length > 0 ? (
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
@@ -658,12 +658,12 @@ export default function AdminDashboard() {
                         </td>
 
                         {/* Ações */}
-                        <td className="p-3.5 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="p-3.5 align-middle text-right whitespace-nowrap">
+                          <div className="inline-flex items-center justify-end gap-2">
                             {cart.length > 0 && (
                               <button
                                 onClick={() => setViewingCartUser(user)}
-                                className="text-[10px] uppercase font-bold px-2.5 py-1.5 bg-surface-pure border border-border-hairline hover:border-primary transition-colors text-text-primary flex items-center gap-1"
+                                className="h-8 inline-flex items-center gap-1 px-2.5 bg-surface-pure border border-border-hairline hover:border-primary transition-colors text-text-primary text-[10px] uppercase font-bold tracking-wider flex-shrink-0"
                                 title="Ver produtos salvos no carrinho"
                               >
                                 <span className="material-symbols-outlined text-[13px]">visibility</span>
@@ -671,24 +671,22 @@ export default function AdminDashboard() {
                               </button>
                             )}
 
-                            {cleanPhone ? (
+                            {cleanPhone && (
                               <a
                                 href={`https://wa.me/${cleanPhone}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-[10px] uppercase font-bold px-2.5 py-1.5 bg-black hover:bg-neutral-800 text-white transition-colors flex items-center gap-1"
+                                className="h-8 inline-flex items-center gap-1 px-2.5 bg-black hover:bg-neutral-800 text-white transition-colors text-[10px] uppercase font-bold tracking-wider flex-shrink-0"
                                 title="Chamar no WhatsApp"
                               >
                                 <span className="material-symbols-outlined text-[13px]">chat</span>
                                 <span>WhatsApp</span>
                               </a>
-                            ) : (
-                              <span className="text-[10px] text-neutral-400 px-2 py-1.5">Sem WhatsApp</span>
                             )}
 
                             <Link
                               href={`/admin/users?search=${encodeURIComponent(user.email)}`}
-                              className="text-[10px] uppercase font-bold px-2.5 py-1.5 text-text-secondary hover:text-text-primary underline"
+                              className="h-8 inline-flex items-center justify-center px-2.5 bg-surface-off border border-border-hairline text-text-primary hover:border-primary hover:bg-surface-pure text-[10px] uppercase font-bold tracking-wider transition-colors flex-shrink-0"
                               title="Gerenciar cadastro completo"
                             >
                               Gerenciar

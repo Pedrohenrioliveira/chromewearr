@@ -113,10 +113,10 @@ export default function CollectionsAdmin() {
             required
           />
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex gap-2 w-full md:w-auto items-end">
           <button
             type="submit"
-            className="bg-primary text-white text-xs uppercase tracking-wider font-bold py-3 px-6 hover:bg-black transition-colors"
+            className="h-10 inline-flex items-center justify-center px-6 bg-primary text-white text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors"
           >
             {isEditing ? 'Atualizar' : 'Criar'}
           </button>
@@ -127,7 +127,7 @@ export default function CollectionsAdmin() {
                 setIsEditing(false);
                 setFormData({ id: '', name: '', slug: '' });
               }}
-              className="bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold py-3 px-4 hover:bg-border-hairline transition-colors"
+              className="h-10 inline-flex items-center justify-center px-4 bg-surface-off border border-border-hairline text-text-primary text-xs uppercase tracking-wider font-bold hover:bg-border-hairline transition-colors"
             >
               Cancelar
             </button>
@@ -137,39 +137,41 @@ export default function CollectionsAdmin() {
 
       {/* List */}
       <div className="bg-surface-pure border border-border-hairline shadow-sm overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <table className="w-full text-left text-sm border-collapse">
           <thead className="bg-surface-off border-b border-border-hairline">
             <tr>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Nome</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Slug</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Qtd. Produtos</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold text-right">Ações</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold whitespace-nowrap">Nome</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold whitespace-nowrap">Slug</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold whitespace-nowrap">Qtd. Produtos</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold text-right whitespace-nowrap">Ações</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-border-hairline">
             {loading ? (
-              <tr><td colSpan={4} className="p-4 text-center">Carregando...</td></tr>
+              <tr><td colSpan={4} className="p-8 text-center text-text-secondary uppercase tracking-wider font-semibold text-xs">Carregando...</td></tr>
             ) : collections.length === 0 ? (
-              <tr><td colSpan={4} className="p-4 text-center">Nenhuma coleção encontrada.</td></tr>
+              <tr><td colSpan={4} className="p-8 text-center text-text-secondary text-xs">Nenhuma coleção encontrada.</td></tr>
             ) : (
               collections.map((col) => (
-                <tr key={col.id} className="border-b border-border-hairline hover:bg-surface-off/50 transition-colors">
-                  <td className="p-4 font-semibold">{col.name}</td>
-                  <td className="p-4 font-mono text-xs">{col.slug}</td>
-                  <td className="p-4">{col._count?.products || 0}</td>
-                  <td className="p-4 text-right space-x-2">
-                    <button
-                      onClick={() => handleEdit(col)}
-                      className="text-xs uppercase tracking-wider font-bold text-primary hover:underline"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(col.id)}
-                      className="text-xs uppercase tracking-wider font-bold text-[#ba1a1a] hover:underline"
-                    >
-                      Excluir
-                    </button>
+                <tr key={col.id} className="hover:bg-surface-off/50 transition-colors">
+                  <td className="p-4 align-middle font-semibold text-text-primary">{col.name}</td>
+                  <td className="p-4 align-middle font-mono text-xs text-text-secondary">{col.slug}</td>
+                  <td className="p-4 align-middle font-mono text-xs">{col._count?.products || 0}</td>
+                  <td className="p-4 align-middle text-right whitespace-nowrap">
+                    <div className="inline-flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleEdit(col)}
+                        className="h-8 inline-flex items-center justify-center px-3 bg-surface-off border border-border-hairline text-text-primary text-[11px] uppercase tracking-wider font-bold hover:border-primary hover:bg-surface-pure transition-colors"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(col.id)}
+                        className="h-8 inline-flex items-center justify-center px-3 bg-surface-off border border-[#ba1a1a]/30 text-[#ba1a1a] hover:bg-[#ba1a1a] hover:text-white hover:border-[#ba1a1a] text-[11px] uppercase tracking-wider font-bold transition-colors"
+                      >
+                        Excluir
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

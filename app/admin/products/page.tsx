@@ -45,61 +45,63 @@ export default function ProductsAdmin() {
         <h1 className="font-display uppercase tracking-widest text-2xl font-bold">Produtos</h1>
         <Link 
           href="/admin/products/new" 
-          className="bg-primary text-white text-xs uppercase tracking-wider font-bold py-3 px-6 hover:bg-black transition-colors"
+          className="h-9 inline-flex items-center px-4 bg-primary text-white text-xs uppercase tracking-wider font-bold hover:bg-black transition-colors"
         >
           Novo Produto
         </Link>
       </div>
 
       <div className="bg-surface-pure border border-border-hairline shadow-sm overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <table className="w-full text-left text-sm border-collapse">
           <thead className="bg-surface-off border-b border-border-hairline">
             <tr>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Imagem</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Nome</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Preço</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold">Estoque</th>
-              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold text-right">Ações</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold whitespace-nowrap">Imagem</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold whitespace-nowrap">Nome</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold whitespace-nowrap">Preço</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold whitespace-nowrap">Estoque</th>
+              <th className="p-4 text-[10px] text-text-secondary uppercase tracking-widest font-semibold text-right whitespace-nowrap">Ações</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-border-hairline">
             {loading ? (
-              <tr><td colSpan={5} className="p-4 text-center">Carregando...</td></tr>
+              <tr><td colSpan={5} className="p-8 text-center text-text-secondary uppercase tracking-wider font-semibold text-xs">Carregando...</td></tr>
             ) : products.length === 0 ? (
-              <tr><td colSpan={5} className="p-4 text-center">Nenhum produto cadastrado.</td></tr>
+              <tr><td colSpan={5} className="p-8 text-center text-text-secondary text-xs">Nenhum produto cadastrado.</td></tr>
             ) : (
               products.map((prod) => (
-                <tr key={prod.id} className="border-b border-border-hairline hover:bg-surface-off/50 transition-colors">
-                  <td className="p-4">
-                    <img src={prod.imageUrl} alt={prod.name} className="w-12 h-12 object-cover border border-border-hairline" />
+                <tr key={prod.id} className="hover:bg-surface-off/50 transition-colors">
+                  <td className="p-4 align-middle">
+                    <img src={prod.imageUrl} alt={prod.name} className="w-12 h-12 object-cover border border-border-hairline flex-shrink-0" />
                   </td>
-                  <td className="p-4">
-                    <p className="font-semibold">{prod.name}</p>
-                    <p className="text-xs text-text-secondary">{prod.category?.name} • {prod.ref}</p>
+                  <td className="p-4 align-middle">
+                    <p className="font-semibold text-text-primary text-sm">{prod.name}</p>
+                    <p className="text-xs text-text-secondary font-mono mt-0.5">{prod.category?.name} • {prod.ref}</p>
                   </td>
-                  <td className="p-4 font-mono text-xs">
+                  <td className="p-4 align-middle font-mono text-xs font-semibold text-text-primary whitespace-nowrap">
                     R$ {prod.price.toFixed(2).replace('.', ',')}
                   </td>
-                  <td className="p-4">
+                  <td className="p-4 align-middle whitespace-nowrap">
                     {prod.inStock ? (
-                      <span className="bg-[#146c2e]/10 text-[#146c2e] text-[10px] font-bold uppercase tracking-wider px-2 py-1">Ativo</span>
+                      <span className="bg-[#146c2e]/10 text-[#146c2e] border border-[#146c2e]/20 text-[10px] font-bold uppercase tracking-wider px-2 py-1 inline-block">Ativo</span>
                     ) : (
-                      <span className="bg-[#ba1a1a]/10 text-[#ba1a1a] text-[10px] font-bold uppercase tracking-wider px-2 py-1">Esgotado</span>
+                      <span className="bg-[#ba1a1a]/10 text-[#ba1a1a] border border-[#ba1a1a]/20 text-[10px] font-bold uppercase tracking-wider px-2 py-1 inline-block">Esgotado</span>
                     )}
                   </td>
-                  <td className="p-4 text-right space-x-2">
-                    <Link
-                      href={`/admin/products/${prod.id}`}
-                      className="text-xs uppercase tracking-wider font-bold text-primary hover:underline"
-                    >
-                      Editar
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(prod.id)}
-                      className="text-xs uppercase tracking-wider font-bold text-[#ba1a1a] hover:underline"
-                    >
-                      Excluir
-                    </button>
+                  <td className="p-4 align-middle text-right whitespace-nowrap">
+                    <div className="inline-flex items-center justify-end gap-2">
+                      <Link
+                        href={`/admin/products/${prod.id}`}
+                        className="h-8 inline-flex items-center justify-center px-3 bg-surface-off border border-border-hairline text-text-primary text-[11px] uppercase tracking-wider font-bold hover:border-primary hover:bg-surface-pure transition-colors"
+                      >
+                        Editar
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(prod.id)}
+                        className="h-8 inline-flex items-center justify-center px-3 bg-surface-off border border-[#ba1a1a]/30 text-[#ba1a1a] hover:bg-[#ba1a1a] hover:text-white hover:border-[#ba1a1a] text-[11px] uppercase tracking-wider font-bold transition-colors"
+                      >
+                        Excluir
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
