@@ -132,7 +132,17 @@ export interface CouponVerification {
 export interface CouponAuditLog {
   id: string;
   couponId: string;
-  action: 'CREATE' | 'UPDATE' | 'STATUS_CHANGE' | 'DUPLICATE' | 'ARCHIVE' | 'REDEMPTION' | 'VERIFICATION_CONFIRMED';
+  action:
+    | 'CREATE'
+    | 'UPDATE'
+    | 'STATUS_CHANGE'
+    | 'DUPLICATE'
+    | 'ARCHIVE'
+    | 'REDEMPTION'
+    | 'VERIFICATION_CONFIRMED'
+    | 'REDEMPTION_DELETED'
+    | 'REDEMPTIONS_CLEARED'
+    | string;
   details: string;
   changedBy: string;
   createdAt: string;

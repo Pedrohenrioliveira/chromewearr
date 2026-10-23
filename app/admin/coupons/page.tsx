@@ -37,6 +37,7 @@ function CouponsAdminContent() {
   const [stats, setStats] = useState<CouponDashboardStats | null>(null);
   const [redemptions, setRedemptions] = useState<CouponRedemption[]>([]);
   const [auditLogs, setAuditLogs] = useState<CouponAuditLog[]>([]);
+  const [modalAuditLogs, setModalAuditLogs] = useState<CouponAuditLog[]>([]);
   const [verifications, setVerifications] = useState<CouponVerification[]>([]);
   const [metadata, setMetadata] = useState<{ sellers: any[]; products: any[]; categories: any[] }>({
     sellers: [],
@@ -52,6 +53,10 @@ function CouponsAdminContent() {
   const [searchingVerification, setSearchingVerification] = useState(false);
   const [confirmingCode, setConfirmingCode] = useState<string | null>(null);
   const [verificationFilter, setVerificationFilter] = useState<'ALL' | 'PENDING' | 'CONFIRMED'>('ALL');
+
+  // History Tab Filters & Search
+  const [historySearch, setHistorySearch] = useState('');
+  const [historyActionFilter, setHistoryActionFilter] = useState<string>('ALL');
 
   // Filters State for Manage Tab
   const [searchFilter, setSearchFilter] = useState('');
@@ -110,11 +115,12 @@ function CouponsAdminContent() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [couponsRes, metaRes, reportsRes, verifyRes] = await Promise.all([
+      const [couponsRes, metaRes, reportsRes, verifyRes, historyRes] = await Promise.all([
         fetch('/api/coupons'),
         fetch('/api/coupons/metadata'),
         fetch('/api/coupons/reports'),
         fetch('/api/coupons/verify'),
+        fetch('/api/coupons/history'),
       ]);
 
       if (couponsRes.ok) {
@@ -136,6 +142,11 @@ function CouponsAdminContent() {
       if (verifyRes.ok) {
         const vList = await verifyRes.json();
         setVerifications(vList || []);
+      }
+
+      if (historyRes.ok) {
+        const hist = await historyRes.json();
+        setAuditLogs(hist || []);
       }
     } catch (err) {
       console.error('Erro ao carregar cupons:', err);
@@ -457,9 +468,185 @@ function CouponsAdminContent() {
       if (res.ok) {
         const fullData = await res.json();
         setSelectedCouponDetails(fullData.coupon);
-        setAuditLogs(fullData.auditLogs || []);
+        setModalAuditLogs(fullData.auditLogs || []);
       }
     } catch (e) {}
+  };
+
+  // Delete individual test redemption from report and recalculate coupon totals
+  const handleDeleteRedemption = async (id: string, couponCode: string, orderId?: string) => {
+    if (
+      !window.confirm(
+        `Deseja excluir o registro de resgate do cupom "${couponCode}"${orderId ? ` (Pedido ${orderId})` : ''}?\n\nOs contadores e métricas de desconto deste cupom serão recalculados automaticamente.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/coupons/reports?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showFeedback('error', data.error || 'Erro ao excluir resgate.');
+        return;
+      }
+      showFeedback('success', `Registro de resgate do cupom "${couponCode}" excluído com sucesso.`);
+      setRedemptions((prev) => prev.filter((r) => r.id !== id));
+      await fetchData();
+    } catch (e) {
+      showFeedback('error', 'Falha ao excluir registro de resgate.');
+    }
+  };
+
+  // Clear all test redemptions and reset metrics
+  const handleClearAllRedemptions = async () => {
+    if (
+      !window.confirm(
+        'Tem certeza que deseja LIMPAR TODOS os registros de teste deste relatório?\n\nTodos os resgates serão removidos e os contadores de cupons serão reajustados para 0.'
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/coupons/reports?all=true', {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showFeedback('error', data.error || 'Erro ao limpar resgates.');
+        return;
+      }
+      showFeedback('success', 'Todos os resgates de teste foram removidos e métricas zeradas.');
+      setRedemptions([]);
+      await fetchData();
+    } catch (e) {
+      showFeedback('error', 'Falha ao limpar resgates.');
+    }
+  };
+
+  // Delete individual audit log entry
+  const handleDeleteAuditLog = async (id: string) => {
+    try {
+      const res = await fetch(`/api/coupons/history?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showFeedback('error', data.error || 'Erro ao excluir registro de histórico.');
+        return;
+      }
+      showFeedback('success', 'Registro removido do histórico.');
+      setAuditLogs((prev) => prev.filter((l) => l.id !== id));
+    } catch (e) {
+      showFeedback('error', 'Falha ao excluir registro do histórico.');
+    }
+  };
+
+  // Clear all audit logs
+  const handleClearAllHistory = async () => {
+    if (
+      !window.confirm(
+        'Tem certeza que deseja LIMPAR TODO o histórico de auditoria de testes?\n\nEssa ação apagará todos os registros da trilha de auditoria.'
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/coupons/history?all=true', {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showFeedback('error', data.error || 'Erro ao limpar histórico.');
+        return;
+      }
+      showFeedback('success', 'Histórico de auditoria limpo com sucesso.');
+      setAuditLogs([]);
+    } catch (e) {
+      showFeedback('error', 'Falha ao limpar histórico.');
+    }
+  };
+
+  // Filtered audit logs for History Tab
+  const filteredAuditLogs = useMemo(() => {
+    return auditLogs.filter((log) => {
+      const matchesAction = historyActionFilter === 'ALL' || log.action === historyActionFilter;
+      const searchLower = historySearch.toLowerCase().trim();
+      const matchesSearch =
+        searchLower === '' ||
+        log.details.toLowerCase().includes(searchLower) ||
+        (log.couponCode && log.couponCode.toLowerCase().includes(searchLower)) ||
+        (log.changedBy && log.changedBy.toLowerCase().includes(searchLower)) ||
+        log.action.toLowerCase().includes(searchLower);
+
+      return matchesAction && matchesSearch;
+    });
+  }, [auditLogs, historyActionFilter, historySearch]);
+
+  // Action Badge Helper for Audit History
+  const renderHistoryActionBadge = (action: string) => {
+    switch (action) {
+      case 'CREATE':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-surface-off border border-border-hairline text-text-primary rounded-sm font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+            Criação
+          </span>
+        );
+      case 'UPDATE':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-surface-off border border-border-hairline text-text-primary rounded-sm font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-text-secondary" />
+            Edição
+          </span>
+        );
+      case 'STATUS_CHANGE':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-surface-off border border-border-hairline text-text-primary rounded-sm font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
+            Status
+          </span>
+        );
+      case 'VERIFICATION_CONFIRMED':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#146c2e]/10 text-[#146c2e] border border-[#146c2e]/30 rounded-sm font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#146c2e]" />
+            WhatsApp OK
+          </span>
+        );
+      case 'REDEMPTION':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-surface-off border border-border-hairline text-text-primary rounded-sm font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+            Resgate
+          </span>
+        );
+      case 'REDEMPTION_DELETED':
+      case 'REDEMPTIONS_CLEARED':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#ba1a1a]/10 text-[#ba1a1a] border border-[#ba1a1a]/20 rounded-sm font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]" />
+            Exclusão
+          </span>
+        );
+      case 'DELETE':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#ba1a1a]/10 text-[#ba1a1a] border border-[#ba1a1a]/20 rounded-sm font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]" />
+            Exclusão 100%
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-surface-off border border-border-hairline text-text-secondary rounded-sm font-mono">
+            {action}
+          </span>
+        );
+    }
   };
 
   // Filtered coupons for management table
@@ -686,24 +873,46 @@ function CouponsAdminContent() {
 
         <button
           onClick={() => changeTab('reports')}
-          className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 ${
+          className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 flex items-center gap-1.5 ${
             activeTab === 'reports'
               ? 'bg-black text-white border-black'
               : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
           }`}
         >
-          Relatórios & Resgates
+          <span>Relatórios & Resgates</span>
+          {redemptions.length > 0 && (
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+                activeTab === 'reports'
+                  ? 'bg-neutral-800 text-white'
+                  : 'bg-surface-container text-text-secondary'
+              }`}
+            >
+              {redemptions.length}
+            </span>
+          )}
         </button>
 
         <button
           onClick={() => changeTab('history')}
-          className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 ${
+          className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 flex items-center gap-1.5 ${
             activeTab === 'history'
               ? 'bg-black text-white border-black'
               : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
           }`}
         >
-          Histórico
+          <span>Histórico</span>
+          {auditLogs.length > 0 && (
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+                activeTab === 'history'
+                  ? 'bg-neutral-800 text-white'
+                  : 'bg-surface-container text-text-secondary'
+              }`}
+            >
+              {auditLogs.length}
+            </span>
+          )}
         </button>
       </div>
 
@@ -2501,7 +2710,7 @@ function CouponsAdminContent() {
       )}
 
       {/* ========================================================
-          TAB 4: RELATÓRIOS & RESGATES (RESPONSIVO NO CELULAR)
+          TAB 4: RELATÓRIOS & RESGATES (COM EXCLUSÃO DE TESTES)
           ======================================================== */}
       {activeTab === 'reports' && (
         <div className="space-y-5 animate-in fade-in duration-200">
@@ -2515,15 +2724,29 @@ function CouponsAdminContent() {
               </p>
             </div>
 
-            <a
-              href="/api/coupons/reports?format=csv"
-              className="w-full sm:w-auto min-h-[40px] px-4 py-2 bg-primary hover:bg-neutral-800 text-white text-xs uppercase tracking-wider font-semibold transition-colors flex items-center justify-center gap-1.5"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-              <span>Baixar CSV</span>
-            </a>
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              {redemptions.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearAllRedemptions}
+                  className="w-full sm:w-auto h-10 px-3.5 bg-surface-off hover:bg-[#ba1a1a]/10 border border-[#ba1a1a]/30 text-[#ba1a1a] text-xs uppercase tracking-wider font-bold transition-colors inline-flex items-center justify-center gap-1.5"
+                  title="Limpar todos os registros de resgate de teste"
+                >
+                  <span className="material-symbols-outlined text-[16px]">delete_sweep</span>
+                  <span>Limpar Testes ({redemptions.length})</span>
+                </button>
+              )}
+
+              <a
+                href="/api/coupons/reports?format=csv"
+                className="w-full sm:w-auto h-10 px-4 bg-primary hover:bg-neutral-800 text-white text-xs uppercase tracking-wider font-semibold transition-colors inline-flex items-center justify-center gap-1.5"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>Baixar CSV</span>
+              </a>
+            </div>
           </div>
 
           {/* Redemptions Empty State */}
@@ -2546,7 +2769,7 @@ function CouponsAdminContent() {
                 {redemptions.map((r) => (
                   <div key={r.id} className="bg-surface-pure border border-border-hairline p-4 shadow-sm space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono font-bold text-xs bg-surface-off text-text-primary border border-border-hairline px-2 py-0.5 rounded-sm">
+                      <span className="font-mono font-bold text-xs bg-surface-off text-text-primary border border-border-hairline px-2 py-0.5">
                         {r.couponCode}
                       </span>
                       <span className="text-[10px] text-text-secondary font-mono">{r.orderId || '-'}</span>
@@ -2560,25 +2783,36 @@ function CouponsAdminContent() {
                     <div className="grid grid-cols-2 gap-2 text-xs bg-surface-off p-2.5 border border-border-hairline">
                       <div>
                         <span className="text-[10px] text-text-secondary uppercase block">Subtotal</span>
-                        <span className="text-text-primary">R$ {formatCurrency(r.subtotal)}</span>
+                        <span className="text-text-primary font-mono">R$ {formatCurrency(r.subtotal)}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-text-secondary uppercase block font-semibold">Desconto</span>
-                        <span className="font-bold text-text-primary">- R$ {formatCurrency(r.discountAmount)}</span>
+                        <span className="font-bold text-text-primary font-mono">- R$ {formatCurrency(r.discountAmount)}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-text-secondary uppercase block">Custo Mkt</span>
-                        <span className="text-text-primary">R$ {formatCurrency(r.marketplaceCost)}</span>
+                        <span className="text-text-primary font-mono">R$ {formatCurrency(r.marketplaceCost)}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-text-secondary uppercase block">Custo Vend</span>
-                        <span className="text-text-primary">R$ {formatCurrency(r.sellerCost)}</span>
+                        <span className="text-text-primary font-mono">R$ {formatCurrency(r.sellerCost)}</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-1 border-t border-border-hairline text-xs font-bold">
-                      <span className="text-text-secondary">Total Pago:</span>
-                      <span className="text-sm text-text-primary">R$ {formatCurrency(r.finalTotal)}</span>
+                    <div className="flex items-center justify-between pt-2 border-t border-border-hairline text-xs font-bold">
+                      <div>
+                        <span className="text-text-secondary">Total Pago: </span>
+                        <span className="text-sm text-text-primary font-mono">R$ {formatCurrency(r.finalTotal)}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteRedemption(r.id, r.couponCode, r.orderId)}
+                        className="h-8 inline-flex items-center gap-1 px-2.5 bg-surface-off border border-[#ba1a1a]/30 text-[#ba1a1a] hover:bg-[#ba1a1a] hover:text-white text-[10px] font-bold uppercase tracking-wider transition-colors"
+                        title="Excluir Resgate de Teste"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">delete</span>
+                        <span>Excluir</span>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -2589,45 +2823,57 @@ function CouponsAdminContent() {
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="bg-surface-off border-b border-border-hairline text-[10px] text-text-secondary uppercase tracking-widest font-semibold">
-                      <th className="p-3">Data / Hora</th>
-                      <th className="p-3">Pedido</th>
-                      <th className="p-3">Cupom</th>
-                      <th className="p-3">Cliente</th>
-                      <th className="p-3">Subtotal</th>
-                      <th className="p-3">Desconto</th>
-                      <th className="p-3">Custo Mkt</th>
-                      <th className="p-3">Custo Vendedor</th>
-                      <th className="p-3">Total Pago</th>
+                      <th className="p-3 whitespace-nowrap">Data / Hora</th>
+                      <th className="p-3 whitespace-nowrap">Pedido</th>
+                      <th className="p-3 whitespace-nowrap">Cupom</th>
+                      <th className="p-3 whitespace-nowrap">Cliente</th>
+                      <th className="p-3 whitespace-nowrap">Subtotal</th>
+                      <th className="p-3 whitespace-nowrap">Desconto</th>
+                      <th className="p-3 whitespace-nowrap">Custo Mkt</th>
+                      <th className="p-3 whitespace-nowrap">Custo Vendedor</th>
+                      <th className="p-3 whitespace-nowrap">Total Pago</th>
+                      <th className="p-3 text-right whitespace-nowrap">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-hairline">
                     {redemptions.map((r) => (
                       <tr key={r.id} className="hover:bg-surface-off/50 transition-colors">
-                        <td className="p-3 text-[11px] text-text-secondary">
+                        <td className="p-3 align-middle text-[11px] text-text-secondary whitespace-nowrap font-mono">
                           {new Date(r.createdAt).toLocaleString('pt-BR')}
                         </td>
-                        <td className="p-3 font-mono font-bold text-xs text-text-primary">{r.orderId || '-'}</td>
-                        <td className="p-3">
-                          <span className="font-mono font-bold text-xs bg-surface-off text-text-primary border border-border-hairline px-2 py-0.5 rounded-sm">
+                        <td className="p-3 align-middle font-mono font-bold text-xs text-text-primary whitespace-nowrap">{r.orderId || '-'}</td>
+                        <td className="p-3 align-middle whitespace-nowrap">
+                          <span className="font-mono font-bold text-xs bg-surface-off text-text-primary border border-border-hairline px-2 py-0.5">
                             {r.couponCode}
                           </span>
                         </td>
-                        <td className="p-3">
+                        <td className="p-3 align-middle">
                           <p className="font-medium text-text-primary">{r.customerName}</p>
-                          <p className="text-[10px] text-text-secondary">{r.customerEmail || r.customerPhone || '-'}</p>
+                          <p className="text-[10px] text-text-secondary whitespace-nowrap">{r.customerEmail || r.customerPhone || '-'}</p>
                         </td>
-                        <td className="p-3 text-text-primary">R$ {formatCurrency(r.subtotal)}</td>
-                        <td className="p-3 font-bold text-text-primary">
+                        <td className="p-3 align-middle text-text-primary font-mono whitespace-nowrap">R$ {formatCurrency(r.subtotal)}</td>
+                        <td className="p-3 align-middle font-bold text-text-primary font-mono whitespace-nowrap">
                           - R$ {formatCurrency(r.discountAmount)}
                         </td>
-                        <td className="p-3 text-text-primary font-medium">
+                        <td className="p-3 align-middle text-text-primary font-medium font-mono whitespace-nowrap">
                           R$ {formatCurrency(r.marketplaceCost)}
                         </td>
-                        <td className="p-3 text-text-primary font-medium">
+                        <td className="p-3 align-middle text-text-primary font-medium font-mono whitespace-nowrap">
                           R$ {formatCurrency(r.sellerCost)}
                         </td>
-                        <td className="p-3 font-bold text-text-primary">
+                        <td className="p-3 align-middle font-bold text-text-primary font-mono whitespace-nowrap">
                           R$ {formatCurrency(r.finalTotal)}
+                        </td>
+                        <td className="p-3 align-middle text-right whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRedemption(r.id, r.couponCode, r.orderId)}
+                            className="h-8 inline-flex items-center justify-center gap-1 px-2.5 bg-surface-off border border-[#ba1a1a]/30 text-[#ba1a1a] hover:bg-[#ba1a1a] hover:text-white text-[11px] font-bold uppercase tracking-wider transition-colors"
+                            title="Excluir Resgate de Teste"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">delete</span>
+                            <span>Excluir</span>
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -2640,46 +2886,226 @@ function CouponsAdminContent() {
       )}
 
       {/* ========================================================
-          TAB 5: HISTÓRICO DE ALTERAÇÕES
+          TAB 5: HISTÓRICO DE AUDITORIA & REGISTROS
           ======================================================== */}
       {activeTab === 'history' && (
         <div className="space-y-4 animate-in fade-in duration-200">
-          <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm">
-            <h2 className="font-display uppercase tracking-widest text-sm sm:text-base font-bold text-text-primary">
-              Trilha de Auditoria & Versionamento
-            </h2>
-            <p className="text-xs text-text-secondary">
-              Registro cronológico de todas as ações administrativas e alterações de regras.
-            </p>
-          </div>
-
-          <div className="bg-surface-pure border border-border-hairline shadow-sm divide-y divide-border-hairline">
-            {coupons.length === 0 ? (
-              <p className="p-8 text-center text-xs text-text-secondary">
-                Nenhum histórico registrado até o momento.
+          <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display uppercase tracking-widest text-sm sm:text-base font-bold text-text-primary">
+                Trilha de Auditoria & Histórico
+              </h2>
+              <p className="text-xs text-text-secondary">
+                Registro cronológico em tempo real de todas as operações: criação, edição, pausa, verificação WhatsApp e resgates.
               </p>
-            ) : (
-              coupons.map((c) => (
-                <div key={c.id} className="p-4 space-y-1">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold bg-surface-off px-2 py-0.5 border border-border-hairline text-text-primary">
-                        {c.code}
-                      </span>
-                      <span className="font-semibold text-text-primary">{c.name}</span>
-                      <span className="text-[10px] bg-surface-container px-1.5 rounded font-mono text-text-secondary">v{c.version}</span>
-                    </div>
-                    <span className="text-[11px] text-text-secondary">
-                      Criado em: {new Date(c.createdAt).toLocaleDateString('pt-BR')} por {c.createdByAdmin || 'Administrador'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-text-secondary">
-                    Tipo: {c.discountType} | Valor: {c.discountValue} | Financiador: {c.financingType} | Utilizações: {c.usedCount}
-                  </p>
-                </div>
-              ))
+            </div>
+
+            {auditLogs.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAllHistory}
+                className="w-full sm:w-auto h-9 px-3.5 bg-surface-off hover:bg-[#ba1a1a]/10 border border-[#ba1a1a]/30 text-[#ba1a1a] text-xs uppercase tracking-wider font-bold transition-colors inline-flex items-center justify-center gap-1.5"
+                title="Limpar registros de teste do histórico"
+              >
+                <span className="material-symbols-outlined text-[16px]">delete_sweep</span>
+                <span>Limpar Histórico de Teste</span>
+              </button>
             )}
           </div>
+
+          {/* History Filters Bar */}
+          <div className="bg-surface-pure border border-border-hairline p-3 sm:p-4 shadow-sm space-y-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              {/* Category Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar flex-nowrap sm:flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setHistoryActionFilter('ALL')}
+                  className={`h-8 px-3 text-[11px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap inline-flex items-center justify-center ${
+                    historyActionFilter === 'ALL'
+                      ? 'bg-primary text-white'
+                      : 'bg-surface-off border border-border-hairline text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  Todos ({auditLogs.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistoryActionFilter('CREATE')}
+                  className={`h-8 px-3 text-[11px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap inline-flex items-center justify-center ${
+                    historyActionFilter === 'CREATE'
+                      ? 'bg-primary text-white'
+                      : 'bg-surface-off border border-border-hairline text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  Criação ({auditLogs.filter((l) => l.action === 'CREATE').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistoryActionFilter('UPDATE')}
+                  className={`h-8 px-3 text-[11px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap inline-flex items-center justify-center ${
+                    historyActionFilter === 'UPDATE'
+                      ? 'bg-primary text-white'
+                      : 'bg-surface-off border border-border-hairline text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  Edição ({auditLogs.filter((l) => l.action === 'UPDATE').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistoryActionFilter('STATUS_CHANGE')}
+                  className={`h-8 px-3 text-[11px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap inline-flex items-center justify-center ${
+                    historyActionFilter === 'STATUS_CHANGE'
+                      ? 'bg-primary text-white'
+                      : 'bg-surface-off border border-border-hairline text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  Status ({auditLogs.filter((l) => l.action === 'STATUS_CHANGE').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistoryActionFilter('VERIFICATION_CONFIRMED')}
+                  className={`h-8 px-3 text-[11px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap inline-flex items-center justify-center ${
+                    historyActionFilter === 'VERIFICATION_CONFIRMED'
+                      ? 'bg-primary text-white'
+                      : 'bg-surface-off border border-border-hairline text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  WhatsApp ({auditLogs.filter((l) => l.action === 'VERIFICATION_CONFIRMED').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistoryActionFilter('REDEMPTION')}
+                  className={`h-8 px-3 text-[11px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap inline-flex items-center justify-center ${
+                    historyActionFilter === 'REDEMPTION'
+                      ? 'bg-primary text-white'
+                      : 'bg-surface-off border border-border-hairline text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  Resgates ({auditLogs.filter((l) => l.action === 'REDEMPTION').length})
+                </button>
+              </div>
+
+              {/* Search box */}
+              <div className="relative w-full sm:w-64">
+                <input
+                  type="text"
+                  placeholder="Buscar no histórico..."
+                  value={historySearch}
+                  onChange={(e) => setHistorySearch(e.target.value)}
+                  className="w-full h-8 border border-border-hairline bg-surface-off pl-8 pr-6 text-xs text-text-primary focus:outline-none focus:border-primary"
+                />
+                <svg
+                  className="w-3.5 h-3.5 text-text-secondary absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                {historySearch && (
+                  <button
+                    onClick={() => setHistorySearch('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary text-xs"
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* History Empty State */}
+          {filteredAuditLogs.length === 0 ? (
+            <div className="p-8 sm:p-12 text-center bg-surface-pure border border-border-hairline shadow-sm space-y-2">
+              <svg className="w-10 h-10 mx-auto text-text-secondary opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="font-display uppercase tracking-widest text-sm font-bold text-text-primary">
+                Nenhum evento no histórico
+              </h3>
+              <p className="text-xs text-text-secondary max-w-sm mx-auto">
+                {auditLogs.length === 0
+                  ? 'Todas as ações realizadas em cupons (criação, edição, ativação/pausa, verificação via WhatsApp e resgates) serão salvas automaticamente neste histórico com data, hora e responsável.'
+                  : 'Nenhum registro coincide com os filtros aplicados.'}
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Mobile View for History */}
+              <div className="md:hidden space-y-3">
+                {filteredAuditLogs.map((log) => (
+                  <div key={log.id} className="bg-surface-pure border border-border-hairline p-4 shadow-sm space-y-2">
+                    <div className="flex items-center justify-between">
+                      {renderHistoryActionBadge(log.action)}
+                      <span className="text-[10px] text-text-secondary font-mono">
+                        {new Date(log.createdAt).toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-text-primary leading-relaxed font-mono">
+                      {log.details}
+                    </p>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-border-hairline text-[11px] text-text-secondary">
+                      <span>Responsável: <strong className="text-text-primary">{log.changedBy || 'Sistema'}</strong></span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteAuditLog(log.id)}
+                        className="text-[#ba1a1a] hover:underline text-[10px] font-bold uppercase tracking-wider"
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table for History */}
+              <div className="hidden md:block bg-surface-pure border border-border-hairline shadow-sm overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-surface-off border-b border-border-hairline text-[10px] text-text-secondary uppercase tracking-widest font-semibold">
+                      <th className="p-3 whitespace-nowrap">Data / Hora</th>
+                      <th className="p-3 whitespace-nowrap">Tipo de Ação</th>
+                      <th className="p-3">Descrição da Operação</th>
+                      <th className="p-3 whitespace-nowrap">Responsável</th>
+                      <th className="p-3 text-right whitespace-nowrap">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-hairline">
+                    {filteredAuditLogs.map((log) => (
+                      <tr key={log.id} className="hover:bg-surface-off/50 transition-colors">
+                        <td className="p-3 align-middle text-[11px] text-text-secondary font-mono whitespace-nowrap">
+                          {new Date(log.createdAt).toLocaleString('pt-BR')}
+                        </td>
+                        <td className="p-3 align-middle whitespace-nowrap">
+                          {renderHistoryActionBadge(log.action)}
+                        </td>
+                        <td className="p-3 align-middle text-text-primary text-xs font-mono">
+                          {log.details}
+                        </td>
+                        <td className="p-3 align-middle text-text-secondary text-xs font-mono whitespace-nowrap">
+                          {log.changedBy || 'Sistema'}
+                        </td>
+                        <td className="p-3 align-middle text-right whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAuditLog(log.id)}
+                            className="h-7 inline-flex items-center justify-center gap-1 px-2 bg-surface-off border border-border-hairline hover:border-[#ba1a1a]/30 text-text-secondary hover:text-[#ba1a1a] hover:bg-[#ba1a1a]/10 text-[10px] font-bold uppercase tracking-wider transition-colors"
+                            title="Excluir este registro"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">delete</span>
+                            <span>Excluir</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -2762,6 +3188,28 @@ function CouponsAdminContent() {
                 Vendedores: <strong>{selectedCouponDetails.sellerSharePercent}%</strong> (Custo acumulado: R$ {formatCurrency(selectedCouponDetails.totalSellerCost)})
               </p>
             </div>
+
+            {/* Coupon Audit Trail in Modal */}
+            {modalAuditLogs.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-[10px] text-text-secondary uppercase tracking-widest block font-semibold">
+                  Histórico deste Cupom ({modalAuditLogs.length})
+                </span>
+                <div className="max-h-40 overflow-y-auto space-y-1.5 border border-border-hairline p-2 bg-surface-off">
+                  {modalAuditLogs.map((log) => (
+                    <div key={log.id} className="text-[11px] flex items-center justify-between gap-2 p-1.5 bg-surface-pure border border-border-hairline font-mono">
+                      <div className="flex items-center gap-2 truncate">
+                        {renderHistoryActionBadge(log.action)}
+                        <span className="text-text-primary truncate">{log.details}</span>
+                      </div>
+                      <span className="text-[10px] text-text-secondary whitespace-nowrap">
+                        {new Date(log.createdAt).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 pt-3 border-t border-border-hairline">
               <button

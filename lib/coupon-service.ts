@@ -645,11 +645,85 @@ export class CouponService {
   }
 
   static getAllRedemptions(): CouponRedemption[] {
-    return readJsonFile<CouponRedemption[]>(REDEMPTIONS_FILE, SEED_REDEMPTIONS);
+    const list = readJsonFile<CouponRedemption[]>(REDEMPTIONS_FILE, SEED_REDEMPTIONS);
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  static deleteRedemption(id: string): { success: boolean; error?: string } {
+    const redemptions = readJsonFile<CouponRedemption[]>(REDEMPTIONS_FILE, []);
+    const idx = redemptions.findIndex((r) => r.id === id);
+    if (idx === -1) {
+      return { success: false, error: 'Registro de resgate não encontrado.' };
+    }
+
+    const removed = redemptions[idx];
+    redemptions.splice(idx, 1);
+    writeJsonFile(REDEMPTIONS_FILE, redemptions);
+
+    // Revert/decrement metrics on the associated coupon
+    const coupons = this.getAllCoupons();
+    const couponIdx = coupons.findIndex((c) => c.id === removed.couponId || c.code.toUpperCase() === removed.couponCode.toUpperCase());
+    if (couponIdx !== -1) {
+      const c = coupons[couponIdx];
+      c.usedCount = Math.max(0, (c.usedCount || 0) - 1);
+      c.totalDiscountGiven = Math.max(0, Math.round(((c.totalDiscountGiven || 0) - (removed.discountAmount || 0)) * 100) / 100);
+      c.totalMarketplaceCost = Math.max(0, Math.round(((c.totalMarketplaceCost || 0) - (removed.marketplaceCost || 0)) * 100) / 100);
+      c.totalSellerCost = Math.max(0, Math.round(((c.totalSellerCost || 0) - (removed.sellerCost || 0)) * 100) / 100);
+      coupons[couponIdx] = c;
+      writeJsonFile(COUPONS_FILE, coupons);
+    }
+
+    // Add audit log for deleting the redemption
+    this.addAuditLog({
+      couponId: removed.couponId || 'system',
+      action: 'REDEMPTION_DELETED',
+      details: `Registro de resgate do cupom ${removed.couponCode} (Pedido: ${removed.orderId || '-'}, Cliente: ${removed.customerName}) foi excluído pelo Administrador.`,
+      changedBy: 'Administrador',
+    });
+
+    return { success: true };
+  }
+
+  static clearAllRedemptions(): { success: boolean; count: number } {
+    const redemptions = readJsonFile<CouponRedemption[]>(REDEMPTIONS_FILE, []);
+    const count = redemptions.length;
+    writeJsonFile(REDEMPTIONS_FILE, []);
+
+    // Reset metrics on coupons for these redemptions
+    const coupons = this.getAllCoupons();
+    coupons.forEach((c) => {
+      c.usedCount = 0;
+      c.totalDiscountGiven = 0;
+      c.totalMarketplaceCost = 0;
+      c.totalSellerCost = 0;
+    });
+    writeJsonFile(COUPONS_FILE, coupons);
+
+    this.addAuditLog({
+      couponId: 'system',
+      action: 'REDEMPTIONS_CLEARED',
+      details: `Todos os ${count} registros de resgate do relatório foram excluídos pelo Administrador.`,
+      changedBy: 'Administrador',
+    });
+
+    return { success: true, count };
   }
 
   static getAllAuditLogs(): CouponAuditLog[] {
-    return readJsonFile<CouponAuditLog[]>(AUDIT_LOGS_FILE, SEED_LOGS);
+    const logs = readJsonFile<CouponAuditLog[]>(AUDIT_LOGS_FILE, SEED_LOGS);
+    return logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  static deleteAuditLog(id: string): { success: boolean } {
+    const logs = readJsonFile<CouponAuditLog[]>(AUDIT_LOGS_FILE, []);
+    const filtered = logs.filter((l) => l.id !== id);
+    writeJsonFile(AUDIT_LOGS_FILE, filtered);
+    return { success: true };
+  }
+
+  static clearAllAuditLogs(): { success: boolean } {
+    writeJsonFile(AUDIT_LOGS_FILE, []);
+    return { success: true };
   }
 
   static addAuditLog(data: Omit<CouponAuditLog, 'id' | 'createdAt'>) {
@@ -945,6 +1019,13 @@ export class CouponService {
     list[idx] = vfy;
     writeJsonFile(VERIFICATIONS_FILE, list);
 
+    this.addAuditLog({
+      couponId: vfy.couponId,
+      action: 'VERIFICATION_CONFIRMED',
+      details: `Código ${vfy.code} (Cupom ${vfy.couponCode}) verificado e confirmado via WhatsApp para ${vfy.customerName}. Desconto: R$ ${vfy.discountAmount.toFixed(2)}.`,
+      changedBy: adminName,
+    });
+
     return { success: true, verification: vfy };
   }
 
@@ -965,6 +1046,13 @@ export class CouponService {
     vfy.cancelledAt = new Date().toISOString();
     list[idx] = vfy;
     writeJsonFile(VERIFICATIONS_FILE, list);
+
+    this.addAuditLog({
+      couponId: vfy.couponId,
+      action: 'STATUS_CHANGE',
+      details: `Código de verificação ${vfy.code} (Cupom ${vfy.couponCode}) foi cancelado pelo Administrador.`,
+      changedBy: adminName,
+    });
 
     return { success: true, verification: vfy };
   }
