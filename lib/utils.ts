@@ -26,7 +26,8 @@ export function buildWhatsAppLink(
   items: Array<any>,
   total: number,
   couponDetails?: CouponDiscountSummary | CouponDiscountSummary[] | null,
-  subtotalOverride?: number
+  subtotalOverride?: number,
+  verificationCode?: string | null
 ): string {
   const itemLines = items.map((item, idx) => {
     const itemSubtotal = item.price * item.quantity;
@@ -60,6 +61,11 @@ export function buildWhatsAppLink(
       msg += `🎟️ Cupom: ${c.code}${typeLabel}\n`;
       msg += `📉 Desconto: - R$ ${formatCurrency(c.discountAmount)}\n`;
     });
+
+    if (verificationCode) {
+      msg += `🔐 Código de Verificação do Cupom: ${verificationCode}\n`;
+      msg += `*(O vendedor confirmará este código no sistema para validar seu desconto)*\n`;
+    }
 
     msg += `----------------------------------------\n`;
     msg += `💰 TOTAL FINAL COM DESCONTO: R$ ${formatCurrency(total)}\n\n`;

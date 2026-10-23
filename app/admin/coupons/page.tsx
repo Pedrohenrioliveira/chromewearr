@@ -12,6 +12,8 @@ import {
   CouponDashboardStats,
   CouponRedemption,
   CouponAuditLog,
+  CouponVerification,
+  VerificationStatus,
 } from '@/types/coupon';
 import { formatCurrency } from '@/lib/utils';
 
@@ -20,12 +22,12 @@ function CouponsAdminContent() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get('tab') || 'overview';
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'manage' | 'create' | 'reports' | 'history'>(
+  const [activeTab, setActiveTab] = useState<'overview' | 'verify' | 'manage' | 'create' | 'reports' | 'history'>(
     (initialTab as any) || 'overview'
   );
 
   // Synchronize activeTab with URL
-  const changeTab = (tab: 'overview' | 'manage' | 'create' | 'reports' | 'history') => {
+  const changeTab = (tab: 'overview' | 'verify' | 'manage' | 'create' | 'reports' | 'history') => {
     setActiveTab(tab);
     router.replace(`/admin/coupons?tab=${tab}`);
   };
@@ -35,6 +37,7 @@ function CouponsAdminContent() {
   const [stats, setStats] = useState<CouponDashboardStats | null>(null);
   const [redemptions, setRedemptions] = useState<CouponRedemption[]>([]);
   const [auditLogs, setAuditLogs] = useState<CouponAuditLog[]>([]);
+  const [verifications, setVerifications] = useState<CouponVerification[]>([]);
   const [metadata, setMetadata] = useState<{ sellers: any[]; products: any[]; categories: any[] }>({
     sellers: [],
     products: [],
@@ -42,6 +45,13 @@ function CouponsAdminContent() {
   });
   const [loading, setLoading] = useState(true);
   const [feedbackMessage, setFeedbackMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Verification Tab State
+  const [verifySearchCode, setVerifySearchCode] = useState('');
+  const [searchedVerification, setSearchedVerification] = useState<CouponVerification | null>(null);
+  const [searchingVerification, setSearchingVerification] = useState(false);
+  const [confirmingCode, setConfirmingCode] = useState<string | null>(null);
+  const [verificationFilter, setVerificationFilter] = useState<'ALL' | 'PENDING' | 'CONFIRMED'>('ALL');
 
   // Filters State for Manage Tab
   const [searchFilter, setSearchFilter] = useState('');
@@ -100,10 +110,11 @@ function CouponsAdminContent() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [couponsRes, metaRes, reportsRes] = await Promise.all([
+      const [couponsRes, metaRes, reportsRes, verifyRes] = await Promise.all([
         fetch('/api/coupons'),
         fetch('/api/coupons/metadata'),
         fetch('/api/coupons/reports'),
+        fetch('/api/coupons/verify'),
       ]);
 
       if (couponsRes.ok) {
@@ -121,12 +132,27 @@ function CouponsAdminContent() {
         const rep = await reportsRes.json();
         setRedemptions(rep.redemptions || []);
       }
+
+      if (verifyRes.ok) {
+        const vList = await verifyRes.json();
+        setVerifications(vList || []);
+      }
     } catch (err) {
       console.error('Erro ao carregar cupons:', err);
       showFeedback('error', 'Erro ao carregar dados de cupons.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchVerifications = async () => {
+    try {
+      const res = await fetch('/api/coupons/verify');
+      if (res.ok) {
+        const data = await res.json();
+        setVerifications(data || []);
+      }
+    } catch (e) {}
   };
 
   useEffect(() => {
@@ -282,24 +308,145 @@ function CouponsAdminContent() {
     }
   };
 
-  // Archive Coupon
-  const handleArchive = async (id: string, code: string) => {
-    if (!window.confirm(`Tem certeza que deseja arquivar o cupom ${code}? Ele não poderá mais ser utilizado.`)) {
+  // 100% Hard Delete - Permanently removes coupon and cleans up history without residual trace
+  const handleDeletePermanently = async (id: string, code: string) => {
+    if (
+      !window.confirm(
+        `Tem certeza que deseja excluir 100% o cupom "${code}"?\n\nEssa ação é irreversível e removerá o cupom e todo o seu histórico do sistema de forma definitiva.`
+      )
+    ) {
       return;
     }
     try {
       const res = await fetch(`/api/coupons/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) {
-        showFeedback('error', data.error || 'Erro ao arquivar.');
+        showFeedback('error', data.error || 'Erro ao excluir cupom.');
         return;
       }
-      showFeedback('success', `Cupom ${code} arquivado.`);
+      showFeedback('success', `Cupom "${code}" excluído 100% com sucesso.`);
+      setCoupons((prev) => prev.filter((c) => c.id !== id));
+      if (selectedCouponDetails?.id === id) {
+        setIsDetailModalOpen(false);
+        setSelectedCouponDetails(null);
+      }
       fetchData();
     } catch (e) {
-      showFeedback('error', 'Erro ao arquivar cupom.');
+      showFeedback('error', 'Erro ao excluir cupom.');
     }
   };
+
+  // Verification Search Handler
+  const handleSearchVerification = async (codeToSearch?: string) => {
+    const code = (codeToSearch || verifySearchCode).trim().toUpperCase();
+    if (!code) {
+      setSearchedVerification(null);
+      return;
+    }
+    setSearchingVerification(true);
+    try {
+      const res = await fetch(`/api/coupons/verify/${code}`);
+      if (!res.ok) {
+        const data = await res.json();
+        showFeedback('error', data.error || 'Código de verificação não encontrado.');
+        setSearchedVerification(null);
+        return;
+      }
+      const data = await res.json();
+      setSearchedVerification(data.verification);
+    } catch (e) {
+      showFeedback('error', 'Erro ao consultar código de verificação.');
+    } finally {
+      setSearchingVerification(false);
+    }
+  };
+
+  // Confirm Verification Handler
+  const handleConfirmVerification = async (code: string) => {
+    setConfirmingCode(code);
+    try {
+      const userStored = localStorage.getItem('chromewear_user');
+      let adminName = 'Administrador';
+      if (userStored) {
+        try {
+          adminName = JSON.parse(userStored).name || 'Administrador';
+        } catch (e) {}
+      }
+
+      const res = await fetch(`/api/coupons/verify/${code}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'confirm', adminName }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        showFeedback('error', data.error || 'Erro ao confirmar uso do cupom.');
+        return;
+      }
+
+      showFeedback('success', `Cupom ${data.verification.couponCode} confirmado com sucesso! Desconto validado.`);
+      if (searchedVerification && searchedVerification.code === code) {
+        setSearchedVerification(data.verification);
+      }
+      await fetchVerifications();
+      await fetchData();
+    } catch (e) {
+      showFeedback('error', 'Erro ao confirmar uso do cupom.');
+    } finally {
+      setConfirmingCode(null);
+    }
+  };
+
+  // Cancel Verification Handler
+  const handleCancelVerification = async (code: string) => {
+    if (!window.confirm(`Deseja cancelar o código de verificação ${code}? O cupom será liberado.`)) return;
+    try {
+      const userStored = localStorage.getItem('chromewear_user');
+      let adminName = 'Administrador';
+      if (userStored) {
+        try {
+          adminName = JSON.parse(userStored).name || 'Administrador';
+        } catch (e) {}
+      }
+
+      const res = await fetch(`/api/coupons/verify/${code}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cancel', adminName }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        showFeedback('error', data.error || 'Erro ao cancelar verificação.');
+        return;
+      }
+
+      showFeedback('success', `Código de verificação ${code} cancelado.`);
+      if (searchedVerification && searchedVerification.code === code) {
+        setSearchedVerification(data.verification);
+      }
+      await fetchVerifications();
+    } catch (e) {
+      showFeedback('error', 'Erro ao cancelar verificação.');
+    }
+  };
+
+  const pendingVerificationsCount = useMemo(() => {
+    return verifications.filter((v) => v.status === 'PENDING').length;
+  }, [verifications]);
+
+  const confirmedVerificationsCount = useMemo(() => {
+    return verifications.filter((v) => v.status === 'CONFIRMED').length;
+  }, [verifications]);
+
+  const filteredVerifications = useMemo(() => {
+    return verifications.filter((v) => {
+      if (verificationFilter === 'PENDING') return v.status === 'PENDING';
+      if (verificationFilter === 'CONFIRMED') return v.status === 'CONFIRMED';
+      return true;
+    });
+  }, [verifications, verificationFilter]);
 
   // Open Details Modal
   const handleOpenDetails = async (coupon: Coupon) => {
@@ -488,6 +635,28 @@ function CouponsAdminContent() {
           }`}
         >
           Visão Geral
+        </button>
+
+        <button
+          onClick={() => changeTab('verify')}
+          className={`text-xs uppercase tracking-wider font-bold px-3 py-2 border transition-colors whitespace-nowrap flex-shrink-0 flex items-center gap-1.5 ${
+            activeTab === 'verify'
+              ? 'bg-black text-white border-black'
+              : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
+          }`}
+        >
+          <span>Verificar Cupom</span>
+          {pendingVerificationsCount > 0 && (
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded font-bold font-mono ${
+                activeTab === 'verify'
+                  ? 'bg-neutral-800 text-white'
+                  : 'bg-[#b45309]/20 text-[#b45309]'
+              }`}
+            >
+              {pendingVerificationsCount}
+            </span>
+          )}
         </button>
 
         <button
@@ -771,6 +940,483 @@ function CouponsAdminContent() {
       )}
 
       {/* ========================================================
+          TAB: VERIFICAR CUPOM (VALIDAÇÃO ANTI-FRAUDE WHATSAPP)
+          ======================================================== */}
+      {activeTab === 'verify' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Header Banner */}
+          <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm space-y-1">
+            <h2 className="font-display uppercase tracking-widest text-sm sm:text-base font-bold text-text-primary">
+              Verificação Anti-Fraude de Cupons
+            </h2>
+            <p className="text-xs text-text-secondary">
+              Valide o código de verificação recebido na mensagem do WhatsApp para checar a autenticidade do cupom e o desconto real. O cupom só será considerado utilizado após a sua confirmação aqui.
+            </p>
+          </div>
+
+          {/* Verification Code Search Box */}
+          <div className="bg-surface-pure border border-border-hairline p-4 sm:p-5 shadow-sm">
+            <label className="block text-[10px] text-text-secondary uppercase tracking-widest font-semibold mb-2">
+              Consultar Código de Verificação do WhatsApp
+            </label>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSearchVerification();
+              }}
+              className="flex flex-col sm:flex-row gap-2"
+            >
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="Ex: CW-VFY-9X82KD"
+                  value={verifySearchCode}
+                  onChange={(e) => setVerifySearchCode(e.target.value.toUpperCase())}
+                  className="w-full pl-9 pr-4 py-2.5 text-sm sm:text-xs font-mono font-bold tracking-wider bg-surface-off border border-border-hairline focus:outline-none focus:border-primary uppercase"
+                />
+                <svg className="w-4 h-4 text-text-secondary absolute left-3 top-3 sm:top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <button
+                type="submit"
+                disabled={searchingVerification || !verifySearchCode.trim()}
+                className="min-h-[42px] px-6 py-2.5 bg-primary hover:bg-neutral-800 text-white text-xs uppercase tracking-wider font-bold transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {searchingVerification ? 'Buscando...' : 'Verificar Código'}
+              </button>
+              {searchedVerification && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchedVerification(null);
+                    setVerifySearchCode('');
+                  }}
+                  className="min-h-[42px] px-4 py-2.5 bg-surface-off hover:bg-surface-container border border-border-hairline text-text-secondary text-xs uppercase tracking-wider font-semibold transition-colors"
+                >
+                  Limpar
+                </button>
+              )}
+            </form>
+          </div>
+
+          {/* Searched Verification Details Card */}
+          {searchedVerification && (
+            <div className="bg-surface-pure border border-border-hairline p-4 sm:p-6 shadow-sm space-y-4 animate-in fade-in duration-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-border-hairline gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-base bg-surface-off px-3 py-1 border border-border-hairline tracking-wider text-text-primary">
+                    {searchedVerification.code}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(searchedVerification.code)}
+                    className="p-1 text-text-secondary hover:text-primary transition-colors text-xs"
+                    title="Copiar código"
+                  >
+                    {copiedCode === searchedVerification.code ? 'Copiado!' : 'Copiar'}
+                  </button>
+                </div>
+
+                <div>
+                  {searchedVerification.status === 'PENDING' && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-[#b45309]/10 text-[#b45309] border border-[#b45309]/20 rounded-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#b45309]" />
+                      Pendente de Confirmação
+                    </span>
+                  )}
+                  {searchedVerification.status === 'CONFIRMED' && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-[#146c2e]/10 text-[#146c2e] border border-[#146c2e]/20 rounded-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#146c2e]" />
+                      Uso Confirmado & Computado
+                    </span>
+                  )}
+                  {searchedVerification.status === 'CANCELLED' && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-surface-off text-text-secondary border border-border-hairline rounded-sm">
+                      Cancelado
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* 4 Key Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="bg-surface-off p-3 border border-border-hairline">
+                  <span className="text-[10px] text-text-secondary uppercase tracking-widest font-semibold block mb-1">
+                    Cupom Utilizado
+                  </span>
+                  <span className="font-mono font-bold text-sm text-text-primary block">
+                    {searchedVerification.couponCode}
+                  </span>
+                  <span className="text-[11px] text-text-secondary truncate block mt-0.5">
+                    {searchedVerification.couponName}
+                  </span>
+                </div>
+
+                <div className="bg-surface-off p-3 border border-border-hairline">
+                  <span className="text-[10px] text-text-secondary uppercase tracking-widest font-semibold block mb-1">
+                    Desconto Real Concedido
+                  </span>
+                  <span className="font-bold text-sm text-text-primary block">
+                    - R$ {formatCurrency(searchedVerification.discountAmount)}
+                  </span>
+                  <span className="text-[11px] text-text-secondary block mt-0.5">
+                    {searchedVerification.discountType === 'PERCENTAGE'
+                      ? `${searchedVerification.discountValue}% OFF`
+                      : searchedVerification.discountType === 'FIXED'
+                      ? `R$ ${formatCurrency(searchedVerification.discountValue)} Fixo`
+                      : 'Frete Grátis'}
+                  </span>
+                </div>
+
+                <div className="bg-surface-off p-3 border border-border-hairline">
+                  <span className="text-[10px] text-text-secondary uppercase tracking-widest font-semibold block mb-1">
+                    Cliente Solicitante
+                  </span>
+                  <span className="font-semibold text-sm text-text-primary block truncate">
+                    {searchedVerification.customerName}
+                  </span>
+                  <span className="text-[11px] text-text-secondary block mt-0.5">
+                    {searchedVerification.customerPhone || searchedVerification.customerEmail || 'WhatsApp'}
+                  </span>
+                </div>
+
+                <div className="bg-surface-off p-3 border border-border-hairline">
+                  <span className="text-[10px] text-text-secondary uppercase tracking-widest font-semibold block mb-1">
+                    Total a Pagar
+                  </span>
+                  <span className="font-bold text-base text-text-primary block">
+                    R$ {formatCurrency(searchedVerification.finalTotal)}
+                  </span>
+                  <span className="text-[11px] text-text-secondary block mt-0.5">
+                    Subtotal: R$ {formatCurrency(searchedVerification.subtotal)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Items List */}
+              {searchedVerification.items && searchedVerification.items.length > 0 && (
+                <div className="bg-surface-off p-3 border border-border-hairline space-y-1.5">
+                  <span className="text-[10px] text-text-secondary uppercase tracking-widest font-semibold block">
+                    Itens da Sacola ({searchedVerification.items.length})
+                  </span>
+                  <div className="divide-y divide-border-hairline text-xs">
+                    {searchedVerification.items.map((item, idx) => (
+                      <div key={idx} className="py-1.5 flex items-center justify-between">
+                        <span className="text-text-primary font-medium">{item.name}</span>
+                        <div className="flex items-center gap-3 text-text-secondary">
+                          <span>Qtd: {item.quantity}</span>
+                          <span className="font-semibold text-text-primary">
+                            R$ {formatCurrency(item.price * item.quantity)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions Footer */}
+              <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                {searchedVerification.status === 'PENDING' ? (
+                  <>
+                    <p className="text-xs text-text-secondary">
+                      Ao confirmar, o cupom será oficialmente debitado das métricas e das regras de limite.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleCancelVerification(searchedVerification.code)}
+                        className="flex-1 sm:flex-initial min-h-[42px] px-4 py-2.5 bg-surface-off hover:bg-[#ba1a1a]/10 border border-border-hairline text-[#ba1a1a] text-xs uppercase tracking-wider font-semibold transition-colors"
+                      >
+                        Cancelar Código
+                      </button>
+                      <button
+                        type="button"
+                        disabled={confirmingCode === searchedVerification.code}
+                        onClick={() => handleConfirmVerification(searchedVerification.code)}
+                        className="flex-1 sm:flex-initial min-h-[42px] px-6 py-2.5 bg-primary hover:bg-neutral-800 text-white text-xs uppercase tracking-wider font-bold transition-all shadow-sm flex items-center justify-center gap-2"
+                      >
+                        {confirmingCode === searchedVerification.code ? (
+                          'Confirmando...'
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>Confirmar Uso do Cupom</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </>
+                ) : searchedVerification.status === 'CONFIRMED' ? (
+                  <div className="w-full p-3 bg-surface-off border border-border-hairline text-xs text-text-secondary flex items-center justify-between">
+                    <span>
+                      Uso confirmado em{' '}
+                      <strong className="text-text-primary">
+                        {searchedVerification.confirmedAt
+                          ? new Date(searchedVerification.confirmedAt).toLocaleString('pt-BR')
+                          : '-'}
+                      </strong>{' '}
+                      por{' '}
+                      <strong className="text-text-primary">
+                        {searchedVerification.confirmedBy || 'Administrador'}
+                      </strong>
+                    </span>
+                    <span className="text-[10px] text-[#146c2e] font-bold uppercase">Validado</span>
+                  </div>
+                ) : (
+                  <div className="w-full p-3 bg-surface-off border border-border-hairline text-xs text-text-secondary">
+                    Este código foi cancelado em{' '}
+                    {searchedVerification.cancelledAt
+                      ? new Date(searchedVerification.cancelledAt).toLocaleString('pt-BR')
+                      : '-'}{' '}
+                    e o cupom foi liberado sem cobrança.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* List of Verifications from WhatsApp */}
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-display uppercase tracking-widest text-xs font-bold text-text-primary">
+                  Códigos de Verificação do WhatsApp
+                </h3>
+                <span className="text-[10px] text-text-secondary">
+                  Intenções de compra iniciadas no carrinho aguardando validação ou já aprovadas.
+                </span>
+              </div>
+
+              {/* Status Filter Buttons */}
+              <div className="flex items-center gap-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setVerificationFilter('ALL')}
+                  className={`px-3 py-1.5 border text-xs font-semibold uppercase tracking-wider transition-colors ${
+                    verificationFilter === 'ALL'
+                      ? 'bg-black text-white border-black'
+                      : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  Todos ({verifications.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVerificationFilter('PENDING')}
+                  className={`px-3 py-1.5 border text-xs font-semibold uppercase tracking-wider transition-colors ${
+                    verificationFilter === 'PENDING'
+                      ? 'bg-black text-white border-black'
+                      : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  Pendentes ({pendingVerificationsCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVerificationFilter('CONFIRMED')}
+                  className={`px-3 py-1.5 border text-xs font-semibold uppercase tracking-wider transition-colors ${
+                    verificationFilter === 'CONFIRMED'
+                      ? 'bg-black text-white border-black'
+                      : 'bg-surface-off border-border-hairline text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  Confirmados ({confirmedVerificationsCount})
+                </button>
+              </div>
+            </div>
+
+            {/* Empty State */}
+            {filteredVerifications.length === 0 ? (
+              <div className="p-8 sm:p-12 text-center bg-surface-pure border border-border-hairline shadow-sm space-y-2">
+                <svg className="w-10 h-10 mx-auto text-text-secondary opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <h4 className="font-display uppercase tracking-widest text-xs sm:text-sm font-bold text-text-primary">
+                  Nenhum código de verificação encontrado
+                </h4>
+                <p className="text-xs text-text-secondary max-w-sm mx-auto">
+                  {verificationFilter === 'PENDING'
+                    ? 'Nenhum cupom pendente de confirmação no momento.'
+                    : 'Assim que os clientes aplicarem cupons no carrinho e clicarem em comprar pelo WhatsApp, os códigos para confirmação aparecerão aqui.'}
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Mobile Cards for Small Screens */}
+                <div className="md:hidden space-y-3">
+                  {filteredVerifications.map((v) => (
+                    <div key={v.id} className="bg-surface-pure border border-border-hairline p-4 shadow-sm space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-bold text-xs bg-surface-off px-2 py-0.5 border border-border-hairline text-text-primary">
+                          {v.code}
+                        </span>
+                        <div>
+                          {v.status === 'PENDING' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#b45309]/10 text-[#b45309] border border-[#b45309]/20 rounded-sm">
+                              <span className="w-1 h-1 rounded-full bg-[#b45309]" />
+                              Pendente
+                            </span>
+                          )}
+                          {v.status === 'CONFIRMED' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#146c2e]/10 text-[#146c2e] border border-[#146c2e]/20 rounded-sm">
+                              <span className="w-1 h-1 rounded-full bg-[#146c2e]" />
+                              Confirmado
+                            </span>
+                          )}
+                          {v.status === 'CANCELLED' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-surface-off text-text-secondary border border-border-hairline rounded-sm">
+                              Cancelado
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs bg-surface-off p-2.5 border border-border-hairline">
+                        <div>
+                          <span className="text-[10px] text-text-secondary uppercase block">Cupom</span>
+                          <span className="font-bold text-text-primary">{v.couponCode}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-text-secondary uppercase block">Desconto</span>
+                          <span className="font-bold text-text-primary">- R$ {formatCurrency(v.discountAmount)}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-text-secondary uppercase block">Cliente</span>
+                          <span className="text-text-primary truncate block">{v.customerName}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-text-secondary uppercase block">Total a Pagar</span>
+                          <span className="font-bold text-text-primary">R$ {formatCurrency(v.finalTotal)}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] text-text-secondary">
+                        <span>{new Date(v.createdAt).toLocaleString('pt-BR')}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSearchedVerification(v);
+                              setVerifySearchCode(v.code);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="font-semibold text-text-primary underline text-xs"
+                          >
+                            Ver Detalhes
+                          </button>
+                          {v.status === 'PENDING' && (
+                            <button
+                              type="button"
+                              disabled={confirmingCode === v.code}
+                              onClick={() => handleConfirmVerification(v.code)}
+                              className="px-3 py-1.5 bg-primary text-white text-[11px] uppercase font-bold tracking-wider rounded"
+                            >
+                              {confirmingCode === v.code ? '...' : 'Confirmar'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table for Screens >= 768px */}
+                <div className="hidden md:block bg-surface-pure border border-border-hairline shadow-sm overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-surface-off border-b border-border-hairline text-[10px] text-text-secondary uppercase tracking-widest font-semibold">
+                        <th className="p-3">Data / Hora</th>
+                        <th className="p-3">Código Verificação</th>
+                        <th className="p-3">Cupom</th>
+                        <th className="p-3">Cliente</th>
+                        <th className="p-3">Desconto</th>
+                        <th className="p-3">Total a Pagar</th>
+                        <th className="p-3">Status</th>
+                        <th className="p-3 text-right">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border-hairline">
+                      {filteredVerifications.map((v) => (
+                        <tr key={v.id} className="hover:bg-surface-off/50 transition-colors">
+                          <td className="p-3 text-[11px] text-text-secondary">
+                            {new Date(v.createdAt).toLocaleString('pt-BR')}
+                          </td>
+                          <td className="p-3 font-mono font-bold text-xs text-text-primary">
+                            <span className="bg-surface-off px-2 py-0.5 border border-border-hairline">
+                              {v.code}
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono font-bold text-text-primary">{v.couponCode}</td>
+                          <td className="p-3">
+                            <p className="font-medium text-text-primary">{v.customerName}</p>
+                            <p className="text-[10px] text-text-secondary">{v.customerPhone || v.customerEmail || '-'}</p>
+                          </td>
+                          <td className="p-3 font-bold text-text-primary">
+                            - R$ {formatCurrency(v.discountAmount)}
+                          </td>
+                          <td className="p-3 font-bold text-text-primary">
+                            R$ {formatCurrency(v.finalTotal)}
+                          </td>
+                          <td className="p-3">
+                            {v.status === 'PENDING' && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#b45309]/10 text-[#b45309] border border-[#b45309]/20 rounded-sm">
+                                <span className="w-1 h-1 rounded-full bg-[#b45309]" />
+                                Pendente
+                              </span>
+                            )}
+                            {v.status === 'CONFIRMED' && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#146c2e]/10 text-[#146c2e] border border-[#146c2e]/20 rounded-sm">
+                                <span className="w-1 h-1 rounded-full bg-[#146c2e]" />
+                                Confirmado
+                              </span>
+                            )}
+                            {v.status === 'CANCELLED' && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-surface-off text-text-secondary border border-border-hairline rounded-sm">
+                                Cancelado
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSearchedVerification(v);
+                                  setVerifySearchCode(v.code);
+                                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                className="px-2.5 py-1 bg-surface-off hover:bg-surface-container border border-border-hairline text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors rounded"
+                              >
+                                Ver Detalhes
+                              </button>
+                              {v.status === 'PENDING' && (
+                                <button
+                                  type="button"
+                                  disabled={confirmingCode === v.code}
+                                  onClick={() => handleConfirmVerification(v.code)}
+                                  className="px-3 py-1 bg-primary hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider transition-colors rounded"
+                                >
+                                  {confirmingCode === v.code ? '...' : 'Confirmar'}
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
           TAB 2: GERENCIAR CUPONS (TABELA & CARDS NO CELULAR)
           ======================================================== */}
       {activeTab === 'manage' && (
@@ -1015,18 +1661,16 @@ function CouponsAdminContent() {
                           </svg>
                         </button>
 
-                        {c.status !== 'ARCHIVED' && (
-                          <button
-                            type="button"
-                            onClick={() => handleArchive(c.id, c.code)}
-                            className="min-h-[38px] px-3 text-[#ba1a1a] bg-surface-off hover:bg-[#ba1a1a]/10 border border-border-hairline rounded transition-colors flex items-center justify-center"
-                            title="Arquivar"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePermanently(c.id, c.code)}
+                          className="min-h-[38px] px-3 text-[#ba1a1a] bg-surface-off hover:bg-[#ba1a1a]/10 border border-border-hairline rounded transition-colors flex items-center justify-center"
+                          title="Excluir Definitivamente (100%)"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   );
@@ -1197,17 +1841,15 @@ function CouponsAdminContent() {
                                 </svg>
                               </button>
 
-                              {c.status !== 'ARCHIVED' && (
-                                <button
-                                  onClick={() => handleArchive(c.id, c.code)}
-                                  className="p-1.5 text-text-secondary hover:text-[#ba1a1a] hover:bg-[#ba1a1a]/10 rounded"
-                                  title="Arquivar"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                  </svg>
-                                </button>
-                              )}
+                              <button
+                                onClick={() => handleDeletePermanently(c.id, c.code)}
+                                className="p-1.5 text-text-secondary hover:text-[#ba1a1a] hover:bg-[#ba1a1a]/10 rounded"
+                                title="Excluir Definitivamente (100%)"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -2121,24 +2763,37 @@ function CouponsAdminContent() {
               </p>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-3 border-t border-border-hairline">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 pt-3 border-t border-border-hairline">
               <button
                 type="button"
-                onClick={() => setIsDetailModalOpen(false)}
-                className="w-full sm:w-auto min-h-[40px] px-4 py-2 bg-surface-off border border-border-hairline text-xs uppercase tracking-wider font-semibold hover:bg-surface-container transition-colors"
+                onClick={() => handleDeletePermanently(selectedCouponDetails.id, selectedCouponDetails.code)}
+                className="w-full sm:w-auto min-h-[40px] px-4 py-2 bg-surface-off border border-[#ba1a1a]/30 text-[#ba1a1a] hover:bg-[#ba1a1a]/10 text-xs uppercase tracking-wider font-semibold transition-colors flex items-center justify-center gap-1.5"
               >
-                Fechar
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Excluir Definitivamente</span>
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDetailModalOpen(false);
-                  handleEditClick(selectedCouponDetails);
-                }}
-                className="w-full sm:w-auto min-h-[40px] px-4 py-2 bg-primary text-white text-xs uppercase tracking-wider font-semibold hover:bg-neutral-800 transition-colors"
-              >
-                Editar Regras
-              </button>
+
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsDetailModalOpen(false)}
+                  className="w-full sm:w-auto min-h-[40px] px-4 py-2 bg-surface-off border border-border-hairline text-xs uppercase tracking-wider font-semibold hover:bg-surface-container transition-colors"
+                >
+                  Fechar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDetailModalOpen(false);
+                    handleEditClick(selectedCouponDetails);
+                  }}
+                  className="w-full sm:w-auto min-h-[40px] px-4 py-2 bg-primary text-white text-xs uppercase tracking-wider font-semibold hover:bg-neutral-800 transition-colors"
+                >
+                  Editar Regras
+                </button>
+              </div>
             </div>
           </div>
         </div>

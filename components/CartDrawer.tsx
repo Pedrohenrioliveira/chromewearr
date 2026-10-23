@@ -178,15 +178,29 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       return;
     }
 
-    // Try to record redemptions in background
-    for (const coup of appliedCoupons) {
+    let verificationCode: string | null = null;
+
+    // Generate anti-fraud verification code if coupons are applied (does NOT burn coupon yet)
+    if (appliedCoupons.length > 0) {
       try {
-        fetch('/api/coupons/redeem', {
+        let customerName = 'Cliente Loja WhatsApp';
+        let customerPhone: string | null = null;
+        let customerEmail: string | null = null;
+        try {
+          const stored = localStorage.getItem('chromewear_user');
+          if (stored) {
+            const u = JSON.parse(stored);
+            if (u.name) customerName = u.name;
+            if (u.phone) customerPhone = u.phone;
+            if (u.email) customerEmail = u.email;
+          }
+        } catch (e) {}
+
+        const res = await fetch('/api/coupons/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            couponCode: coup.code,
-            customerName: 'Cliente Loja WhatsApp',
+            couponCode: appliedCoupons[0].code,
             items: items.map((i) => ({
               id: i.id,
               productId: i.productId,
@@ -195,9 +209,23 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               quantity: i.quantity,
               ref: i.ref,
             })),
+            customerName,
+            customerPhone,
+            customerEmail,
+            subtotal,
+            finalTotal,
           }),
-        }).catch(() => {});
-      } catch (e) {}
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.verification?.code) {
+            verificationCode = data.verification.code;
+          }
+        }
+      } catch (e) {
+        console.error('Error generating verification code:', e);
+      }
     }
 
     const couponSummaries: CouponDiscountSummary[] = appliedCoupons.map((c) => ({
@@ -213,7 +241,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       items,
       finalTotal,
       couponSummaries.length > 0 ? couponSummaries : null,
-      subtotal
+      subtotal,
+      verificationCode
     );
 
     // Create an anchor and click it to bypass pop-up blockers nicely

@@ -53,13 +53,25 @@ export async function DELETE(
 ) {
   try {
     const { id } = await context.params;
-    const result = CouponService.archiveCoupon(id);
-    if (!result.success) {
-      return NextResponse.json({ error: result.error || 'Erro ao arquivar cupom.' }, { status: 400 });
+    const { searchParams } = new URL(request.url);
+    const mode = searchParams.get('mode');
+
+    if (mode === 'archive') {
+      const result = CouponService.archiveCoupon(id);
+      if (!result.success) {
+        return NextResponse.json({ error: result.error || 'Erro ao arquivar cupom.' }, { status: 400 });
+      }
+      return NextResponse.json({ success: true, message: 'Cupom arquivado com sucesso.' });
     }
-    return NextResponse.json({ success: true, message: 'Cupom arquivado com sucesso.' });
+
+    // 100% Hard Delete - Permanently removes the coupon and cleans up all its history
+    const result = CouponService.deleteCouponPermanently(id);
+    if (!result.success) {
+      return NextResponse.json({ error: result.error || 'Erro ao excluir cupom.' }, { status: 400 });
+    }
+    return NextResponse.json({ success: true, message: 'Cupom excluído 100% com sucesso.' });
   } catch (error: any) {
-    console.error('Error archiving coupon:', error);
-    return NextResponse.json({ error: 'Erro ao arquivar cupom.' }, { status: 500 });
+    console.error('Error deleting coupon:', error);
+    return NextResponse.json({ error: 'Erro ao excluir cupom.' }, { status: 500 });
   }
 }

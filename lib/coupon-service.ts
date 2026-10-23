@@ -8,6 +8,7 @@ import {
   CouponDashboardStats,
   CouponValidationResult,
   CartValidationItem,
+  CouponVerification,
 } from '@/types/coupon';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from '@/lib/data';
 
@@ -16,6 +17,7 @@ const DATA_DIR = path.join(process.cwd(), 'data');
 const COUPONS_FILE = path.join(DATA_DIR, 'coupons.json');
 const REDEMPTIONS_FILE = path.join(DATA_DIR, 'coupon_redemptions.json');
 const AUDIT_LOGS_FILE = path.join(DATA_DIR, 'coupon_audit_logs.json');
+const VERIFICATIONS_FILE = path.join(DATA_DIR, 'coupon_verifications.json');
 
 // Ensure directory exists
 function ensureDataDir() {
@@ -271,6 +273,31 @@ export class CouponService {
   static archiveCoupon(id: string, adminName: string = 'Administrador'): { success: boolean; error?: string } {
     const res = this.updateCoupon(id, { status: 'ARCHIVED' }, adminName);
     if (res.error) return { success: false, error: res.error };
+    return { success: true };
+  }
+
+  // 100% Hard Delete - Permanently removes the coupon and cleans up all its logs and verifications
+  static deleteCouponPermanently(id: string): { success: boolean; error?: string } {
+    const coupons = readJsonFile<Coupon[]>(COUPONS_FILE, SEED_COUPONS);
+    const idx = coupons.findIndex((c) => c.id === id);
+    if (idx === -1) {
+      return { success: false, error: 'Cupom não encontrado.' };
+    }
+
+    const removed = coupons[idx];
+    coupons.splice(idx, 1);
+    writeJsonFile(COUPONS_FILE, coupons);
+
+    // 100% cleanup: Remove all audit logs associated with this coupon so no unnecessary history remains
+    const logs = readJsonFile<CouponAuditLog[]>(AUDIT_LOGS_FILE, SEED_LOGS);
+    const filteredLogs = logs.filter((l) => l.couponId !== id);
+    writeJsonFile(AUDIT_LOGS_FILE, filteredLogs);
+
+    // Remove any verifications associated with this coupon
+    const verifications = readJsonFile<CouponVerification[]>(VERIFICATIONS_FILE, []);
+    const filteredVerifications = verifications.filter((v) => v.couponId !== id && v.couponCode !== removed.code);
+    writeJsonFile(VERIFICATIONS_FILE, filteredVerifications);
+
     return { success: true };
   }
 
@@ -804,5 +831,141 @@ export class CouponService {
     });
 
     return [headers.join(';'), ...rows].join('\r\n');
+  }
+
+  // ==========================================
+  // ANTI-FRAUD VERIFICATION SYSTEM
+  // ==========================================
+  static getAllVerifications(): CouponVerification[] {
+    return readJsonFile<CouponVerification[]>(VERIFICATIONS_FILE, []);
+  }
+
+  static getVerificationByCode(code: string): CouponVerification | null {
+    const normalized = (code || '').trim().toUpperCase();
+    const list = this.getAllVerifications();
+    return list.find((v) => v.code.toUpperCase() === normalized) || null;
+  }
+
+  static createVerification(params: {
+    couponCode: string;
+    items: CartValidationItem[];
+    customerName?: string;
+    customerEmail?: string | null;
+    customerPhone?: string | null;
+    subtotal: number;
+    finalTotal: number;
+  }): { success: boolean; verification?: CouponVerification; error?: string } {
+    const val = this.validateCouponForCart({
+      code: params.couponCode,
+      items: params.items,
+      customerIdentifier: params.customerEmail || params.customerPhone || undefined,
+    });
+
+    if (!val.valid || !val.coupon) {
+      return { success: false, error: val.message || 'Cupom inválido para esta compra.' };
+    }
+
+    const coupon = val.coupon;
+    // Generate secure, unique, human-friendly verification code: CW-VFY-XXXXXX
+    const randomHex = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const verificationCode = `CW-VFY-${randomHex}`;
+
+    const newVerification: CouponVerification = {
+      id: `vfy-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      code: verificationCode,
+      couponId: coupon.id,
+      couponCode: coupon.code,
+      couponName: coupon.name,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      discountAmount: val.discountAmount,
+      subtotal: params.subtotal || val.eligibleSubtotal,
+      finalTotal: val.finalTotal,
+      customerName: params.customerName || 'Cliente Loja WhatsApp',
+      customerEmail: params.customerEmail || null,
+      customerPhone: params.customerPhone || null,
+      items: params.items.map((i) => ({
+        name: i.name,
+        quantity: i.quantity,
+        price: i.price,
+      })),
+      status: 'PENDING',
+      createdAt: new Date().toISOString(),
+    };
+
+    const list = this.getAllVerifications();
+    list.unshift(newVerification);
+    writeJsonFile(VERIFICATIONS_FILE, list);
+
+    return { success: true, verification: newVerification };
+  }
+
+  static confirmVerification(code: string, adminName: string = 'Administrador'): { success: boolean; verification?: CouponVerification; error?: string } {
+    const normalized = (code || '').trim().toUpperCase();
+    const list = this.getAllVerifications();
+    const idx = list.findIndex((v) => v.code.toUpperCase() === normalized);
+    if (idx === -1) {
+      return { success: false, error: 'Código de verificação não encontrado no sistema.' };
+    }
+
+    const vfy = list[idx];
+    if (vfy.status === 'CONFIRMED') {
+      return {
+        success: false,
+        error: `Este cupom já foi confirmado anteriormente em ${new Date(vfy.confirmedAt || '').toLocaleString('pt-BR')} por ${vfy.confirmedBy || 'Administrador'}.`,
+      };
+    }
+    if (vfy.status === 'CANCELLED') {
+      return { success: false, error: 'Este código de verificação foi cancelado e não pode mais ser utilizado.' };
+    }
+
+    // Now officially redeem the coupon! This is what increments usedCount and tracks financials!
+    const redeemRes = this.redeemCoupon({
+      couponCode: vfy.couponCode,
+      customerName: vfy.customerName,
+      customerEmail: vfy.customerEmail,
+      customerPhone: vfy.customerPhone,
+      items: vfy.items.map((i, index) => ({
+        id: `item-${index}`,
+        productId: `prod-${index}`,
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity,
+      })),
+    });
+
+    if (!redeemRes.success) {
+      return { success: false, error: redeemRes.error || 'Erro ao registrar resgate do cupom.' };
+    }
+
+    // Update verification record
+    vfy.status = 'CONFIRMED';
+    vfy.confirmedAt = new Date().toISOString();
+    vfy.confirmedBy = adminName;
+    list[idx] = vfy;
+    writeJsonFile(VERIFICATIONS_FILE, list);
+
+    return { success: true, verification: vfy };
+  }
+
+  static cancelVerification(code: string, adminName: string = 'Administrador'): { success: boolean; verification?: CouponVerification; error?: string } {
+    const normalized = (code || '').trim().toUpperCase();
+    const list = this.getAllVerifications();
+    const idx = list.findIndex((v) => v.code.toUpperCase() === normalized);
+    if (idx === -1) {
+      return { success: false, error: 'Código de verificação não encontrado.' };
+    }
+
+    const vfy = list[idx];
+    if (vfy.status === 'CONFIRMED') {
+      return { success: false, error: 'Não é possível cancelar um cupom que já foi confirmado e utilizado.' };
+    }
+
+    vfy.status = 'CANCELLED';
+    vfy.cancelledAt = new Date().toISOString();
+    list[idx] = vfy;
+    writeJsonFile(VERIFICATIONS_FILE, list);
+
+    return { success: true, verification: vfy };
   }
 }

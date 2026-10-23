@@ -120,6 +120,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <Link href="/admin/coupons?tab=overview" onClick={() => setIsSidebarOpen(false)} className="block py-1 px-2 text-text-secondary hover:text-text-primary transition-colors">
                       • Visão Geral
                     </Link>
+                    <Link href="/admin/coupons?tab=verify" onClick={() => setIsSidebarOpen(false)} className="block py-1 px-2 text-text-secondary hover:text-text-primary transition-colors font-semibold">
+                      • Verificar Cupom
+                    </Link>
                     <Link href="/admin/coupons?tab=manage" onClick={() => setIsSidebarOpen(false)} className="block py-1 px-2 text-text-secondary hover:text-text-primary transition-colors">
                       • Gerenciar Cupons
                     </Link>

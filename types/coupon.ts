@@ -100,10 +100,39 @@ export interface CouponRedemption {
   createdAt: string;
 }
 
+export type VerificationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+
+export interface CouponVerification {
+  id: string;
+  code: string; // Human-friendly verification code e.g. "CW-VFY-9X82KD"
+  couponId: string;
+  couponCode: string;
+  couponName: string;
+  discountType: CouponDiscountType;
+  discountValue: number;
+  discountAmount: number;
+  subtotal: number;
+  finalTotal: number;
+  customerName: string;
+  customerEmail?: string | null;
+  customerPhone?: string | null;
+  items: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+    size?: string;
+  }>;
+  status: VerificationStatus;
+  createdAt: string;
+  confirmedAt?: string | null;
+  confirmedBy?: string | null;
+  cancelledAt?: string | null;
+}
+
 export interface CouponAuditLog {
   id: string;
   couponId: string;
-  action: 'CREATE' | 'UPDATE' | 'STATUS_CHANGE' | 'DUPLICATE' | 'ARCHIVE' | 'REDEMPTION';
+  action: 'CREATE' | 'UPDATE' | 'STATUS_CHANGE' | 'DUPLICATE' | 'ARCHIVE' | 'REDEMPTION' | 'VERIFICATION_CONFIRMED';
   details: string;
   changedBy: string;
   createdAt: string;
