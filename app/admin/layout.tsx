@@ -13,26 +13,52 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('chromewear_user');
-      if (stored) {
-        const u = JSON.parse(stored);
-        if (u.role === 'ADMIN' || u.role === 'VENDOR') {
-          setUser(u);
-          setIsAuthorized(true);
-        } else {
-          router.push('/'); // Normal users are kicked out
+    let isMounted = true;
+
+    async function verifySession() {
+      if (pathname === '/admin/login') {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/auth/me', {
+          method: 'GET',
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+
+        if (!res.ok) {
+          throw new Error('Não autenticado');
         }
-      } else {
-        if (pathname !== '/admin/login') {
-          router.push('/admin/login');
+
+        const data = await res.json();
+        if (data.authenticated && (data.user?.role === 'ADMIN' || data.user?.role === 'VENDOR')) {
+          if (isMounted) {
+            setUser(data.user);
+            setIsAuthorized(true);
+            localStorage.setItem('chromewear_user', JSON.stringify(data.user));
+          }
+        } else {
+          throw new Error('Permissão insuficiente');
+        }
+      } catch (err) {
+        if (isMounted) {
+          localStorage.removeItem('chromewear_user');
+          setIsAuthorized(false);
+          router.replace('/admin/login');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
         }
       }
-    } catch (e) {
-      router.push('/admin/login');
-    } finally {
-      setIsLoading(false);
     }
+
+    verifySession();
+
+    return () => {
+      isMounted = false;
+    };
   }, [pathname, router]);
 
   if (isLoading) {
@@ -148,8 +174,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <p className="text-[10px] text-text-secondary">{user.role}</p>
           </div>
           <button 
-            onClick={() => {
+            onClick={async () => {
+              try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+              } catch (e) {}
               localStorage.removeItem('chromewear_user');
+              sessionStorage.removeItem('chromewear_user');
               router.push('/admin/login');
             }}
             className="w-full px-4 py-3 text-xs uppercase tracking-wider font-bold text-[#ba1a1a] hover:bg-[#ba1a1a]/10 transition-colors text-left"

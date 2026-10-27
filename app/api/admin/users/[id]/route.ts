@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { requireAdmin } from '@/lib/auth';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { error } = await requireAdmin(req, ['ADMIN']);
+    if (error) return error;
     const { id } = await params;
     const user = await prisma.user.findUnique({
       where: { id },
@@ -46,6 +49,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { error } = await requireAdmin(req, ['ADMIN']);
+    if (error) return error;
     const { id } = await params;
     const data = await req.json();
     const { name, email, phone, role, isVerified, password } = data;

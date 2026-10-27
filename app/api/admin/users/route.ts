@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { requireAdmin } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
+    const { error } = await requireAdmin(req, ['ADMIN']);
+    if (error) return error;
     const url = new URL(req.url);
     const roleParam = url.searchParams.get('role');
     const searchParam = url.searchParams.get('search')?.trim();
@@ -64,6 +67,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const { error } = await requireAdmin(req, ['ADMIN']);
+    if (error) return error;
     const data = await req.json();
     const { name, email, phone, password, role, isVerified } = data;
 
@@ -112,6 +117,8 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
+    const { error } = await requireAdmin(req, ['ADMIN']);
+    if (error) return error;
     const data = await req.json();
     const { id, name, email, phone, role, isVerified, password } = data;
 
@@ -202,6 +209,8 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
+    const { error } = await requireAdmin(req, ['ADMIN']);
+    if (error) return error;
     const url = new URL(req.url);
     const id = url.searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID obrigatório' }, { status: 400 });

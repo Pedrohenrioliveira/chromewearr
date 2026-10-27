@@ -5,20 +5,38 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    // 1. Create default admin if not exists
-    const existingAdmin = await prisma.user.findUnique({ where: { email: 'admin@chromewear.com' } });
-    if (!existingAdmin) {
-      const hash = await bcrypt.hash('admin123', 10);
+    const url = new URL(req.url);
+    const secret = url.searchParams.get('secret') || req.headers.get('x-seed-secret');
+    const expectedSecret = process.env.ADMIN_SEED_SECRET;
+
+    // Em produção ou quando a chave estiver configurada, exige autenticação estrita
+    if (process.env.NODE_ENV === 'production' || expectedSecret) {
+      if (!expectedSecret || secret !== expectedSecret) {
+        return NextResponse.json(
+          { error: 'Acesso negado. Rota de seed restrita e protegida.' },
+          { status: 403 }
+        );
+      }
+    }
+
+    // 1. Create default admin ONLY if NO admin exists in the entire database
+    const anyAdmin = await prisma.user.findFirst({
+      where: { role: 'ADMIN' },
+    });
+
+    if (!anyAdmin) {
+      const defaultPassword = process.env.INITIAL_ADMIN_PASSWORD || 'admin123';
+      const hash = await bcrypt.hash(defaultPassword, 10);
       await prisma.user.create({
         data: {
           name: 'Administrador',
           email: 'admin@chromewear.com',
           password: hash,
           role: 'ADMIN',
-          isVerified: true
-        }
+          isVerified: true,
+        },
       });
     }
 
