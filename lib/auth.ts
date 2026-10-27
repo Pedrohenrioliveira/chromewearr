@@ -58,7 +58,7 @@ async function getCryptoKey(): Promise<CryptoKey> {
   const enc = new TextEncoder();
   return crypto.subtle.importKey(
     'raw',
-    enc.encode(AUTH_SECRET),
+    enc.encode(AUTH_SECRET) as unknown as BufferSource,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign', 'verify']
@@ -87,7 +87,11 @@ export async function signAdminToken(
 
   const key = await getCryptoKey();
   const enc = new TextEncoder();
-  const signatureBuffer = await crypto.subtle.sign('HMAC', key, enc.encode(data));
+  const signatureBuffer = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    enc.encode(data) as unknown as BufferSource
+  );
   const signatureBytes = new Uint8Array(signatureBuffer);
   const encodedSignature = base64UrlEncodeBytes(signatureBytes);
 
@@ -110,7 +114,12 @@ export async function verifyAdminToken(token: string): Promise<AdminTokenPayload
     const enc = new TextEncoder();
     const signatureBytes = base64UrlDecodeToBytes(encodedSignature);
 
-    const isValid = await crypto.subtle.verify('HMAC', key, signatureBytes, enc.encode(data));
+    const isValid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      signatureBytes as unknown as BufferSource,
+      enc.encode(data) as unknown as BufferSource
+    );
     if (!isValid) return null;
 
     const payloadJson = base64UrlDecode(encodedPayload);
