@@ -32,7 +32,12 @@ export const InfoModal: React.FC<InfoModalProps> = ({ type, onClose }) => {
               Falar no WhatsApp
             </a>
           </p>
-          <p>E-mail: chrmewear@gmail.com</p>
+          <p>
+            E-mail:{' '}
+            <a href="mailto:chromewear.se@gmail.com" className="underline text-primary">
+              chromewear.se@gmail.com
+            </a>
+          </p>
           <p>
             <a href="https://www.instagram.com/chrome.wr/" target="_blank" rel="noreferrer" className="underline text-primary">
               Instagram @chrome.wr
